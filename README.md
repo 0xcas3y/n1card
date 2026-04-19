@@ -2,6 +2,10 @@
 
 自用的 N1 级日语动词刷卡 Web 应用。
 
+## 在线访问
+
+<https://0xcas3y.github.io/n1card/>
+
 ## 本地运行
 
 ```bash
