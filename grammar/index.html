@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JLPT 文法卡片 — N5 到 N1 全套</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --n5: #f39c12; --n4: #54a0ff; --n3: #a855f7; --n2: #10ac84; --n1: #ee5a24;
+    --bg: #0e0e12;
+    --card: #16161e;
+    --border: rgba(255,255,255,0.07);
+    --tx: #f0f0f5;
+    --muted: rgba(240,240,245,0.45);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--tx);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ── */
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-1 { background: #10ac84; top: -200px; left: -100px; }
+  .glow-2 { background: #ee5a24; bottom: -200px; right: -100px; }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 48px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .badge-jlpt {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 52px 0 48px;
+  }
+
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(38px, 7vw, 64px);
+    line-height: 1.08;
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(90deg, #10ac84, #54a0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 520px;
+    margin-top: 18px;
+  }
+
+  /* ── LEVEL CARDS ── */
+  .levels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 40px 0;
+  }
+
+  .lv {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--tx);
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .lv::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--c);
+    opacity: 0.8;
+  }
+
+  .lv:hover {
+    transform: translateY(-4px);
+    border-color: var(--c);
+    box-shadow: 0 12px 40px -8px var(--c-glow);
+  }
+
+  .lv-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--c);
+    font-weight: 700;
+    margin-bottom: 8px;
+    opacity: 0.9;
+  }
+
+  .lv-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--c);
+    margin: 6px auto;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .lv-count {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .lv-count strong {
+    color: var(--tx);
+    font-size: 16px;
+    font-weight: 700;
+    display: block;
+  }
+
+  /* ── COMPANION LINK ── */
+  .companion-link {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 22px;
+    margin: 20px 0 40px;
+    text-decoration: none; color: var(--tx);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .companion-link:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  .comp-left { display: flex; align-items: center; gap: 14px; }
+  .comp-icon { font-size: 28px; }
+  .comp-title { font-weight: 700; font-size: 16px; }
+  .comp-sub { font-size: 12px; opacity: 0.6; margin-top: 3px; }
+  .comp-arrow { font-size: 22px; opacity: 0.5; }
+
+  /* ── FEATURES ── */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .feat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 20px;
+  }
+
+  .feat-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .feat h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .feat p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── DEMO CARD ── */
+  .demo-wrap {
+    margin-bottom: 40px;
+  }
+
+  .demo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .demo-topbar {
+    background: rgba(16,172,132,0.12);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .demo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--n2);
+    opacity: 0.7;
+  }
+
+  .demo-topbar span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .demo-body {
+    padding: 24px;
+  }
+
+  .demo-gram {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--tx);
+    margin-bottom: 6px;
+  }
+
+  .demo-gram .hl { color: var(--n2); }
+
+  .demo-mean {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-ex {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .demo-ex .jp {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .demo-ex .jp .gm { color: var(--n2); }
+
+  .demo-ex .zh {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── CTA ── */
+  .cta-box {
+    background: linear-gradient(135deg, rgba(16,172,132,0.12), rgba(84,160,255,0.08));
+    border: 1px solid rgba(16,172,132,0.25);
+    border-radius: 20px;
+    padding: 36px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .cta-left h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+
+  .cta-left p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .cta-right {
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .price {
+    font-family: 'Space Mono', monospace;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--tx);
+    line-height: 1;
+  }
+
+  .price sup {
+    font-size: 18px;
+    vertical-align: super;
+  }
+
+  .price-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .btn-buy {
+    display: block;
+    margin-top: 16px;
+    background: var(--n2);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+
+  .btn-buy:hover { opacity: 0.85; transform: translateY(-2px); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero, .levels, .features, .demo-wrap, .cta-box {
+    animation: fadeUp 0.6s ease both;
+  }
+  .levels   { animation-delay: 0.1s; }
+  .features { animation-delay: 0.2s; }
+  .demo-wrap{ animation-delay: 0.25s; }
+  .cta-box  { animation-delay: 0.3s; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    .levels { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .lv { padding: 12px 6px; border-radius: 10px; }
+    .lv-badge { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; }
+    .lv-count strong { font-size: 13px; }
+    .lv-count { font-size: 10px; }
+    .features { grid-template-columns: 1fr; }
+    .cta-box { flex-direction: column; text-align: center; }
+    .hero h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="badge-jlpt">JLPT · 日本語能力試験</div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-label">文法卡片 / Grammar Cards</div>
+    <h1>从 N5 到 N1，<br><em>全部搞定。</em></h1>
+    <p class="hero-sub">
+      508 条文法要点，例句全部可点击朗读，中文翻译 + 接续说明一目了然。
+      离线可用，无需注册，买一次永久使用。
+    </p>
+  </section>
+
+  <!-- LEVEL CARDS -->
+  <div class="levels">
+    <a class="lv" href="n5.html" style="--c:var(--n5);--c-glow:rgba(243,156,18,0.3)">
+      <div class="lv-tag">入門</div>
+      <div class="lv-badge">N5</div>
+      <div class="lv-count"><strong>35</strong>条文法</div>
+    </a>
+    <a class="lv" href="n4.html" style="--c:var(--n4);--c-glow:rgba(84,160,255,0.3)">
+      <div class="lv-tag">初級</div>
+      <div class="lv-badge">N4</div>
+      <div class="lv-count"><strong>75</strong>条文法</div>
+    </a>
+    <a class="lv" href="n3.html" style="--c:var(--n3);--c-glow:rgba(168,85,247,0.3)">
+      <div class="lv-tag">中級</div>
+      <div class="lv-badge">N3</div>
+      <div class="lv-count"><strong>137</strong>条文法</div>
+    </a>
+    <a class="lv" href="n2.html" style="--c:var(--n2);--c-glow:rgba(16,172,132,0.3)">
+      <div class="lv-tag">中上級</div>
+      <div class="lv-badge">N2</div>
+      <div class="lv-count"><strong>133</strong>条文法</div>
+    </a>
+    <a class="lv" href="n1.html" style="--c:var(--n1);--c-glow:rgba(238,90,36,0.3)">
+      <div class="lv-tag">上級</div>
+      <div class="lv-badge">N1</div>
+      <div class="lv-count"><strong>128</strong>条文法</div>
+    </a>
+  </div>
+
+  <a class="companion-link" href="/">
+    <div class="comp-left">
+      <div class="comp-icon">🎴</div>
+      <div>
+        <div class="comp-title">配套动词卡片</div>
+        <div class="comp-sub">1123 个 N5 → N1 动词 · 汉字拆解读音记忆法 · 免费</div>
+      </div>
+    </div>
+    <div class="comp-arrow">›</div>
+  </a>
+
+  <hr class="divider">
+
+  <!-- FEATURES -->
+  <div class="section-label">功能特点</div>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">🔊</div>
+      <h3>点击例句朗读</h3>
+      <p>每条文法的例句直接点击即可播放日语语音，边看边听，加深印象。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📖</div>
+      <h3>双语解释 + 接续</h3>
+      <p>意思、接续方式、中文翻译全部标注清楚，不用查字典就能看懂。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⭐</div>
+      <h3>收藏 & 掌握标记</h3>
+      <p>标记不熟悉的文法，专项复习；打上✅后从未掌握列表中移除。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📱</div>
+      <h3>手机滑动翻卡</h3>
+      <p>左右滑动切换，单手操作，随时随地刷题。支持随机顺序练习。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">☰</div>
+      <h3>一览 & 搜索</h3>
+      <p>切换到一览模式，所有文法一页呈现，按难度或章节筛选。</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">✈️</div>
+      <h3>完全离线</h3>
+      <p>单个 HTML 文件，下载后不需要联网，地铁、飞机上都能用。</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- DEMO CARD -->
+  <div class="demo-wrap">
+    <div class="section-label">示例卡片 — N2</div>
+    <div class="demo-card">
+      <div class="demo-topbar">
+        <div class="demo-dot"></div>
+        <span>N2 · 第 12 条 · ～にすぎない</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-gram">～<span class="hl">にすぎない</span></div>
+        <div class="demo-mean">
+          只不过是～（强调程度之低）<br>
+          <span style="font-size:11px;opacity:0.6">接续：动词普通形 / 名词 + にすぎない</span>
+        </div>
+        <div class="demo-ex">
+          <div class="jp">これは私の<span class="gm">にすぎない</span>意見<span class="gm">にすぎない</span>。</div>
+          <div class="zh">这只不过是我个人的意见而已。</div>
+        </div>
+        <div class="demo-ex">
+          <div class="jp">彼は運が良かった<span class="gm">にすぎない</span>。</div>
+          <div class="zh">他只不过是运气好罢了。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <div class="cta-left">
+      <h2>N5 — N1 全套文法卡片</h2>
+      <p>508 条文法 · 5 个级别 · 中文界面<br>一次购买，永久使用，离线可用</p>
+    </div>
+    <div class="cta-right">
+      <div class="price"><sup>¥</sup>10</div>
+      <div class="price-note">买断 · 无订阅</div>
+      <a class="btn-buy" href="#">立即购买</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 JLPT 文法卡片 · 单文件 · 无追踪 · 无广告</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
