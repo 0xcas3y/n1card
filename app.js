@@ -177,6 +177,38 @@ const CardView = {
   },
 };
 
+const TopBar = {
+  warnings: [],
+  addWarning(msg) { this.warnings.push(msg); },
+  render() {
+    const topbar = document.querySelector('#topbar');
+    const total = DataStore.allCards().length;
+    const idx = Router.currentIndex + 1;
+    const stats = Progress.stats();
+    const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
+    topbar.innerHTML = `
+      <div class="topbar-left">📚 N1 动词 · ${idx}/${total}${warn}</div>
+      <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
+      <div class="topbar-right">
+        <select id="filter-select">
+          <option value="all">全部</option>
+          <option value="unknown_only">只看待巩固</option>
+          <option value="unseen_only">只看未学过</option>
+          <option value="random">随机乱序</option>
+        </select>
+        <button class="brainwash-btn" id="brainwash-btn">🧠 洗脑</button>
+      </div>
+    `;
+    topbar.querySelector('#filter-select').value = Progress.getFilter();
+    topbar.querySelector('#filter-select').addEventListener('change', (e) => {
+      Router.applyFilter(e.target.value);
+    });
+    topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
+      if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
+    });
+  }
+};
+
 const Router = {
   currentIndex: 0,
   currentColor: null,
@@ -211,6 +243,7 @@ const Router = {
         });
       });
     }
+    TopBar.render();
   },
   nextCard() {
     const cards = DataStore.allCards();
@@ -237,25 +270,25 @@ const Router = {
     const card = DataStore.allCards()[this.currentIndex];
     if (card) TTSEngine.speak(card.examples[idx].jp, { rate: Progress.getTTSRate() });
   },
+  applyFilter(filter) {
+    Progress.setFilter(filter);
+    // Task 12 实现真实过滤
+    this.showCurrent();
+  },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
   const topbar = document.querySelector('#topbar');
   try {
     await DataStore.load();
-    topbar.textContent = `N1 动词速记 · ${DataStore.allCards().length} 词`;
     Progress.load();
     TTSEngine.init();
-    if (!TTSEngine.isSupported()) {
-      topbar.textContent += ' · ⚠ 当前浏览器不支持发音';
-    }
+    if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
+    if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
     const lastId = Progress.getLastCardId();
     if (lastId !== null) {
       const idx = DataStore.allCards().findIndex(c => c.id === lastId);
       if (idx >= 0) Router.currentIndex = idx;
-    }
-    if (!Progress.isAvailable()) {
-      topbar.textContent += ' · ⚠ 进度不会保存（隐私模式）';
     }
     Router.showCurrent();
 
