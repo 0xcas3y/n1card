@@ -13,6 +13,47 @@ const DataStore = {
   getCard(id) { return this.cards.find(c => c.id === id); }
 };
 
+const Gestures = {
+  attach(el, { onTap, onDoubleTap, onSwipe }) {
+    let tapTimer = null;
+    let touchStart = null;
+
+    const clearTap = () => { if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; } };
+
+    el.addEventListener('pointerdown', (e) => {
+      touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+    });
+    el.addEventListener('pointerup', (e) => {
+      if (!touchStart) return;
+      const dx = e.clientX - touchStart.x;
+      const dy = e.clientY - touchStart.y;
+      const dt = performance.now() - touchStart.t;
+      const speed = Math.hypot(dx, dy) / dt;
+
+      // 滑动判定
+      if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx) * 1.5 && speed > 0.3) {
+        clearTap();
+        onSwipe?.(dy < 0 ? 'up' : 'down');
+        touchStart = null;
+        return;
+      }
+      // 几乎不动 → 点击
+      if (Math.hypot(dx, dy) < 10) {
+        if (tapTimer) {
+          clearTap();
+          onDoubleTap?.(e);
+        } else {
+          tapTimer = setTimeout(() => {
+            tapTimer = null;
+            onTap?.(e);
+          }, 200);
+        }
+      }
+      touchStart = null;
+    });
+  }
+};
+
 const CardView = {
   randomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; },
   renderFront(card, color) {
@@ -63,9 +104,34 @@ const Router = {
     if (!this.currentColor) this.currentColor = CardView.randomColor();
     const stage = document.querySelector('#cardstage');
     stage.innerHTML = '';
-    stage.appendChild(this.flipped
+    const cardEl = this.flipped
       ? CardView.renderBack(card, this.currentColor)
-      : CardView.renderFront(card, this.currentColor));
+      : CardView.renderFront(card, this.currentColor);
+    stage.appendChild(cardEl);
+
+    Gestures.attach(cardEl, {
+      onTap: (e) => {
+        // 背面的例句点击优先级更高 → 由例句 row 自己处理
+        if (e.target.closest('.sentence-row')) return;
+        console.log('[tap]', card.word);  // Task 10 会接 TTS
+      },
+      onDoubleTap: () => this.toggleFlip(),
+      onSwipe: (dir) => {
+        console.log('[swipe]', dir);  // Task 9 会接 Progress
+        this.nextCard();
+      }
+    });
+
+    // 背面例句单独绑定（Task 10 接 TTS）
+    if (this.flipped) {
+      cardEl.querySelectorAll('.sentence-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(row.dataset.exIndex, 10);
+          console.log('[sentence tap]', card.examples[idx].jp);
+        });
+      });
+    }
   },
   nextCard() {
     this.currentIndex = (this.currentIndex + 1) % DataStore.allCards().length;
@@ -90,7 +156,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('#cardstage').textContent = String(err);
   }
 });
-
-// TEMP: dev-only, removed in Task 7
-window._flip = () => Router.toggleFlip();
-window._next = () => Router.nextCard();
