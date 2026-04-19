@@ -53,3 +53,18 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 }
 .topbar-right button.brainwash-btn { background: #E85D4A; color: #fff; border-color: #E85D4A; }
 .topbar-warn { color: #ffb74d; margin-left: 8px; font-size: 12px; }
+body.brainwash-on #topbar { background: #E85D4A; }
+body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
+.brainwash-exit {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer;
+}
+.brainwash-current-example {
+  color: #fff; font-size: 15px; opacity: 0.95; text-align: center;
+}
+@keyframes pulse {
+  0%   { transform: scale(1.0); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1.0); }
+}
+.front-word.pulse { animation: pulse 0.35s ease-out; }

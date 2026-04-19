@@ -209,6 +209,115 @@ const TopBar = {
   }
 };
 
+const BrainwashMode = {
+  active: false,
+  _aborted: false,
+  _paused: false,
+
+  async toggle() {
+    if (this.active) this.exit();
+    else await this.enter();
+  },
+  async enter() {
+    this.active = true;
+    this._aborted = false;
+    this._paused = false;
+    document.body.classList.add('brainwash-on');
+    // 确保在正面
+    Router.flipped = false;
+    Router.showCurrent();
+    await this._runLoop();
+  },
+  exit() {
+    this.active = false;
+    this._aborted = true;
+    TTSEngine.cancel();
+    document.body.classList.remove('brainwash-on');
+    TopBar.render();
+  },
+  pauseToggle() {
+    this._paused = !this._paused;
+    if (this._paused) TTSEngine.cancel();
+  },
+  async skipToNext() {
+    this._aborted = true;
+    TTSEngine.cancel();
+    Router.nextCard();
+    this._aborted = false;
+    await this._runLoop();
+  },
+
+  async _runLoop() {
+    while (this.active && !this._aborted) {
+      const card = Router.visibleCards[Router.currentIndex];
+      if (!card) break;
+      await this._playCard(card);
+      if (this._aborted) break;
+      // 进下一张（不改 progress）
+      Router.currentIndex = (Router.currentIndex + 1) % Router.visibleCards.length;
+      Router.currentColor = CardView.randomColor();
+      Router.flipped = false;
+      Progress.setLastCardId(Router.visibleCards[Router.currentIndex].id);
+      Router.showCurrent();
+    }
+  },
+
+  async _playCard(card) {
+    // 10 × word，每次 pulse
+    for (let i = 0; i < 10 && !this._aborted; i++) {
+      await this._waitIfPaused();
+      this._pulseWord();
+      await TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+      if (this._aborted) return;
+      await this._sleep(300);
+    }
+    if (this._aborted) return;
+    await this._ding();
+    // 例句 1 × 2
+    for (let rep = 0; rep < 2 && !this._aborted; rep++) {
+      await this._waitIfPaused();
+      this._showExampleInTopBar(card.examples[0].jp);
+      await TTSEngine.speak(card.examples[0].jp, { rate: Progress.getTTSRate() });
+      if (this._aborted) return;
+      await this._sleep(300);
+    }
+    if (this._aborted) return;
+    await this._ding();
+    // 例句 2 × 2
+    for (let rep = 0; rep < 2 && !this._aborted; rep++) {
+      await this._waitIfPaused();
+      this._showExampleInTopBar(card.examples[1].jp);
+      await TTSEngine.speak(card.examples[1].jp, { rate: Progress.getTTSRate() });
+      if (this._aborted) return;
+      await this._sleep(300);
+    }
+    await this._sleep(800);
+  },
+
+  _pulseWord() {
+    const el = document.querySelector('.front-word');
+    if (!el) return;
+    el.classList.remove('pulse');
+    void el.offsetWidth;  // reflow
+    el.classList.add('pulse');
+  },
+  _showExampleInTopBar(jp) {
+    const center = document.querySelector('.topbar-center');
+    if (center) {
+      center.textContent = jp;
+      center.classList.add('brainwash-current-example');
+    }
+  },
+  async _ding() {
+    // Task 14 实现 WebAudio；先用静音占位
+    await this._sleep(150);
+  },
+  _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+  async _waitIfPaused() {
+    while (this._paused && !this._aborted) await this._sleep(100);
+  }
+};
+
 const Router = {
   currentIndex: 0,
   currentColor: null,
@@ -251,8 +360,14 @@ const Router = {
         if (e.target.closest('.sentence-row')) return;
         this.playCurrentWord();
       },
-      onDoubleTap: () => this.toggleFlip(),
-      onSwipe: (dir) => this.markAndNext(dir === 'up' ? 'unknown' : 'known')
+      onDoubleTap: () => {
+        if (BrainwashMode.active) BrainwashMode.pauseToggle();
+        else this.toggleFlip();
+      },
+      onSwipe: (dir) => {
+        if (BrainwashMode.active) BrainwashMode.skipToNext();
+        else this.markAndNext(dir === 'up' ? 'unknown' : 'known');
+      }
     });
 
     if (this.flipped) {
@@ -328,6 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         case 'ArrowDown': e.preventDefault(); Router.markAndNext('known'); break;
         case 'ArrowRight':e.preventDefault(); Router.nextCard(); break;
         case 'p': case 'P': Router.playCurrentWord(); break;
+        case 'Escape': if (BrainwashMode.active) BrainwashMode.exit(); break;
       }
     });
   } catch (err) {
