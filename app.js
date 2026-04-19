@@ -251,7 +251,7 @@ const CardView = {
     el.innerHTML = `
       <div class="card-id">${card.id}</div>
       <div class="front-center"><div class="front-word">${card.word}</div></div>
-      <div class="hint-bottom">单击发音 · 双击翻面</div>
+      <div class="hint-bottom">单击发音 · 双击翻面 · ↑难 ↓易</div>
     `;
     return el;
   },
