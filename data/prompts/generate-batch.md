@@ -14,14 +14,19 @@ JSON object `{ "version": 1, "cards": [...] }` where each card matches this sche
 - `accent` (string|null): Tokyo accent number as string, e.g. "0", "3". Use null if uncertain — don't guess.
 - `type` (string|null): "五段" | "一段" | "サ变" | "カ变"
 - `meanings` (string[]): 1-4 concise Chinese meanings, 5-15 chars each
-- `mnemonic` (string): **kanji decomposition** with ⇒ arrow, e.g. "受け + 玉 + 割る ⇒ 承る". Decompose the kanji characters, not the meaning. For pure-kana verbs use sound/imagery hook.
+- `mnemonic` (string): **reading-chain** — break the kana reading into 2–4 familiar Japanese word chunks whose readings concatenate to the target reading. Format: `chunk1(kana1) + chunk2(kana2) ⇒ targetkana（kanji）`. For pure-kana verbs write the chunks directly. No Chinese text anywhere in the mnemonic.
+  - Gold standard: `受け(うけ) + 玉(たま) + 割る(わる) ⇒ うけたまわる（承る）`
+  - Pure-kana: `在り(あり) + 触れる(ふれる) ⇒ ありふれる`
+  - Minor stretch (mark with ほぼ): `然(さ) + 又(また) + げる ⇒ さまたげる（妨げる）`
+  - BAD (kanji decomp with Chinese gloss): `女 + 方 ⇒ 妨（挡路） + 害ける`
+  - BAD (has Chinese annotations): `受け（うけ，接受）+ 玉（たま，珍贵）⇒ 承る`
 - `examples`: **exactly 2** objects, each `{ jp, cn }`. Use N1-level real usage, not children's Japanese.
 
 ## Quality checklist
 - [ ] Accent only when confident — nulls are fine
-- [ ] Mnemonics are kanji-decomposition style (⇒ arrow), not vague imagery
+- [ ] Mnemonics are reading-chain style: kana chunks + ⇒ arrow, no Chinese text
 - [ ] Examples sound like real N1-level Japanese
 - [ ] `kana` field is pure hiragana (run `validate-cards.js` to check)
 
 ## Reference
-See `data/cards.seed.json` for 承る / 妨げる / 賜る — the tone / structure / mnemonic style to match.
+See `data/cards.seed.json` for 承る / 妨げる / 賜る — the reading-chain mnemonic style to match.
