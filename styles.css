@@ -4,3 +4,33 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 #topbar { padding: 12px 16px; background: #1a1a1a; font-size: 14px; }
 #cardstage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: manipulation; }
 .flash-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.flash-card {
+  width: min(90vw, 360px);
+  aspect-ratio: 9 / 16;
+  max-height: 75vh;
+  border-radius: 18px;
+  padding: 32px 28px;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.flash-card.color-blue   { background: #5A9AD4; }
+.flash-card.color-green  { background: #4FA896; }
+.flash-card.color-purple { background: #8A6FB8; }
+.flash-card.color-coral  { background: #D97B5F; }
+.flash-card.color-teal   { background: #3E8A9E; }
+.flash-card.color-pink   { background: #C75F87; }
+.card-id {
+  position: absolute; top: 24px; right: 24px;
+  width: 38px; height: 38px;
+  border: 2px solid rgba(255,255,255,0.85);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 500;
+}
+.front-center { flex: 1; display: flex; align-items: center; justify-content: center; }
+.front-word { font-size: clamp(64px, 18vw, 110px); font-weight: 600; letter-spacing: 4px; }
+.hint-bottom { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: 0.5; letter-spacing: 1px; }
