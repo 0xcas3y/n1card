@@ -308,9 +308,31 @@ const BrainwashMode = {
       center.classList.add('brainwash-current-example');
     }
   },
+  _audioCtx: null,
+  _getAudioCtx() {
+    if (!this._audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) this._audioCtx = new Ctx();
+    }
+    return this._audioCtx;
+  },
   async _ding() {
-    // Task 14 实现 WebAudio；先用静音占位
-    await this._sleep(150);
+    const ctx = this._getAudioCtx();
+    if (!ctx) { await this._sleep(150); return; }
+    // 两个叠加正弦：440 + 880，80ms 衰减
+    const now = ctx.currentTime;
+    const playTone = (freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now); osc.stop(now + 0.15);
+    };
+    playTone(440); playTone(880);
+    await this._sleep(160);
   },
   _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
   async _waitIfPaused() {
