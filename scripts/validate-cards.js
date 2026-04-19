@@ -39,18 +39,24 @@ export function validate(data) {
   return { ok: errors.length === 0, errors };
 }
 
-// CLI: node scripts/validate-cards.js data/cards.json
 if (import.meta.url === `file://${process.argv[1]}`) {
   const fs = await import('node:fs/promises');
   const file = process.argv[2] || 'data/cards.json';
-  const data = JSON.parse(await fs.readFile(file, 'utf8'));
-  const r = validate(data);
-  if (r.ok) {
-    console.log(`ok: ${data.cards.length} cards valid`);
-    process.exit(0);
-  } else {
-    console.error(`FAIL (${r.errors.length} errors):`);
-    r.errors.forEach(e => console.error('  - ' + e));
+  try {
+    const data = JSON.parse(await fs.readFile(file, 'utf8'));
+    const r = validate(data);
+    if (r.ok) {
+      console.log(`ok: ${data.cards.length} cards valid`);
+      process.exit(0);
+    } else {
+      console.error(`FAIL (${r.errors.length} errors):`);
+      r.errors.forEach(e => console.error('  - ' + e));
+      process.exit(1);
+    }
+  } catch (err) {
+    if (err.code === 'ENOENT') console.error(`error: file not found: ${file}`);
+    else if (err instanceof SyntaxError) console.error(`error: invalid JSON in ${file}: ${err.message}`);
+    else console.error(`error: ${err.message}`);
     process.exit(1);
   }
 }

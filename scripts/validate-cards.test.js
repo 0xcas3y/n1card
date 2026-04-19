@@ -60,3 +60,17 @@ test('rejects duplicate ids', () => {
   const r = validate({ version: 1, cards: [validCard, validCard] });
   assert.equal(r.ok, false);
 });
+
+test('rejects empty mnemonic (whitespace only)', () => {
+  const bad = { ...validCard, mnemonic: "   " };
+  const r = validate({ version: 1, cards: [bad] });
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some(e => e.includes('mnemonic')));
+});
+
+test('rejects meaning with empty string', () => {
+  const bad = { ...validCard, meanings: ["valid meaning", ""] };
+  const r = validate({ version: 1, cards: [bad] });
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some(e => e.includes('meanings')));
+});
