@@ -428,6 +428,53 @@ const SettingsPanel = {
   }
 };
 
+const EditPanel = {
+  open(card) {
+    if (!card) return;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>编辑 · ${card.word}</h3>
+        <label>注释（每行一条）</label>
+        <textarea id="edit-meanings">${card.meanings.join('\n')}</textarea>
+        <label>关联记忆</label>
+        <textarea id="edit-mnemonic">${card.mnemonic}</textarea>
+        <label>例句 1 · 日文</label>
+        <input id="edit-ex1-jp" value="${this._esc(card.examples[0].jp)}">
+        <label>例句 1 · 中文</label>
+        <input id="edit-ex1-cn" value="${this._esc(card.examples[0].cn)}">
+        <label>例句 2 · 日文</label>
+        <input id="edit-ex2-jp" value="${this._esc(card.examples[1].jp)}">
+        <label>例句 2 · 中文</label>
+        <input id="edit-ex2-cn" value="${this._esc(card.examples[1].cn)}">
+        <div class="row">
+          <button class="primary" id="save-btn">保存</button>
+          <button id="cancel-btn">取消</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) this.close(); });
+    backdrop.querySelector('#cancel-btn').addEventListener('click', () => this.close());
+    backdrop.querySelector('#save-btn').addEventListener('click', () => {
+      const patch = {
+        meanings: backdrop.querySelector('#edit-meanings').value.split('\n').map(s => s.trim()).filter(Boolean),
+        mnemonic: backdrop.querySelector('#edit-mnemonic').value.trim(),
+        examples: [
+          { jp: backdrop.querySelector('#edit-ex1-jp').value.trim(), cn: backdrop.querySelector('#edit-ex1-cn').value.trim() },
+          { jp: backdrop.querySelector('#edit-ex2-jp').value.trim(), cn: backdrop.querySelector('#edit-ex2-cn').value.trim() }
+        ]
+      };
+      DataStore.applyOverride(card.id, patch);
+      this.close();
+      Router.showCurrent();
+    });
+  },
+  close() { document.querySelector('.modal-backdrop')?.remove(); },
+  _esc(s) { return String(s).replace(/"/g, '&quot;'); }
+};
+
 const Router = {
   currentIndex: 0,
   currentColor: null,
