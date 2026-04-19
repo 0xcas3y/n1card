@@ -586,6 +586,13 @@ const Router = {
   }
 };
 
+// 禁止 iOS Safari 双击缩放（user-scalable=no 在部分 iOS 版本仍允许双击缩放）
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+// 禁止双指捏合缩放
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+document.addEventListener('gesturechange', (e) => e.preventDefault());
+document.addEventListener('gestureend', (e) => e.preventDefault());
+
 document.addEventListener('DOMContentLoaded', async () => {
   const topbar = document.querySelector('#topbar');
   try {
