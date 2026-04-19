@@ -1,0 +1,9 @@
+{
+  "name": "n1card",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test 'scripts/**/*.test.js'",
+    "validate": "node scripts/validate-cards.js data/cards.json"
+  }
+}
