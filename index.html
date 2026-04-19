@@ -7,18 +7,71 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>N1 动词速记</title>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <title>日语动词速记</title>
+  <link rel="stylesheet" href="styles.css?v=18">
+  <style>
+    .hub { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .hub h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+    .hub .subtitle { opacity: 0.7; font-size: 14px; margin-bottom: 32px; }
+    .level-list { display: flex; flex-direction: column; gap: 12px; }
+    .level-btn {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px; border-radius: 14px;
+      text-decoration: none; color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    .level-btn:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .level-btn .lv { font-size: 28px; font-weight: 700; letter-spacing: 2px; }
+    .level-btn .meta { font-size: 14px; opacity: 0.9; text-align: right; }
+    .level-btn .count { font-size: 18px; font-weight: 500; display: block; }
+    .level-btn .arrow { font-size: 22px; margin-left: 16px; opacity: 0.7; }
+    .lv-n5 { background: #4FA896; }
+    .lv-n4 { background: #3E8A9E; }
+    .lv-n3 { background: #5A9AD4; }
+    .lv-n2 { background: #8A6FB8; }
+    .lv-n1 { background: #D97B5F; }
+    .footer { margin-top: 40px; opacity: 0.5; font-size: 12px; text-align: center; }
+    .footer a { color: inherit; }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <header id="topbar"></header>
-    <main id="cardstage"></main>
+  <div class="hub">
+    <h1>📚 日语动词速记</h1>
+    <p class="subtitle">选一个级别开始刷卡。每个级别的学习进度独立保存。</p>
+
+    <div class="level-list">
+      <a class="level-btn lv-n5" href="n5.html">
+        <span class="lv">N5</span>
+        <span class="meta"><span class="count">80 词</span>入门基础</span>
+        <span class="arrow">›</span>
+      </a>
+      <a class="level-btn lv-n4" href="n4.html">
+        <span class="lv">N4</span>
+        <span class="meta"><span class="count">150 词</span>初级日常</span>
+        <span class="arrow">›</span>
+      </a>
+      <a class="level-btn lv-n3" href="n3.html">
+        <span class="lv">N3</span>
+        <span class="meta"><span class="count">300 词</span>中级过渡</span>
+        <span class="arrow">›</span>
+      </a>
+      <a class="level-btn lv-n2" href="n2.html">
+        <span class="lv">N2</span>
+        <span class="meta"><span class="count">200 词</span>中高级</span>
+        <span class="arrow">›</span>
+      </a>
+      <a class="level-btn lv-n1" href="n1.html">
+        <span class="lv">N1</span>
+        <span class="meta"><span class="count">393 词</span>高级精通</span>
+        <span class="arrow">›</span>
+      </a>
+    </div>
+
+    <p class="footer">
+      单击卡片发音 · 双击翻面 · 上划不熟 · 下划已掌握 · 🧠 洗脑模式<br>
+      <a href="https://github.com/0xcas3y/n1card">GitHub</a>
+    </p>
   </div>
-  <script>
-    window.LEVEL_NAME = 'N1';
-    window.CARD_DATA_URL = 'data/cards.json';
-  </script>
-  <script type="module" src="app.js?v=17"></script>
 </body>
 </html>

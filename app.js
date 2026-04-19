@@ -228,7 +228,7 @@ const TopBar = {
     const stats = Progress.stats();
     const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
     topbar.innerHTML = `
-      <div class="topbar-left">📚 ${LEVEL} 动词 · ${idx}/${total}${warn}</div>
+      <a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} 动词 · ${idx}/${total}${warn}</a>
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
       <div class="topbar-right">
         <select id="filter-select">
