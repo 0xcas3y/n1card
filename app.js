@@ -13,6 +13,56 @@ const DataStore = {
   getCard(id) { return this.cards.find(c => c.id === id); }
 };
 
+const Progress = {
+  key: 'n1card:progress',
+  settingsKey: 'n1card:settings',
+  _progress: {},
+  _settings: { filter: 'all', ttsRate: 0.9, lastCardId: null },
+  _available: true,
+
+  load() {
+    try {
+      const p = localStorage.getItem(this.key);
+      if (p) this._progress = JSON.parse(p);
+      const s = localStorage.getItem(this.settingsKey);
+      if (s) this._settings = { ...this._settings, ...JSON.parse(s) };
+    } catch (err) {
+      console.warn('localStorage unavailable:', err);
+      this._available = false;
+    }
+  },
+  _save() {
+    if (!this._available) return;
+    try {
+      localStorage.setItem(this.key, JSON.stringify(this._progress));
+      localStorage.setItem(this.settingsKey, JSON.stringify(this._settings));
+    } catch (err) {
+      this._available = false;
+    }
+  },
+  mark(id, status) {
+    this._progress[id] = { status, lastSeen: Date.now() };
+    this._save();
+  },
+  getStatus(id) { return this._progress[id]?.status || null; },
+  stats() {
+    const s = { known: 0, unknown: 0, unseen: 0 };
+    for (const k in this._progress) {
+      if (this._progress[k].status === 'known') s.known++;
+      else if (this._progress[k].status === 'unknown') s.unknown++;
+    }
+    return s;
+  },
+  setLastCardId(id) { this._settings.lastCardId = id; this._save(); },
+  getLastCardId() { return this._settings.lastCardId; },
+  getFilter() { return this._settings.filter; },
+  setFilter(f) { this._settings.filter = f; this._save(); },
+  getTTSRate() { return this._settings.ttsRate; },
+  setTTSRate(r) { this._settings.ttsRate = r; this._save(); },
+  reset() { this._progress = {}; this._settings.lastCardId = null; this._save(); },
+  isAvailable() { return this._available; }
+};
+
 const Gestures = {
   attach(el, { onTap, onDoubleTap, onSwipe }) {
     let tapTimer = null;
@@ -116,10 +166,7 @@ const Router = {
         console.log('[tap]', card.word);  // Task 10 会接 TTS
       },
       onDoubleTap: () => this.toggleFlip(),
-      onSwipe: (dir) => {
-        console.log('[swipe]', dir);  // Task 9 会接 Progress
-        this.nextCard();
-      }
+      onSwipe: (dir) => this.markAndNext(dir === 'up' ? 'unknown' : 'known')
     });
 
     // 背面例句单独绑定（Task 10 接 TTS）
@@ -134,9 +181,11 @@ const Router = {
     }
   },
   nextCard() {
-    this.currentIndex = (this.currentIndex + 1) % DataStore.allCards().length;
+    const cards = DataStore.allCards();
+    this.currentIndex = (this.currentIndex + 1) % cards.length;
     this.currentColor = CardView.randomColor();
     this.flipped = false;
+    Progress.setLastCardId(cards[this.currentIndex].id);
     this.showCurrent();
   },
   toggleFlip() {
@@ -144,8 +193,8 @@ const Router = {
     this.showCurrent();
   },
   markAndNext(status) {
-    // Task 9: 调用 Progress.mark()
-    console.log('[mark]', status);
+    const card = DataStore.allCards()[this.currentIndex];
+    if (card) Progress.mark(card.id, status);
     this.nextCard();
   },
   playCurrentWord() {
@@ -159,6 +208,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await DataStore.load();
     topbar.textContent = `N1 动词速记 · ${DataStore.allCards().length} 词`;
+    Progress.load();
+    const lastId = Progress.getLastCardId();
+    if (lastId !== null) {
+      const idx = DataStore.allCards().findIndex(c => c.id === lastId);
+      if (idx >= 0) Router.currentIndex = idx;
+    }
+    if (!Progress.isAvailable()) {
+      topbar.textContent += ' · ⚠ 进度不会保存（隐私模式）';
+    }
     Router.showCurrent();
 
     document.addEventListener('keydown', (e) => {
