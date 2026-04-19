@@ -303,6 +303,7 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>
+        <a class="settings-btn" href="https://0xcas3y.github.io/jlpt-gramcard/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="settings-btn">⚙</button>
         <button class="brainwash-btn" id="brainwash-btn">🧠 洗脑</button>
       </div>
