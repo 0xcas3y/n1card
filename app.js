@@ -142,6 +142,15 @@ const Router = {
   toggleFlip() {
     this.flipped = !this.flipped;
     this.showCurrent();
+  },
+  markAndNext(status) {
+    // Task 9: 调用 Progress.mark()
+    console.log('[mark]', status);
+    this.nextCard();
+  },
+  playCurrentWord() {
+    // Task 10: 调用 TTSEngine
+    console.log('[play word]');
   }
 };
 
@@ -151,6 +160,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await DataStore.load();
     topbar.textContent = `N1 动词速记 · ${DataStore.allCards().length} 词`;
     Router.showCurrent();
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea, select')) return;
+      switch (e.key) {
+        case ' ':         e.preventDefault(); Router.toggleFlip(); break;
+        case 'ArrowUp':   e.preventDefault(); Router.markAndNext('unknown'); break;
+        case 'ArrowDown': e.preventDefault(); Router.markAndNext('known'); break;
+        case 'ArrowRight':e.preventDefault(); Router.nextCard(); break;
+        case 'p': case 'P': Router.playCurrentWord(); break;
+      }
+    });
   } catch (err) {
     topbar.textContent = '加载失败';
     document.querySelector('#cardstage').textContent = String(err);
