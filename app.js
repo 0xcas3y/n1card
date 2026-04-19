@@ -138,9 +138,11 @@ const Gestures = {
     const clearTap = () => { if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; } };
 
     el.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.sentence-row')) { touchStart = null; return; }
       touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
     });
     el.addEventListener('pointerup', (e) => {
+      if (e.target.closest('.sentence-row')) { touchStart = null; clearTap(); return; }
       if (!touchStart) return;
       const dx = e.clientX - touchStart.x;
       const dy = e.clientY - touchStart.y;
