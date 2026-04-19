@@ -2,11 +2,36 @@ const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
 const DataStore = {
   cards: [],
+  overrides: {},
+  loadOverrides() {
+    try {
+      const o = localStorage.getItem('n1card:overrides');
+      if (o) this.overrides = JSON.parse(o);
+    } catch {}
+  },
+  _saveOverrides() {
+    try { localStorage.setItem('n1card:overrides', JSON.stringify(this.overrides)); }
+    catch {}
+  },
+  applyOverride(id, patch) {
+    this.overrides[id] = { ...this.overrides[id], ...patch };
+    const i = this.cards.findIndex(c => c.id === id);
+    if (i >= 0) this.cards[i] = { ...this.cards[i], ...patch };
+    this._saveOverrides();
+  },
+  exportOverrides() {
+    return { version: 1, overrides: this.overrides };
+  },
   async load() {
     const res = await fetch('data/cards.json');
     if (!res.ok) throw new Error(`cards.json fetch failed: ${res.status}`);
     const data = await res.json();
     this.cards = data.cards;
+    this.loadOverrides();
+    for (const id in this.overrides) {
+      const i = this.cards.findIndex(c => c.id === parseInt(id, 10));
+      if (i >= 0) this.cards[i] = { ...this.cards[i], ...this.overrides[id] };
+    }
     return this.cards;
   },
   allCards() { return this.cards; },
@@ -196,6 +221,7 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>
+        <button class="settings-btn" id="settings-btn">⚙</button>
         <button class="brainwash-btn" id="brainwash-btn">🧠 洗脑</button>
       </div>
     `;
@@ -203,6 +229,7 @@ const TopBar = {
     topbar.querySelector('#filter-select').addEventListener('change', (e) => {
       Router.applyFilter(e.target.value);
     });
+    topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
@@ -337,6 +364,67 @@ const BrainwashMode = {
   _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
   async _waitIfPaused() {
     while (this._paused && !this._aborted) await this._sleep(100);
+  }
+};
+
+const SettingsPanel = {
+  open() {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>设置</h3>
+        <label>TTS 语速：<span id="rate-val">${Progress.getTTSRate().toFixed(2)}</span></label>
+        <input type="range" id="rate-input" min="0.5" max="1.5" step="0.05" value="${Progress.getTTSRate()}">
+        <div class="row">
+          <button id="edit-btn">编辑当前卡</button>
+          <button id="export-btn">导出修改</button>
+        </div>
+        <div class="row">
+          <button class="danger" id="reset-btn">清空学习记录</button>
+        </div>
+        <div class="row">
+          <button id="close-btn">关闭</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) this.close(); });
+
+    const rateInput = backdrop.querySelector('#rate-input');
+    rateInput.addEventListener('input', () => {
+      const v = parseFloat(rateInput.value);
+      backdrop.querySelector('#rate-val').textContent = v.toFixed(2);
+      Progress.setTTSRate(v);
+    });
+    backdrop.querySelector('#edit-btn').addEventListener('click', () => {
+      this.close();
+      if (typeof EditPanel !== 'undefined') EditPanel.open(Router.visibleCards[Router.currentIndex]);
+    });
+    backdrop.querySelector('#export-btn').addEventListener('click', () => {
+      this._exportOverrides();
+    });
+    backdrop.querySelector('#reset-btn').addEventListener('click', () => {
+      if (confirm('清空所有学习记录？（不会影响你编辑过的卡片）')) {
+        Progress.reset();
+        Router.computeVisible();
+        Router.currentIndex = 0;
+        Router.showCurrent();
+        this.close();
+      }
+    });
+    backdrop.querySelector('#close-btn').addEventListener('click', () => this.close());
+  },
+  close() {
+    document.querySelector('.modal-backdrop')?.remove();
+  },
+  _exportOverrides() {
+    const data = JSON.stringify(DataStore.exportOverrides(), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'cards.overrides.json';
+    a.click(); URL.revokeObjectURL(url);
   }
 };
 

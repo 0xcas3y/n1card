@@ -68,3 +68,29 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
   100% { transform: scale(1.0); }
 }
 .front-word.pulse { animation: pulse 0.35s ease-out; }
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal {
+  background: #222; color: #eee; border-radius: 12px;
+  padding: 20px; width: min(90vw, 460px); max-height: 85vh; overflow-y: auto;
+}
+.modal h3 { margin-bottom: 12px; font-size: 18px; }
+.modal label { display: block; margin: 10px 0 4px; font-size: 13px; opacity: 0.8; }
+.modal input, .modal textarea {
+  width: 100%; background: #111; color: #eee; border: 1px solid #444;
+  border-radius: 6px; padding: 8px; font-family: inherit; font-size: 14px;
+}
+.modal textarea { min-height: 60px; resize: vertical; }
+.modal .row { display: flex; gap: 8px; margin-top: 16px; }
+.modal button {
+  flex: 1; background: #2a2a2a; color: #eee; border: 1px solid #444;
+  border-radius: 6px; padding: 10px; font-size: 14px; cursor: pointer;
+}
+.modal button.primary { background: #5A9AD4; border-color: #5A9AD4; }
+.modal button.danger { background: #c0392b; border-color: #c0392b; }
+.settings-btn {
+  background: #2a2a2a; color: #eee; border: 1px solid #444;
+  border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer;
+}
