@@ -534,8 +534,9 @@ const Router = {
         this.playCurrentWord();
       },
       onDoubleTap: () => {
-        if (BrainwashMode.active) BrainwashMode.pauseToggle();
-        else this.toggleFlip();
+        if (BrainwashMode.active) { BrainwashMode.pauseToggle(); return; }
+        this.toggleFlip();
+        this._speakWordTwice();
       },
       onSwipe: (dir) => {
         if (BrainwashMode.active) BrainwashMode.skipToNext();
@@ -547,6 +548,8 @@ const Router = {
       cardEl.querySelectorAll('.sentence-row').forEach(row => {
         row.addEventListener('click', (e) => {
           e.stopPropagation();
+          // 400ms 内刚双击翻面的话，落点误触例句不算数
+          if (performance.now() - (this._flipTime || 0) < 400) return;
           const idx = parseInt(row.dataset.exIndex, 10);
           this.playExample(idx);
         });
@@ -568,7 +571,20 @@ const Router = {
     Progress.setLastCardId(this.visibleCards[this.currentIndex].id);
     this.showCurrent();
   },
-  toggleFlip() { this.flipped = !this.flipped; this.showCurrent(); },
+  toggleFlip() {
+    this.flipped = !this.flipped;
+    this._flipTime = performance.now();
+    this.showCurrent();
+  },
+  async _speakWordTwice() {
+    const card = this.visibleCards[this.currentIndex];
+    if (!card) return;
+    const rate = Progress.getTTSRate();
+    await TTSEngine.speak(card.kana, { rate });
+    // 如果用户已经切卡或洗脑模式打断，就不要读第二遍
+    if (this.visibleCards[this.currentIndex] !== card || BrainwashMode.active) return;
+    await TTSEngine.speak(card.kana, { rate });
+  },
 
   applyFilter(filter) {
     const currentCard = this.visibleCards[this.currentIndex];
