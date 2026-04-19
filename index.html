@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>日语动词速记</title>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <style>
     .hub { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
     .hub h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
@@ -33,12 +33,27 @@
     .lv-n1 { background: #D97B5F; }
     .footer { margin-top: 40px; opacity: 0.5; font-size: 12px; text-align: center; }
     .footer a { color: inherit; }
+    .streak-box {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      text-align: center;
+    }
+    .streak-box .item .num { font-size: 22px; font-weight: 600; }
+    .streak-box .item .lbl { font-size: 11px; opacity: 0.6; margin-top: 2px; letter-spacing: 1px; }
   </style>
 </head>
 <body>
   <div class="hub">
     <h1>📚 日语动词速记</h1>
     <p class="subtitle">选一个级别开始刷卡。每个级别的学习进度独立保存。</p>
+
+    <div id="streak-box" class="streak-box" style="display:none;"></div>
 
     <div class="level-list">
       <a class="level-btn lv-n5" href="n5.html">
@@ -73,5 +88,33 @@
       <a href="https://github.com/0xcas3y/n1card">GitHub</a>
     </p>
   </div>
+  <script>
+    // 打卡状态展示（读 localStorage，无副作用）
+    (function() {
+      try {
+        const raw = localStorage.getItem('n1card:streak');
+        if (!raw) return;
+        const s = JSON.parse(raw);
+        const today = new Date();
+        const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const todayStr = fmt(today);
+        const y = new Date(today); y.setDate(y.getDate() - 1);
+        const yStr = fmt(y);
+        // 今天或昨天没续上的话，current 显示为 0（但 longest/total 保留）
+        const current = (s.lastDate === todayStr || s.lastDate === yStr) ? (s.current || 0) : 0;
+        const longest = s.longest || 0;
+        const total = s.total || 0;
+        if (longest === 0) return;  // 从没打过卡，不显示
+        const box = document.getElementById('streak-box');
+        box.style.display = 'flex';
+        const today_flag = s.lastDate === todayStr ? '✅' : '';
+        box.innerHTML = `
+          <div class="item"><div class="num">🔥 ${current}</div><div class="lbl">连续 ${today_flag}</div></div>
+          <div class="item"><div class="num">${longest}</div><div class="lbl">最长</div></div>
+          <div class="item"><div class="num">${total}</div><div class="lbl">累计天数</div></div>
+        `;
+      } catch {}
+    })();
+  </script>
 </body>
 </html>

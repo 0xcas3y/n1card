@@ -40,6 +40,7 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .section-body { font-size: 17px; line-height: 1.7; opacity: 0.95; }
 .sentence-row { padding: 8px 10px; border-radius: 8px; margin: 4px -10px; cursor: pointer; transition: background 0.15s; }
 .sentence-row:hover, .sentence-row:active { background: rgba(255,255,255,0.14); }
+.sentence-row.brainwash-playing { background: rgba(255,255,255,0.28); box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
 .sentence-row .jp { font-size: 16px; line-height: 1.5; }
 .sentence-row .cn { font-size: 13px; opacity: 0.75; margin-top: 2px; }
 .flash-card.back { padding-top: 28px; overflow-y: auto; }

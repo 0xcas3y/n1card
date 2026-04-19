@@ -93,6 +93,61 @@ const Progress = {
   isAvailable() { return this._available; }
 };
 
+// 打卡：全局（跨 level 共享），记录哪些日期用户真实刷了卡
+const Streak = {
+  key: 'n1card:streak',
+  _state: { lastDate: null, current: 0, longest: 0, total: 0 },
+  _loaded: false,
+
+  _dateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  },
+  load() {
+    if (this._loaded) return;
+    try {
+      const s = localStorage.getItem(this.key);
+      if (s) this._state = { ...this._state, ...JSON.parse(s) };
+    } catch {}
+    this._loaded = true;
+  },
+  _save() {
+    try { localStorage.setItem(this.key, JSON.stringify(this._state)); } catch {}
+  },
+  tick() {
+    this.load();
+    const today = this._dateStr(new Date());
+    if (this._state.lastDate === today) return false;  // 今天已打过卡
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = this._dateStr(yesterday);
+
+    if (this._state.lastDate === yStr) {
+      this._state.current = (this._state.current || 0) + 1;
+    } else {
+      this._state.current = 1;
+    }
+    if (this._state.current > (this._state.longest || 0)) this._state.longest = this._state.current;
+    this._state.total = (this._state.total || 0) + 1;
+    this._state.lastDate = today;
+    this._save();
+    return true;  // 刚完成今日打卡
+  },
+  getCurrent() {
+    this.load();
+    // 如果今天没打过 + 昨天也没打过，current 应当重置为 0
+    const today = this._dateStr(new Date());
+    if (this._state.lastDate === today) return this._state.current;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (this._state.lastDate === this._dateStr(yesterday)) return this._state.current;
+    return 0;
+  },
+  getLongest() { this.load(); return this._state.longest || 0; },
+  getTotal() { this.load(); return this._state.total || 0; },
+  getLastDate() { this.load(); return this._state.lastDate; }
+};
+
 const TTSEngine = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
@@ -226,9 +281,11 @@ const TopBar = {
     const total = DataStore.allCards().length;
     const idx = Router.currentIndex + 1;
     const stats = Progress.stats();
+    const streak = Streak.getCurrent();
+    const streakHtml = streak > 0 ? ` · 🔥${streak}` : '';
     const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
     topbar.innerHTML = `
-      <a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} 动词 · ${idx}/${total}${warn}</a>
+      <a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
       <div class="topbar-right">
         <select id="filter-select">
@@ -306,7 +363,9 @@ const BrainwashMode = {
   },
 
   async _playCard(card) {
-    // 10 × word，每次 pulse
+    // 正面阶段：10 × word，每次 pulse
+    Router.flipped = false;
+    Router.showCurrent();
     for (let i = 0; i < 10 && !this._aborted; i++) {
       await this._waitIfPaused();
       this._pulseWord();
@@ -316,10 +375,15 @@ const BrainwashMode = {
     }
     if (this._aborted) return;
     await this._ding();
+
+    // 背面阶段：翻到背面，例句 1 × 2 + 例句 2 × 2
+    Router.flipped = true;
+    Router.showCurrent();
+
     // 例句 1 × 2
     for (let rep = 0; rep < 2 && !this._aborted; rep++) {
       await this._waitIfPaused();
-      this._showExampleInTopBar(card.examples[0].jp);
+      this._highlightExampleRow(0);
       await TTSEngine.speak(card.examples[0].jp, { rate: Progress.getTTSRate() });
       if (this._aborted) return;
       await this._sleep(300);
@@ -329,7 +393,7 @@ const BrainwashMode = {
     // 例句 2 × 2
     for (let rep = 0; rep < 2 && !this._aborted; rep++) {
       await this._waitIfPaused();
-      this._showExampleInTopBar(card.examples[1].jp);
+      this._highlightExampleRow(1);
       await TTSEngine.speak(card.examples[1].jp, { rate: Progress.getTTSRate() });
       if (this._aborted) return;
       await this._sleep(300);
@@ -344,12 +408,10 @@ const BrainwashMode = {
     void el.offsetWidth;  // reflow
     el.classList.add('pulse');
   },
-  _showExampleInTopBar(jp) {
-    const center = document.querySelector('.topbar-center');
-    if (center) {
-      center.textContent = jp;
-      center.classList.add('brainwash-current-example');
-    }
+  _highlightExampleRow(idx) {
+    const rows = document.querySelectorAll('.sentence-row');
+    rows.forEach(r => r.classList.remove('brainwash-playing'));
+    if (rows[idx]) rows[idx].classList.add('brainwash-playing');
   },
   _audioCtx: null,
   _getAudioCtx() {
@@ -560,7 +622,10 @@ const Router = {
 
   markAndNext(status) {
     const card = this.visibleCards[this.currentIndex];
-    if (card) Progress.mark(card.id, status);
+    if (card) {
+      Progress.mark(card.id, status);
+      Streak.tick();
+    }
     this.nextCard();
   },
   nextCard() {
