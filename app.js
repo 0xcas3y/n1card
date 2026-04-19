@@ -1,16 +1,21 @@
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
+// 级别配置从 HTML 注入，默认 N1（向后兼容）
+const LEVEL = window.LEVEL_NAME || 'N1';
+const CARD_DATA_URL = window.CARD_DATA_URL || 'data/cards.json';
+const LEVEL_KEY = LEVEL.toLowerCase();  // n1 / n5 / ...
+
 const DataStore = {
   cards: [],
   overrides: {},
   loadOverrides() {
     try {
-      const o = localStorage.getItem('n1card:overrides');
+      const o = localStorage.getItem(`n1card:overrides:${LEVEL_KEY}`);
       if (o) this.overrides = JSON.parse(o);
     } catch {}
   },
   _saveOverrides() {
-    try { localStorage.setItem('n1card:overrides', JSON.stringify(this.overrides)); }
+    try { localStorage.setItem(`n1card:overrides:${LEVEL_KEY}`, JSON.stringify(this.overrides)); }
     catch {}
   },
   applyOverride(id, patch) {
@@ -23,8 +28,8 @@ const DataStore = {
     return { version: 1, overrides: this.overrides };
   },
   async load() {
-    const res = await fetch('data/cards.json');
-    if (!res.ok) throw new Error(`cards.json fetch failed: ${res.status}`);
+    const res = await fetch(CARD_DATA_URL);
+    if (!res.ok) throw new Error(`${CARD_DATA_URL} fetch failed: ${res.status}`);
     const data = await res.json();
     this.cards = data.cards;
     this.loadOverrides();
@@ -39,8 +44,8 @@ const DataStore = {
 };
 
 const Progress = {
-  key: 'n1card:progress',
-  settingsKey: 'n1card:settings',
+  key: `n1card:progress:${LEVEL_KEY}`,
+  settingsKey: `n1card:settings:${LEVEL_KEY}`,
   _progress: {},
   _settings: { filter: 'all', ttsRate: 0.9, lastCardId: null },
   _available: true,
@@ -222,7 +227,7 @@ const TopBar = {
     const stats = Progress.stats();
     const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
     topbar.innerHTML = `
-      <div class="topbar-left">📚 N1 动词 · ${idx}/${total}${warn}</div>
+      <div class="topbar-left">📚 ${LEVEL} 动词 · ${idx}/${total}${warn}</div>
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
       <div class="topbar-right">
         <select id="filter-select">
