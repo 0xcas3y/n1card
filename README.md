@@ -4,7 +4,7 @@
 
 ## 在线访问
 
-<https://0xcas3y.github.io/n1card/>
+<https://jlptcards.app>
 
 ## 本地运行
 
