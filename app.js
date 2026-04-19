@@ -24,20 +24,58 @@ const CardView = {
       <div class="hint-bottom">单击发音 · 双击翻面</div>
     `;
     return el;
-  }
+  },
+  renderBack(card, color) {
+    const el = document.createElement('div');
+    el.className = `flash-card back color-${color}`;
+    const meanings = card.meanings.map((m, i) => `${['①','②','③','④'][i]} ${m}`).join('<br>');
+    el.innerHTML = `
+      <div class="card-id">${card.id}</div>
+      <div class="back-head">${card.word}</div>
+      <div class="back-kana">${card.kana} ${card.accent ? '['+card.accent+']' : ''} ${card.type ? '· '+card.type : ''}</div>
+      <div class="section-title">注释</div>
+      <div class="section-body">${meanings}</div>
+      <div class="section-title">关联记忆</div>
+      <div class="section-body">${card.mnemonic}</div>
+      <div class="section-title">例句</div>
+      <div class="section-body">
+        ${card.examples.map((ex, i) => `
+          <div class="sentence-row" data-ex-index="${i}">
+            <div class="jp">${['①','②'][i]} ${ex.jp}</div>
+            <div class="cn">${ex.cn}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="hint-bottom">双击翻回正面</div>
+    `;
+    return el;
+  },
 };
 
 const Router = {
   currentIndex: 0,
   currentColor: null,
+  flipped: false,
   showCurrent() {
     const cards = DataStore.allCards();
     if (cards.length === 0) return;
     const card = cards[this.currentIndex];
-    this.currentColor = CardView.randomColor();
+    if (!this.currentColor) this.currentColor = CardView.randomColor();
     const stage = document.querySelector('#cardstage');
     stage.innerHTML = '';
-    stage.appendChild(CardView.renderFront(card, this.currentColor));
+    stage.appendChild(this.flipped
+      ? CardView.renderBack(card, this.currentColor)
+      : CardView.renderFront(card, this.currentColor));
+  },
+  nextCard() {
+    this.currentIndex = (this.currentIndex + 1) % DataStore.allCards().length;
+    this.currentColor = CardView.randomColor();
+    this.flipped = false;
+    this.showCurrent();
+  },
+  toggleFlip() {
+    this.flipped = !this.flipped;
+    this.showCurrent();
   }
 };
 
@@ -52,3 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('#cardstage').textContent = String(err);
   }
 });
+
+// TEMP: dev-only, removed in Task 7
+window._flip = () => Router.toggleFlip();
+window._next = () => Router.nextCard();

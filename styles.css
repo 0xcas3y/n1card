@@ -34,3 +34,12 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .front-center { flex: 1; display: flex; align-items: center; justify-content: center; }
 .front-word { font-size: clamp(64px, 18vw, 110px); font-weight: 600; letter-spacing: 4px; }
 .hint-bottom { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: 0.5; letter-spacing: 1px; }
+.back-head { font-size: 34px; font-weight: 600; margin-right: 50px; }
+.back-kana { font-size: 14px; opacity: 0.85; margin-bottom: 14px; }
+.section-title { font-size: 18px; font-weight: 500; margin: 12px 0 6px; opacity: 0.95; }
+.section-body { font-size: 17px; line-height: 1.7; opacity: 0.95; }
+.sentence-row { padding: 8px 10px; border-radius: 8px; margin: 4px -10px; cursor: pointer; transition: background 0.15s; }
+.sentence-row:hover, .sentence-row:active { background: rgba(255,255,255,0.14); }
+.sentence-row .jp { font-size: 16px; line-height: 1.5; }
+.sentence-row .cn { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+.flash-card.back { padding-top: 28px; overflow-y: auto; }
