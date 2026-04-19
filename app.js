@@ -91,6 +91,7 @@ const Progress = {
 const TTSEngine = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
+  _errorCount: 0,
 
   init() {
     if (!this._supported) return;
@@ -113,7 +114,14 @@ const TTSEngine = {
       u.rate = rate;
       u.onstart = () => onStart?.();
       u.onend = () => { onEnd?.(); resolve(); };
-      u.onerror = () => { onEnd?.(); resolve(); };
+      u.onerror = () => {
+        this._errorCount++;
+        if (this._errorCount === 3) {
+          TopBar.addWarning('TTS 多次失败');
+          TopBar.render();
+        }
+        onEnd?.(); resolve();
+      };
       speechSynthesis.speak(u);
     });
   },
@@ -604,7 +612,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   } catch (err) {
-    topbar.textContent = '加载失败';
-    document.querySelector('#cardstage').textContent = String(err);
+    document.querySelector('#topbar').textContent = '加载失败';
+    document.querySelector('#cardstage').innerHTML = `
+      <div class="fatal-error">
+        <h2>无法加载卡片数据</h2>
+        <p>${err.message}</p>
+        <button onclick="location.reload()">重试</button>
+      </div>
+    `;
   }
 });
