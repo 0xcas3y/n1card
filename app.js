@@ -1,5 +1,14 @@
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
+// 词性归一化显示（subagent 给的数据可能是 "他"/"他动词"/"他動詞" 三种之一）
+const _normTrans = (t) => {
+  if (!t) return '';
+  const s = String(t);
+  if (s.startsWith('他')) return '他动词';
+  if (s.startsWith('自')) return '自动词';
+  return s;
+};
+
 // 级别配置从 HTML 注入，默认 N1（向后兼容）
 const LEVEL = window.LEVEL_NAME || 'N1';
 const CARD_DATA_URL = window.CARD_DATA_URL || 'data/cards.json';
@@ -253,7 +262,7 @@ const CardView = {
     el.innerHTML = `
       <div class="card-id">${card.id}</div>
       <div class="back-head">${card.word}</div>
-      <div class="back-kana">${card.kana} ${card.accent ? '['+card.accent+']' : ''} ${card.type ? '· '+card.type : ''}</div>
+      <div class="back-kana">${card.kana} ${card.accent ? '['+card.accent+']' : ''} ${card.type ? '· '+card.type : ''} ${card.transitivity ? '· '+_normTrans(card.transitivity) : ''}</div>
       <div class="section-title">注释</div>
       <div class="section-body">${meanings}</div>
       <div class="section-title">关联记忆</div>

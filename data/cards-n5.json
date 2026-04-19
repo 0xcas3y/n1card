@@ -7,6 +7,7 @@
       "kana": "ある",
       "accent": "1",
       "type": "五段",
+      "transitivity": null,
       "meanings": ["存在（无生命）", "有", "位于"],
       "mnemonic": "あ + る ⇒ 「あ、ある！」（看到东西惊呼「啊，有了！」→表示存在）",
       "examples": [
@@ -20,8 +21,9 @@
       "kana": "いる",
       "accent": "0",
       "type": "一段",
+      "transitivity": null,
       "meanings": ["存在（有生命）", "在", "有（人/动物）"],
-      "mnemonic": "居(い) + る ⇒ 居る（「居」就是居住在某处，表示人或动物的存在）",
+      "mnemonic": "居(い) + る ⇒ 居る（「居」就是居住在某处，表示人或動物的存在）",
       "examples": [
         { "jp": "部屋に猫がいる。", "cn": "房间里有猫。" },
         { "jp": "田中さんはここにいます。", "cn": "田中先生在这里。" }
@@ -33,6 +35,7 @@
       "kana": "する",
       "accent": "0",
       "type": "サ变",
+      "transitivity": null,
       "meanings": ["做", "进行", "（感觉）是"],
       "mnemonic": "す + る ⇒ 「スルスル」する（事情像线一样顺滑滚动，就是「做」起来顺手）",
       "examples": [
@@ -46,6 +49,7 @@
       "kana": "くる",
       "accent": "1",
       "type": "カ变",
+      "transitivity": "自动词",
       "meanings": ["来", "到来", "过来"],
       "mnemonic": "来(く) + る ⇒ 来る（「来」字读く，人向这边走来→来）",
       "examples": [
@@ -59,6 +63,7 @@
       "kana": "いく",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["去", "前往", "走"],
       "mnemonic": "行(い) + く ⇒ 行く（「行」字读い，迈步向前→去）",
       "examples": [
@@ -72,6 +77,7 @@
       "kana": "かえる",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["回去", "回家", "返回"],
       "mnemonic": "蛙(かえる) ⇒ 蛙が池に帰る（青蛙跳回水池→回家）",
       "examples": [
@@ -85,6 +91,7 @@
       "kana": "あるく",
       "accent": "2",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["走路", "步行", "散步"],
       "mnemonic": "あ + 流(る) + 句(く) ⇒ あるく（步行时脚步如流水般交替→走路）",
       "examples": [
@@ -98,6 +105,7 @@
       "kana": "はしる",
       "accent": "2",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["跑", "奔跑", "行驶"],
       "mnemonic": "橋(はし) + る ⇒ 橋を走る（在桥上奔跑→跑步）",
       "examples": [
@@ -111,6 +119,7 @@
       "kana": "およぐ",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["游泳", "游"],
       "mnemonic": "お + 夜(よ) + 具(ぐ) ⇒ お夜の具（夜里划水的姿势→游泳）",
       "examples": [
@@ -124,6 +133,7 @@
       "kana": "とぶ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["飞", "跳", "飞翔"],
       "mnemonic": "鳥(とり) + ぶ → とぶ ⇒ 鳥がぶんぶん飛ぶ（鸟嗡嗡地飞→飞翔）",
       "examples": [
@@ -137,6 +147,7 @@
       "kana": "のぼる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["爬", "攀登", "登上"],
       "mnemonic": "野(の) + 坊(ぼ) + る ⇒ 野坊が山に登る（山野小子攀登山峰→爬山）",
       "examples": [
@@ -150,6 +161,7 @@
       "kana": "たべる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["吃", "进食"],
       "mnemonic": "田(た) + 部屋(べや) ⇒ 田んぼの部屋で食べる（在稻田边的屋里进食→吃饭）",
       "examples": [
@@ -163,6 +175,7 @@
       "kana": "のむ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["喝", "饮", "服（药）"],
       "mnemonic": "飲(の) + む ⇒ のむ（喉咙「の」形张开，「む」声咕嘟一口→喝）",
       "examples": [
@@ -176,6 +189,7 @@
       "kana": "すう",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["吸", "抽（烟）", "吸入"],
       "mnemonic": "吸(す) + う ⇒ スーッと吸う（「嗖」地吸一口→吸气）",
       "examples": [
@@ -189,6 +203,7 @@
       "kana": "みる",
       "accent": "1",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["看", "观看", "查看"],
       "mnemonic": "三(み) + る ⇒ 三つの目で見る（用三只眼睛看→仔细看）",
       "examples": [
@@ -202,6 +217,7 @@
       "kana": "きく",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["听", "问", "打听"],
       "mnemonic": "木(き) + 句(く) ⇒ 木に句を聞く（对着树倾诉，耳朵竖起来听→倾听）",
       "examples": [
@@ -215,6 +231,7 @@
       "kana": "はなす",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["说", "讲话", "交谈"],
       "mnemonic": "花(はな) + す ⇒ 花を話す（话像花一样开放绽放→说话）",
       "examples": [
@@ -228,6 +245,7 @@
       "kana": "いう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["说", "讲", "说道"],
       "mnemonic": "言(い) + う ⇒ 言う（嘴巴「い」字形张开发声→说）",
       "examples": [
@@ -241,6 +259,7 @@
       "kana": "よむ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["读", "阅读", "朗读"],
       "mnemonic": "夜(よ) + 夢(む) ⇒ 夜に夢のように読む（夜晚如梦般阅读→读书）",
       "examples": [
@@ -254,6 +273,7 @@
       "kana": "かく",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["写", "书写", "画"],
       "mnemonic": "花(か) + 句(く) ⇒ 花の句を書く（写下花的俳句→书写）",
       "examples": [
@@ -267,6 +287,7 @@
       "kana": "うたう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["唱歌", "歌唱", "咏唱"],
       "mnemonic": "歌(うた) + う ⇒ 歌う（口里吐出「歌」→唱歌）",
       "examples": [
@@ -280,6 +301,7 @@
       "kana": "おどる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["跳舞", "舞蹈"],
       "mnemonic": "お + 土(ど) + る ⇒ お土産を踊る（拎着土特产扭动身体→跳舞）",
       "examples": [
@@ -293,6 +315,7 @@
       "kana": "あそぶ",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["玩耍", "游玩", "玩"],
       "mnemonic": "あ + 祖(そ) + 部(ぶ) ⇒ あ、祖父の部屋で遊ぶ（啊，在爷爷的房间里玩耍→玩耍）",
       "examples": [
@@ -306,6 +329,7 @@
       "kana": "わらう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["笑", "嘲笑", "大笑"],
       "mnemonic": "笑(わら) + う ⇒ 笑う（「哇哈哈」→大笑）",
       "examples": [
@@ -319,6 +343,7 @@
       "kana": "なく",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["哭", "哭泣", "啼哭"],
       "mnemonic": "泣(な) + 句(く) ⇒ 泣きの句（哭泣的诗句→哭）",
       "examples": [
@@ -332,6 +357,7 @@
       "kana": "おこる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["生气", "发怒", "责骂"],
       "mnemonic": "お + 子(こ) + る ⇒ お子に怒る（对孩子发火→生气骂人）",
       "examples": [
@@ -345,6 +371,7 @@
       "kana": "たつ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["站立", "站起", "建立"],
       "mnemonic": "タッ + つ ⇒ タッと立つ（「嗒」地一声站起来→站立）",
       "examples": [
@@ -358,6 +385,7 @@
       "kana": "すわる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["坐", "就座", "坐下"],
       "mnemonic": "巣(す) + 笑(わ) + る ⇒ 巣に笑いながら座る（在巢穴里笑着端坐→坐下）",
       "examples": [
@@ -371,6 +399,7 @@
       "kana": "ねる",
       "accent": "1",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["睡觉", "就寝", "躺下"],
       "mnemonic": "根(ね) + る ⇒ 根のように寝る（像树根一样扎实地睡→睡觉）",
       "examples": [
@@ -384,6 +413,7 @@
       "kana": "おきる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["起床", "起来", "发生"],
       "mnemonic": "お + 木(き) + る ⇒ お木を起きる（把立着的木头扶起→起床站起）",
       "examples": [
@@ -397,6 +427,7 @@
       "kana": "まつ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["等待", "等", "期待"],
       "mnemonic": "松(まつ) ⇒ 松の木のように待つ（像松树一样静静地等待→等候）",
       "examples": [
@@ -410,6 +441,7 @@
       "kana": "あう",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["见面", "相遇", "会面"],
       "mnemonic": "合(あ) + う ⇒ 合う（两人合在一起→相遇见面）",
       "examples": [
@@ -423,6 +455,7 @@
       "kana": "つくる",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["制作", "做", "创作"],
       "mnemonic": "机(つくえ) ⇒ 机を作る（亲手做张桌子→制作）",
       "examples": [
@@ -436,6 +469,7 @@
       "kana": "かう",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["买", "购买"],
       "mnemonic": "買(か) + う ⇒ 買う（「貝」贝壳古代是货币，拿贝壳换东西→买）",
       "examples": [
@@ -449,6 +483,7 @@
       "kana": "うる",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["卖", "出售"],
       "mnemonic": "売(う) + る ⇒ 売る（「売」字上面是「士」，士卖物品→出售）",
       "examples": [
@@ -462,6 +497,7 @@
       "kana": "かりる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["借入", "借（来）", "租"],
       "mnemonic": "仮(かり) + る ⇒ 仮に借りる（暂时借用→借入）",
       "examples": [
@@ -475,6 +511,7 @@
       "kana": "かす",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["借出", "借给", "租出"],
       "mnemonic": "貸(か) + す ⇒ 貸す（把贝壳〔钱〕交出去→借给别人）",
       "examples": [
@@ -488,6 +525,7 @@
       "kana": "かえす",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["归还", "还回", "翻转"],
       "mnemonic": "蛙(かえ) + す ⇒ 蛙が巣に返す（青蛙把东西带回巢穴→归还）",
       "examples": [
@@ -501,6 +539,7 @@
       "kana": "はらう",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["付钱", "支付", "拂去"],
       "mnemonic": "払(はら) + う ⇒ 腹（はら）から払う（从肚皮里掏钱付账→支付）",
       "examples": [
@@ -514,6 +553,7 @@
       "kana": "つかう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["使用", "用", "花（钱/时间）"],
       "mnemonic": "使(つか) + う ⇒ 使者を使う（派使者去做事→使用）",
       "examples": [
@@ -527,6 +567,7 @@
       "kana": "すてる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["扔掉", "丢弃", "抛弃"],
       "mnemonic": "す + 手(て) + る ⇒ 素手で捨てる（空手把东西丢出去→扔掉）",
       "examples": [
@@ -540,6 +581,7 @@
       "kana": "しめる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["关闭", "关上", "锁上"],
       "mnemonic": "締(し) + 目(め) + る ⇒ 目を締める（把眼睛闭合→关闭）",
       "examples": [
@@ -553,6 +595,7 @@
       "kana": "あける",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["打开", "开", "张开"],
       "mnemonic": "あ + 毛(け) + る ⇒ あ、毛が出る（「啊」地张开嘴毛都出来了→打开）",
       "examples": [
@@ -566,6 +609,7 @@
       "kana": "はじめる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["开始", "着手", "启动"],
       "mnemonic": "ハジ(は + じ) + 目(め) + る ⇒ 弾みを目で始める（目光一对上就弹起开始→开始）",
       "examples": [
@@ -579,6 +623,7 @@
       "kana": "おわる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["结束", "完成", "终了"],
       "mnemonic": "終(お) + 笑(わ) + る ⇒ 終わり笑う（结束时开心地笑→结束）",
       "examples": [
@@ -592,6 +637,7 @@
       "kana": "つく",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["到达", "抵达", "到"],
       "mnemonic": "付(つ) + く ⇒ 付いて着く（紧跟着抵达目的地→到达）",
       "examples": [
@@ -605,6 +651,7 @@
       "kana": "でる",
       "accent": "1",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["出来", "出去", "出现"],
       "mnemonic": "出(で) + る ⇒ 出る（「出」字两脚往外踏→走出去）",
       "examples": [
@@ -618,6 +665,7 @@
       "kana": "はいる",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["进入", "进去", "加入"],
       "mnemonic": "は + 入(い) + る ⇒ はっと入る（「啊」地一声进去→进入）",
       "examples": [
@@ -631,6 +679,7 @@
       "kana": "おく",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["放置", "放", "搁"],
       "mnemonic": "お + 句(く) ⇒ お供に置く（放在供台上→放置）",
       "examples": [
@@ -644,6 +693,7 @@
       "kana": "のる",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["乘坐", "搭乘", "骑"],
       "mnemonic": "野(の) + る ⇒ 野原を馬に乗る（骑马驰过原野→乘骑）",
       "examples": [
@@ -657,6 +707,7 @@
       "kana": "おりる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["下车", "下来", "降落"],
       "mnemonic": "折(お) + 利(り) + る ⇒ 折れて降りる（身子一弯下来→下车）",
       "examples": [
@@ -670,6 +721,7 @@
       "kana": "わたる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["过（桥/马路）", "渡过", "横渡"],
       "mnemonic": "渡(わた) + る ⇒ 綿のように渡る（像棉絮一样轻轻飘过→渡过）",
       "examples": [
@@ -683,6 +735,7 @@
       "kana": "まがる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["转弯", "弯曲", "拐"],
       "mnemonic": "曲(ま) + が + る ⇒ 間が曲がる（中间弯折→转弯）",
       "examples": [
@@ -696,6 +749,7 @@
       "kana": "わすれる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["忘记", "遗忘"],
       "mnemonic": "笑(わ) + 素(す) + 礼(れ) + る ⇒ 笑う素振りで礼を忘れる（笑嘻嘻地把礼仪都忘了→忘记）",
       "examples": [
@@ -709,6 +763,7 @@
       "kana": "おぼえる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["记住", "记忆", "学会"],
       "mnemonic": "お + 坊(ぼ) + 得(え) + る ⇒ お坊さんが得を覚える（僧侣学得道理→记住）",
       "examples": [
@@ -722,6 +777,7 @@
       "kana": "しる",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["知道", "了解", "认识"],
       "mnemonic": "知(し) + る ⇒ 知る（「知」字是矢射中口，一针见血→知晓）",
       "examples": [
@@ -735,6 +791,7 @@
       "kana": "おもう",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["认为", "觉得", "想"],
       "mnemonic": "重(おも) + う ⇒ 重く思う（沉甸甸地思考→认为/觉得）",
       "examples": [
@@ -748,6 +805,7 @@
       "kana": "かんがえる",
       "accent": "4",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["思考", "考虑", "想"],
       "mnemonic": "缶(かん) + が + 絵(え) + る ⇒ 缶の絵を考える（对着罐头画苦思冥想→思考）",
       "examples": [
@@ -761,6 +819,7 @@
       "kana": "つかれる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["疲劳", "累", "疲惫"],
       "mnemonic": "疲(つか) + れ + る ⇒ 疲れた顔で「疲れた」（满脸倦容说「我好累」→疲劳）",
       "examples": [
@@ -774,6 +833,7 @@
       "kana": "やすむ",
       "accent": "2",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["休息", "请假", "歇"],
       "mnemonic": "休(やす) + む ⇒ 休む（「休」字是人靠着树休息→休息）",
       "examples": [
@@ -787,6 +847,7 @@
       "kana": "すむ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["居住", "住", "生活"],
       "mnemonic": "巣(す) + む ⇒ 巣に住む（住在巢穴里→居住）",
       "examples": [
@@ -800,6 +861,7 @@
       "kana": "わかる",
       "accent": "0",
       "type": "五段",
+      "transitivity": null,
       "meanings": ["明白", "理解", "懂"],
       "mnemonic": "若(わか) + る ⇒ 若い子が分かる（年轻人一点就通→明白）",
       "examples": [
@@ -813,6 +875,7 @@
       "kana": "できる",
       "accent": "2",
       "type": "一段",
+      "transitivity": null,
       "meanings": ["能够", "会", "完成"],
       "mnemonic": "出(で) + 来(き) + る ⇒ 出て来る（本事从里面冒出来→能做到）",
       "examples": [
@@ -826,6 +889,7 @@
       "kana": "きる",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["切", "剪", "割断"],
       "mnemonic": "木(き) + る ⇒ 木を切る（砍木头→切割）",
       "examples": [
@@ -839,6 +903,7 @@
       "kana": "きる",
       "accent": "1",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["穿（上衣）", "穿戴"],
       "mnemonic": "着(き) + る ⇒ 着る（「着」字是羊毛盖在人身上→穿衣服）",
       "examples": [
@@ -852,6 +917,7 @@
       "kana": "ぬぐ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["脱（衣服）", "脱去"],
       "mnemonic": "ぬ + 具(ぐ) ⇒ ぬぐい具（擦拭的动作，像脱衣服一样往外褪→脱去）",
       "examples": [
@@ -865,6 +931,7 @@
       "kana": "あらう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["洗", "清洗", "洗涤"],
       "mnemonic": "洗(あら) + う ⇒ 荒れを洗う（洗去污秽→清洗）",
       "examples": [
@@ -878,6 +945,7 @@
       "kana": "はく",
       "accent": "1",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["穿（鞋/裤）", "穿戴（下身）"],
       "mnemonic": "履(は) + 句(く) ⇒ 履の句（穿鞋的俳句：「はく」→穿鞋）",
       "examples": [
@@ -891,6 +959,7 @@
       "kana": "かける",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["挂", "打（电话）", "施加"],
       "mnemonic": "架(か) + 気(け) + る ⇒ 架に気を掛ける（在架子上挂东西→悬挂）",
       "examples": [
@@ -904,6 +973,7 @@
       "kana": "ならう",
       "accent": "2",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["学习", "学", "跟…学"],
       "mnemonic": "習(なら) + う ⇒ 習う（「習」是羽毛不断练习，反复→学习）",
       "examples": [
@@ -917,6 +987,7 @@
       "kana": "おしえる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["教", "告诉", "传授"],
       "mnemonic": "お + 師(し) + 得(え) + る ⇒ お師匠が得を教える（师傅传授技艺→教导）",
       "examples": [
@@ -930,6 +1001,7 @@
       "kana": "はたらく",
       "accent": "0",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["工作", "劳动", "运作"],
       "mnemonic": "畑(はた) + 楽(らく) ⇒ 畑で楽しく働く（在田里快乐地劳动→工作）",
       "examples": [
@@ -943,6 +1015,7 @@
       "kana": "つとめる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["上班", "任职", "勤务"],
       "mnemonic": "勤(つと) + 目(め) + る ⇒ 勤を目指す（以勤勉为目标→任职上班）",
       "examples": [
@@ -956,6 +1029,7 @@
       "kana": "えらぶ",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["选择", "挑选", "选"],
       "mnemonic": "選(えら) + ぶ ⇒ 偉い(えらい)ぶって選ぶ（摆出高傲的样子来挑选→选择）",
       "examples": [
@@ -969,8 +1043,9 @@
       "kana": "もらう",
       "accent": "0",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["得到", "收到", "接受"],
-      "mnemonic": "貰(もら) + う ⇒ 漏らうように貰う（像漏下来一样接住→收到）",
+      "mnemonic": "貰(もら) + う ⇒ 漏らうように貰う（像漏下来一样接住→収到）",
       "examples": [
         { "jp": "プレゼントを貰う。", "cn": "收到礼物。" },
         { "jp": "友達から手紙を貰いました。", "cn": "收到了朋友的信。" }
@@ -982,6 +1057,7 @@
       "kana": "あげる",
       "accent": "2",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["给（对方）", "举起", "提高"],
       "mnemonic": "上(あ) + 毛(げ) + る ⇒ 上に毛が上がる（毛往上扬→举起/给予）",
       "examples": [
@@ -995,6 +1071,7 @@
       "kana": "くれる",
       "accent": "0",
       "type": "一段",
+      "transitivity": "他动词",
       "meanings": ["给（我方）", "赐给"],
       "mnemonic": "呉(く) + れ + る ⇒ 呉から礼が来る（从吴国送来礼物→给我）",
       "examples": [
@@ -1008,6 +1085,7 @@
       "kana": "いただく",
       "accent": "4",
       "type": "五段",
+      "transitivity": "他动词",
       "meanings": ["（谦）收到", "（谦）吃/喝", "顶"],
       "mnemonic": "頂(いただ) + く ⇒ 頂きます（头顶上举→谦恭地接受/餐前语）",
       "examples": [
@@ -1021,6 +1099,7 @@
       "kana": "うまれる",
       "accent": "3",
       "type": "一段",
+      "transitivity": "自动词",
       "meanings": ["出生", "诞生", "被生下"],
       "mnemonic": "馬(うま) + れ + る ⇒ 馬が生まれる（小马驹破壳而出→出生）",
       "examples": [
@@ -1034,6 +1113,7 @@
       "kana": "しぬ",
       "accent": "1",
       "type": "五段",
+      "transitivity": "自动词",
       "meanings": ["死", "去世", "死亡"],
       "mnemonic": "死(し) + 怒(ぬ) ⇒ 死ぬほど怒る（愤怒到极点→死→去世）",
       "examples": [
