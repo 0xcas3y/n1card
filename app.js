@@ -213,10 +213,31 @@ const Router = {
   currentIndex: 0,
   currentColor: null,
   flipped: false,
+  visibleCards: [],
+
+  computeVisible() {
+    const all = DataStore.allCards();
+    const filter = Progress.getFilter();
+    let v;
+    switch (filter) {
+      case 'unknown_only':
+        v = all.filter(c => Progress.getStatus(c.id) === 'unknown'); break;
+      case 'unseen_only':
+        v = all.filter(c => Progress.getStatus(c.id) === null); break;
+      case 'random':
+        v = [...all].sort(() => Math.random() - 0.5); break;
+      case 'all':
+      default:
+        v = [...all];
+    }
+    this.visibleCards = v.length > 0 ? v : all;  // 空则回退全部
+  },
+
   showCurrent() {
-    const cards = DataStore.allCards();
-    if (cards.length === 0) return;
-    const card = cards[this.currentIndex];
+    if (this.visibleCards.length === 0) this.computeVisible();
+    if (this.visibleCards.length === 0) return;
+    if (this.currentIndex >= this.visibleCards.length) this.currentIndex = 0;
+    const card = this.visibleCards[this.currentIndex];
     if (!this.currentColor) this.currentColor = CardView.randomColor();
     const stage = document.querySelector('#cardstage');
     stage.innerHTML = '';
@@ -228,7 +249,7 @@ const Router = {
     Gestures.attach(cardEl, {
       onTap: (e) => {
         if (e.target.closest('.sentence-row')) return;
-        Router.playCurrentWord();
+        this.playCurrentWord();
       },
       onDoubleTap: () => this.toggleFlip(),
       onSwipe: (dir) => this.markAndNext(dir === 'up' ? 'unknown' : 'known')
@@ -239,42 +260,48 @@ const Router = {
         row.addEventListener('click', (e) => {
           e.stopPropagation();
           const idx = parseInt(row.dataset.exIndex, 10);
-          Router.playExample(idx);
+          this.playExample(idx);
         });
       });
     }
     TopBar.render();
   },
-  nextCard() {
-    const cards = DataStore.allCards();
-    this.currentIndex = (this.currentIndex + 1) % cards.length;
-    this.currentColor = CardView.randomColor();
-    this.flipped = false;
-    Progress.setLastCardId(cards[this.currentIndex].id);
-    this.showCurrent();
-  },
-  toggleFlip() {
-    this.flipped = !this.flipped;
-    this.showCurrent();
-  },
+
   markAndNext(status) {
-    const card = DataStore.allCards()[this.currentIndex];
+    const card = this.visibleCards[this.currentIndex];
     if (card) Progress.mark(card.id, status);
     this.nextCard();
   },
+  nextCard() {
+    if (this.visibleCards.length === 0) return;
+    this.currentIndex = (this.currentIndex + 1) % this.visibleCards.length;
+    this.currentColor = CardView.randomColor();
+    this.flipped = false;
+    Progress.setLastCardId(this.visibleCards[this.currentIndex].id);
+    this.showCurrent();
+  },
+  toggleFlip() { this.flipped = !this.flipped; this.showCurrent(); },
+
+  applyFilter(filter) {
+    const currentCard = this.visibleCards[this.currentIndex];
+    Progress.setFilter(filter);
+    this.computeVisible();
+    // 尽量保留位置：若当前卡仍在新列表里，就定位到它
+    const keepIdx = currentCard ? this.visibleCards.findIndex(c => c.id === currentCard.id) : -1;
+    this.currentIndex = keepIdx >= 0 ? keepIdx : 0;
+    this.currentColor = CardView.randomColor();
+    this.flipped = false;
+    this.showCurrent();
+  },
+
   playCurrentWord() {
-    const card = DataStore.allCards()[this.currentIndex];
+    const card = this.visibleCards[this.currentIndex];
     if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
   },
   playExample(idx) {
-    const card = DataStore.allCards()[this.currentIndex];
+    const card = this.visibleCards[this.currentIndex];
     if (card) TTSEngine.speak(card.examples[idx].jp, { rate: Progress.getTTSRate() });
-  },
-  applyFilter(filter) {
-    Progress.setFilter(filter);
-    // Task 12 实现真实过滤
-    this.showCurrent();
-  },
+  }
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -282,12 +309,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await DataStore.load();
     Progress.load();
+    Router.computeVisible();
     TTSEngine.init();
     if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
     if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
     const lastId = Progress.getLastCardId();
     if (lastId !== null) {
-      const idx = DataStore.allCards().findIndex(c => c.id === lastId);
+      const idx = Router.visibleCards.findIndex(c => c.id === lastId);
       if (idx >= 0) Router.currentIndex = idx;
     }
     Router.showCurrent();
