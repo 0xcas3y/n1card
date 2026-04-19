@@ -3,7 +3,7 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 #app { height: 100%; display: flex; flex-direction: column; touch-action: manipulation; }
 #topbar { padding: 12px 16px; background: #1a1a1a; font-size: 14px; }
 #cardstage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: manipulation; }
-.flash-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+.flash-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
 .flash-card {
   width: min(90vw, 360px);
   aspect-ratio: 9 / 16;
