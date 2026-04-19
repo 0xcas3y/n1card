@@ -63,6 +63,40 @@ const Progress = {
   isAvailable() { return this._available; }
 };
 
+const TTSEngine = {
+  _supported: 'speechSynthesis' in window,
+  _jaVoice: null,
+
+  init() {
+    if (!this._supported) return;
+    const pick = () => {
+      const voices = speechSynthesis.getVoices();
+      this._jaVoice = voices.find(v => v.lang.startsWith('ja')) || null;
+    };
+    pick();
+    speechSynthesis.addEventListener('voiceschanged', pick);
+  },
+  isSupported() { return this._supported; },
+  hasJapanese() { return this._jaVoice !== null; },
+
+  speak(text, { rate = 0.9, onEnd = null, onStart = null } = {}) {
+    if (!this._supported) { onEnd?.(); return Promise.resolve(); }
+    return new Promise((resolve) => {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ja-JP';
+      if (this._jaVoice) u.voice = this._jaVoice;
+      u.rate = rate;
+      u.onstart = () => onStart?.();
+      u.onend = () => { onEnd?.(); resolve(); };
+      u.onerror = () => { onEnd?.(); resolve(); };
+      speechSynthesis.speak(u);
+    });
+  },
+  cancel() {
+    if (this._supported) speechSynthesis.cancel();
+  }
+};
+
 const Gestures = {
   attach(el, { onTap, onDoubleTap, onSwipe }) {
     let tapTimer = null;
@@ -161,21 +195,19 @@ const Router = {
 
     Gestures.attach(cardEl, {
       onTap: (e) => {
-        // 背面的例句点击优先级更高 → 由例句 row 自己处理
         if (e.target.closest('.sentence-row')) return;
-        console.log('[tap]', card.word);  // Task 10 会接 TTS
+        Router.playCurrentWord();
       },
       onDoubleTap: () => this.toggleFlip(),
       onSwipe: (dir) => this.markAndNext(dir === 'up' ? 'unknown' : 'known')
     });
 
-    // 背面例句单独绑定（Task 10 接 TTS）
     if (this.flipped) {
       cardEl.querySelectorAll('.sentence-row').forEach(row => {
         row.addEventListener('click', (e) => {
           e.stopPropagation();
           const idx = parseInt(row.dataset.exIndex, 10);
-          console.log('[sentence tap]', card.examples[idx].jp);
+          Router.playExample(idx);
         });
       });
     }
@@ -198,9 +230,13 @@ const Router = {
     this.nextCard();
   },
   playCurrentWord() {
-    // Task 10: 调用 TTSEngine
-    console.log('[play word]');
-  }
+    const card = DataStore.allCards()[this.currentIndex];
+    if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+  },
+  playExample(idx) {
+    const card = DataStore.allCards()[this.currentIndex];
+    if (card) TTSEngine.speak(card.examples[idx].jp, { rate: Progress.getTTSRate() });
+  },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -209,6 +245,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await DataStore.load();
     topbar.textContent = `N1 动词速记 · ${DataStore.allCards().length} 词`;
     Progress.load();
+    TTSEngine.init();
+    if (!TTSEngine.isSupported()) {
+      topbar.textContent += ' · ⚠ 当前浏览器不支持发音';
+    }
     const lastId = Progress.getLastCardId();
     if (lastId !== null) {
       const idx = DataStore.allCards().findIndex(c => c.id === lastId);
