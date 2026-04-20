@@ -32,7 +32,12 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
   font-size: 18px; font-weight: 500;
 }
 .front-center { flex: 1; display: flex; align-items: center; justify-content: center; }
-.front-word { font-size: clamp(64px, 18vw, 110px); font-weight: 600; letter-spacing: 4px; }
+.front-word { font-size: clamp(64px, 18vw, 110px); font-weight: 600; letter-spacing: 4px; white-space: nowrap; }
+.front-word[data-len="4"] { font-size: clamp(50px, 14vw, 88px); letter-spacing: 2px; }
+.front-word[data-len="5"] { font-size: clamp(42px, 11.5vw, 72px); letter-spacing: 1px; }
+.front-word[data-len="6"] { font-size: clamp(34px, 9.5vw, 58px); letter-spacing: 1px; }
+.front-word[data-len="7"] { font-size: clamp(28px, 8vw, 48px); letter-spacing: 0; }
+.front-word[data-len="8"] { font-size: clamp(24px, 7vw, 42px); letter-spacing: 0; }
 .hint-bottom { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: 0.5; letter-spacing: 1px; }
 .back-head { font-size: 34px; font-weight: 600; margin-right: 50px; }
 .back-kana { font-size: 14px; opacity: 0.85; margin-bottom: 14px; }
