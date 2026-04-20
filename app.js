@@ -30,7 +30,7 @@ const DataStore = {
   applyOverride(id, patch) {
     this.overrides[id] = { ...this.overrides[id], ...patch };
     const i = this.cards.findIndex(c => c.id === id);
-    if (i >= 0) this.cards[i] = { ...this.cards[i], ...patch };
+    if (i >= 0) Object.assign(this.cards[i], patch);
     this._saveOverrides();
   },
   exportOverrides() {
