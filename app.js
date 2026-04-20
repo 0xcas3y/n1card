@@ -305,7 +305,7 @@ const TopBar = {
         </select>
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="settings-btn">⚙</button>
-        <button class="brainwash-btn" id="brainwash-btn">🧠 洗脑</button>
+        <button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>
       </div>
     `;
     topbar.querySelector('#filter-select').value = Progress.getFilter();
