@@ -105,7 +105,7 @@ const Progress = {
 // 打卡：全局（跨 level 共享），记录哪些日期用户真实刷了卡
 const Streak = {
   key: 'n1card:streak',
-  _state: { lastDate: null, current: 0, longest: 0, total: 0 },
+  _state: { lastDate: null, current: 0, longest: 0, total: 0, dates: [] },
   _loaded: false,
 
   _dateStr(d) {
@@ -117,6 +117,7 @@ const Streak = {
       const s = localStorage.getItem(this.key);
       if (s) this._state = { ...this._state, ...JSON.parse(s) };
     } catch {}
+    if (!Array.isArray(this._state.dates)) this._state.dates = this._state.lastDate ? [this._state.lastDate] : [];
     this._loaded = true;
   },
   _save() {
@@ -139,6 +140,7 @@ const Streak = {
     if (this._state.current > (this._state.longest || 0)) this._state.longest = this._state.current;
     this._state.total = (this._state.total || 0) + 1;
     this._state.lastDate = today;
+    if (!this._state.dates.includes(today)) this._state.dates.push(today);
     this._save();
     return true;  // 刚完成今日打卡
   },

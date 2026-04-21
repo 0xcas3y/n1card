@@ -8,7 +8,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>日语动词速记</title>
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
   <style>
     .hub { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
     .hub h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
@@ -53,6 +53,27 @@
     }
     .streak-box .item .num { font-size: 22px; font-weight: 600; }
     .streak-box .item .lbl { font-size: 11px; opacity: 0.6; margin-top: 2px; letter-spacing: 1px; }
+    .streak-cal {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px 14px 14px;
+      margin-bottom: 20px;
+    }
+    .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .cal-month { font-size: 13px; font-weight: 500; opacity: 0.85; }
+    .cal-nav { background: none; border: 0; color: #888; font-size: 18px; cursor: pointer; padding: 2px 14px; line-height: 1; }
+    .cal-nav:hover, .cal-nav:active { color: #fff; }
+    .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; opacity: 0.45; font-size: 10px; margin-bottom: 6px; letter-spacing: 1px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-day {
+      aspect-ratio: 1; max-width: 36px; margin: 0 auto;
+      width: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; opacity: 0.35; border-radius: 50%;
+    }
+    .cal-day.checked { background: #4FA896; color: #fff; opacity: 1; font-weight: 500; }
+    .cal-day.today { box-shadow: 0 0 0 1px rgba(255,255,255,0.6); }
+    .cal-day.empty { visibility: hidden; }
   </style>
   <script defer src="https://cloud.umami.is/script.js" data-website-id="8a6b752b-43bc-4150-a95c-24ab8f3fab09"></script>
 </head>
@@ -62,6 +83,17 @@
     <p class="subtitle">选一个级别开始刷卡。每个级别的学习进度独立保存。</p>
 
     <div id="streak-box" class="streak-box" style="display:none;"></div>
+    <div id="streak-cal" class="streak-cal" style="display:none;">
+      <div class="cal-head">
+        <button class="cal-nav" id="cal-prev" aria-label="上月">‹</button>
+        <span class="cal-month" id="cal-month"></span>
+        <button class="cal-nav" id="cal-next" aria-label="下月">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
 
     <div class="level-list">
       <a class="level-btn lv-n5" href="n5.html">
@@ -114,15 +146,17 @@
         if (!raw) return;
         const s = JSON.parse(raw);
         const today = new Date();
-        const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const pad = n => String(n).padStart(2,'0');
+        const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        const fmtYMD = (y, m, d) => `${y}-${pad(m+1)}-${pad(d)}`;
         const todayStr = fmt(today);
         const y = new Date(today); y.setDate(y.getDate() - 1);
         const yStr = fmt(y);
-        // 今天或昨天没续上的话，current 显示为 0（但 longest/total 保留）
         const current = (s.lastDate === todayStr || s.lastDate === yStr) ? (s.current || 0) : 0;
         const longest = s.longest || 0;
         const total = s.total || 0;
         if (longest === 0) return;  // 从没打过卡，不显示
+
         const box = document.getElementById('streak-box');
         box.style.display = 'flex';
         const today_flag = s.lastDate === todayStr ? '✅' : '';
@@ -131,6 +165,35 @@
           <div class="item"><div class="num">${longest}</div><div class="lbl">最长</div></div>
           <div class="item"><div class="num">${total}</div><div class="lbl">累计天数</div></div>
         `;
+
+        // 打卡日历
+        const dates = new Set(Array.isArray(s.dates) ? s.dates : (s.lastDate ? [s.lastDate] : []));
+        if (dates.size === 0) return;
+        document.getElementById('streak-cal').style.display = 'block';
+        let viewY = today.getFullYear();
+        let viewM = today.getMonth();
+        const render = () => {
+          document.getElementById('cal-month').textContent = `${viewY}年${viewM+1}月`;
+          const firstWd = new Date(viewY, viewM, 1).getDay();
+          const daysInMonth = new Date(viewY, viewM+1, 0).getDate();
+          let html = '';
+          for (let i = 0; i < firstWd; i++) html += '<div class="cal-day empty"></div>';
+          for (let d = 1; d <= daysInMonth; d++) {
+            const ds = fmtYMD(viewY, viewM, d);
+            const cls = ['cal-day'];
+            if (dates.has(ds)) cls.push('checked');
+            if (ds === todayStr) cls.push('today');
+            html += `<div class="${cls.join(' ')}">${d}</div>`;
+          }
+          document.getElementById('cal-grid').innerHTML = html;
+        };
+        document.getElementById('cal-prev').addEventListener('click', () => {
+          viewM--; if (viewM < 0) { viewM = 11; viewY--; } render();
+        });
+        document.getElementById('cal-next').addEventListener('click', () => {
+          viewM++; if (viewM > 11) { viewM = 0; viewY++; } render();
+        });
+        render();
       } catch {}
     })();
   </script>
