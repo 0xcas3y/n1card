@@ -71,6 +71,18 @@ const Progress = {
       console.warn('localStorage unavailable:', err);
       this._available = false;
     }
+    // 懒回填：已经标了 known 但没有 masteredAt 的，回填为 now
+    // 让老用户的掌握词在 7 天后进入周复习
+    const now = Date.now();
+    let changed = false;
+    for (const id in this._progress) {
+      const p = this._progress[id];
+      if (p.status === 'known' && !p.masteredAt) {
+        p.masteredAt = now;
+        changed = true;
+      }
+    }
+    if (changed) this._save();
   },
   _save() {
     if (!this._available) return;
@@ -82,10 +94,52 @@ const Progress = {
     }
   },
   mark(id, status) {
-    this._progress[id] = { status, lastSeen: Date.now() };
+    // 滑动：终态覆盖
+    const now = Date.now();
+    const entry = this._progress[id] || {};
+    entry.status = status;
+    entry.lastSeen = now;
+    entry.correctStreak = 0;  // 滑动清零 quiz streak
+    if (status === 'known') {
+      entry.masteredAt = now;
+    } else if (status === 'unknown') {
+      entry.masteredAt = undefined;
+    }
+    if (entry.firstLearnedAt === undefined) entry.firstLearnedAt = now;
+    this._progress[id] = entry;
+    this._save();
+  },
+  markQuiz(id, correct) {
+    const now = Date.now();
+    const entry = this._progress[id] || { status: 'unknown', lastSeen: now };
+    entry.lastSeen = now;
+    entry.quizSeenCount = (entry.quizSeenCount || 0) + 1;
+
+    if (correct) {
+      if (entry.status === 'known') {
+        entry.lastWeeklyReviewAt = now;  // 周复习续期
+      } else {
+        // 不熟答对：连对 +1，达到 2 升掌握
+        entry.correctStreak = (entry.correctStreak || 0) + 1;
+        if (entry.correctStreak >= 2) {
+          entry.status = 'known';
+          entry.masteredAt = now;
+          entry.correctStreak = 0;
+        }
+      }
+    } else {
+      if (entry.status === 'known') {
+        entry.status = 'unknown';
+        entry.masteredAt = undefined;
+      }
+      entry.correctStreak = 0;
+    }
+    this._progress[id] = entry;
     this._save();
   },
   getStatus(id) { return this._progress[id]?.status || null; },
+  getEntry(id) { return this._progress[id]; },
+  all() { return this._progress; },
   stats() {
     const s = { known: 0, unknown: 0, unseen: 0 };
     for (const k in this._progress) {
