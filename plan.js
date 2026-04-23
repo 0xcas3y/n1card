@@ -83,3 +83,11 @@ export function pickDistractors(correct, pool, count = 3) {
   }
   return unique.slice(0, count);
 }
+
+export function aggregateCheckIns(checkIns, dateStr) {
+  const c = checkIns?.[dateStr];
+  if (!c) return 'none';
+  if (c.morning && c.evening) return 'gold';
+  if (c.morning || c.evening) return 'half';
+  return 'none';
+}

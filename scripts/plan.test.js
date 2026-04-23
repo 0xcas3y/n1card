@@ -162,3 +162,25 @@ test('pickDistractors: pool smaller than count → returns what it has', () => {
   const result = pickDistractors('X', pool, 3);
   assert.strictEqual(result.length, 2);
 });
+
+import { aggregateCheckIns } from '../plan.js';
+
+test('aggregateCheckIns: both morning+evening → gold', () => {
+  const checkIns = { '2026-04-23': { morning: true, evening: true } };
+  assert.strictEqual(aggregateCheckIns(checkIns, '2026-04-23'), 'gold');
+});
+
+test('aggregateCheckIns: only morning → half', () => {
+  const checkIns = { '2026-04-23': { morning: true } };
+  assert.strictEqual(aggregateCheckIns(checkIns, '2026-04-23'), 'half');
+});
+
+test('aggregateCheckIns: only evening → half', () => {
+  const checkIns = { '2026-04-23': { evening: true } };
+  assert.strictEqual(aggregateCheckIns(checkIns, '2026-04-23'), 'half');
+});
+
+test('aggregateCheckIns: none → none', () => {
+  assert.strictEqual(aggregateCheckIns({}, '2026-04-23'), 'none');
+  assert.strictEqual(aggregateCheckIns({ '2026-04-23': {} }, '2026-04-23'), 'none');
+});

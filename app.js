@@ -1,3 +1,5 @@
+import { aggregateCheckIns } from './plan.js';
+
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
 // 词性归一化显示（subagent 给的数据可能是 "他"/"他动词"/"他動詞" 三种之一）
@@ -102,10 +104,10 @@ const Progress = {
   isAvailable() { return this._available; }
 };
 
-// 打卡：全局（跨 level 共享），记录哪些日期用户真实刷了卡
+// 打卡：全局（跨 level 共享），记录哪些日期用户真实完成了 session
 const Streak = {
   key: 'n1card:streak',
-  _state: { lastDate: null, current: 0, longest: 0, total: 0, dates: [] },
+  _state: { lastDate: null, current: 0, longest: 0, total: 0, dates: [], checkIns: {} },
   _loaded: false,
 
   _dateStr(d) {
@@ -118,6 +120,7 @@ const Streak = {
       if (s) this._state = { ...this._state, ...JSON.parse(s) };
     } catch {}
     if (!Array.isArray(this._state.dates)) this._state.dates = this._state.lastDate ? [this._state.lastDate] : [];
+    if (!this._state.checkIns || typeof this._state.checkIns !== 'object') this._state.checkIns = {};
     this._loaded = true;
   },
   _save() {
@@ -144,19 +147,49 @@ const Streak = {
     this._save();
     return true;  // 刚完成今日打卡
   },
+
+  markCheckIn(dateStr, kind) {
+    this.load();
+    if (kind !== 'morning' && kind !== 'evening') return;
+    if (!this._state.checkIns[dateStr]) this._state.checkIns[dateStr] = {};
+    if (this._state.checkIns[dateStr][kind]) return;  // idempotent
+    this._state.checkIns[dateStr][kind] = true;
+
+    // 维护 dates、current、longest、total、lastDate
+    if (!this._state.dates.includes(dateStr)) {
+      this._state.dates.push(dateStr);
+      // 判断是否与 lastDate 连续
+      if (this._state.lastDate) {
+        const last = new Date(this._state.lastDate);
+        last.setDate(last.getDate() + 1);
+        const expected = this._dateStr(last);
+        this._state.current = (expected === dateStr) ? (this._state.current + 1) : 1;
+      } else {
+        this._state.current = 1;
+      }
+      if (this._state.current > this._state.longest) this._state.longest = this._state.current;
+      this._state.total += 1;
+      this._state.lastDate = dateStr;
+    }
+    this._save();
+  },
+
+  getStatus(dateStr) { this.load(); return aggregateCheckIns(this._state.checkIns, dateStr); },
+  getCheckIn(dateStr) { this.load(); return this._state.checkIns[dateStr] || {}; },
+  isGold(dateStr) { return this.getStatus(dateStr) === 'gold'; },
+
   getCurrent() {
     this.load();
-    // 如果今天没打过 + 昨天也没打过，current 应当重置为 0
     const today = this._dateStr(new Date());
     if (this._state.lastDate === today) return this._state.current;
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (this._state.lastDate === this._dateStr(yesterday)) return this._state.current;
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    if (this._state.lastDate === this._dateStr(y)) return this._state.current;
     return 0;
   },
   getLongest() { this.load(); return this._state.longest || 0; },
   getTotal() { this.load(); return this._state.total || 0; },
-  getLastDate() { this.load(); return this._state.lastDate; }
+  getLastDate() { this.load(); return this._state.lastDate; },
+  getAllDates() { this.load(); return [...this._state.dates]; }
 };
 
 const TTSEngine = {
@@ -636,7 +669,6 @@ const Router = {
     const card = this.visibleCards[this.currentIndex];
     if (card) {
       Progress.mark(card.id, status);
-      Streak.tick();
     }
     this.nextCard();
   },
