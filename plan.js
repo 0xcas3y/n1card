@@ -72,3 +72,14 @@ export function computeWeeklyDue(progress, now) {
   }
   return due;
 }
+
+export function pickDistractors(correct, pool, count = 3) {
+  const candidates = pool.map(c => c.kana).filter(k => k && k !== correct);
+  const unique = [...new Set(candidates)];
+  // Fisher–Yates partial shuffle
+  for (let i = unique.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]];
+  }
+  return unique.slice(0, count);
+}

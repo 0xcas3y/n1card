@@ -131,3 +131,34 @@ test('computeWeeklyDue: known without masteredAt → not due (awaits backfill)',
   const progress = { 1: { status: 'known' } };
   assert.deepStrictEqual(computeWeeklyDue(progress, Date.now()), []);
 });
+
+import { pickDistractors } from '../plan.js';
+
+test('pickDistractors: returns 3 unique kanas, none equal to correct', () => {
+  const pool = [
+    { id: 1, kana: 'あいうえお' },
+    { id: 2, kana: 'かきくけこ' },
+    { id: 3, kana: 'さしすせそ' },
+    { id: 4, kana: 'たちつてと' },
+    { id: 5, kana: 'なにぬねの' }
+  ];
+  const result = pickDistractors('あいうえお', pool, 3);
+  assert.strictEqual(result.length, 3);
+  assert.ok(!result.includes('あいうえお'));
+  assert.strictEqual(new Set(result).size, 3);
+});
+
+test('pickDistractors: skips kana equal to correct', () => {
+  const pool = [
+    { kana: 'X' }, { kana: 'X' }, { kana: 'Y' }, { kana: 'Z' }
+  ];
+  const result = pickDistractors('X', pool, 2);
+  assert.ok(!result.includes('X'));
+  assert.strictEqual(result.length, 2);
+});
+
+test('pickDistractors: pool smaller than count → returns what it has', () => {
+  const pool = [{ kana: 'A' }, { kana: 'B' }];
+  const result = pickDistractors('X', pool, 3);
+  assert.strictEqual(result.length, 2);
+});
