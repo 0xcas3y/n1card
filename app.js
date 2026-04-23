@@ -376,14 +376,24 @@ const TopBar = {
   addWarning(msg) { this.warnings.push(msg); },
   render() {
     const topbar = document.querySelector('#topbar');
-    const total = DataStore.allCards().length;
-    const idx = Router.currentIndex + 1;
+    let leftHtml;
     const stats = Progress.stats();
     const streak = Streak.getCurrent();
     const streakHtml = streak > 0 ? ` · 🔥${streak}` : '';
     const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
+
+    if (Router.learnMode) {
+      const done = Router.learnCompletedIds.length;
+      const total = Router.learnQueue.length;
+      leftHtml = `<a class="topbar-left" href="/" style="color: inherit; text-decoration: none;">← 返回 · 学新 ${done}/${total}${streakHtml}${warn}</a>`;
+    } else {
+      const total = DataStore.allCards().length;
+      const idx = Router.currentIndex + 1;
+      leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
+    }
+
     topbar.innerHTML = `
-      <a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>
+      ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
       <div class="topbar-right">
         <select id="filter-select">
@@ -762,6 +772,10 @@ const Router = {
   currentColor: null,
   flipped: false,
   visibleCards: [],
+  learnMode: false,
+  learnQueue: [],
+  learnCompletedIds: [],
+  learnReturnUrl: null,
 
   computeVisible() {
     const all = DataStore.allCards();
@@ -828,6 +842,11 @@ const Router = {
     const card = this.visibleCards[this.currentIndex];
     if (card) {
       Progress.mark(card.id, status);
+      if (this.learnMode) this.learnCompletedIds.push(card.id);
+    }
+    if (this.learnMode && this.learnCompletedIds.length >= this.learnQueue.length) {
+      this._finishLearn();
+      return;
     }
     this.nextCard();
   },
@@ -839,6 +858,34 @@ const Router = {
     Progress.setLastCardId(this.visibleCards[this.currentIndex].id);
     this.showCurrent();
   },
+
+  async enterLearnSession(queue, returnUrl) {
+    this.learnMode = true;
+    this.learnQueue = queue.slice();
+    this.learnCompletedIds = [];
+    this.learnReturnUrl = returnUrl;
+    this.visibleCards = queue;
+    this.currentIndex = 0;
+    this.currentColor = CardView.randomColor();
+    this.flipped = false;
+    this.showCurrent();
+  },
+
+  _finishLearn() {
+    const ids = this.learnCompletedIds.slice();
+    const url = this.learnReturnUrl || '/';
+    this.learnMode = false;
+    this.learnQueue = [];
+    this.learnCompletedIds = [];
+    this.learnReturnUrl = null;
+    // 把完成信号塞进 URL（hub.js 会读取后写 cohort 和 markCheckIn）
+    const p = new URLSearchParams();
+    p.set('learn_completed', '1');
+    p.set('level', LEVEL_KEY);
+    p.set('ids', ids.join(','));
+    window.location.href = url + '?' + p.toString();
+  },
+
   toggleFlip() {
     this.flipped = !this.flipped;
     this._flipTime = performance.now();
@@ -889,6 +936,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     await DataStore.load();
     Progress.load();
     Router.computeVisible();
+
+    // 若 URL 带 ?session=learn，进入学新模式
+    const params = new URLSearchParams(location.search);
+    if (params.get('session') === 'learn') {
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+      const queue = queueIds
+        .map(id => DataStore.getCard(id))
+        .filter(Boolean);
+      if (queue.length > 0) {
+        Router.enterLearnSession(queue, '/');
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && Router.learnMode) {
+            // 允许用户中途退出，回首页（未完成计数不入 cohort）
+            window.location.href = '/';
+          }
+        });
+        return;
+      }
+    }
+
     TTSEngine.init();
     if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
     if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
