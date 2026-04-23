@@ -10,20 +10,24 @@
 
 现有 app 只有"自由刷卡"：打开、滑一阵、关掉。没有每日节奏、没有复习机制、没有巩固回路。
 
-把"打卡 + 日期"升级成一套**每日计划**：
+**产品北极星**：**让用户不用操心地养成背单词习惯**。日历是唯一入口，点一个日子就知道今天要干什么——剩下的节奏、配额、复习曲线全部由 app 处理。
+
+具体化为三条：
 
 1. 每天有明确的 **新词学习配额**（随打卡连续天数解锁，1→2→3 组，每组 30 词）
-2. 新学的词会**按固定节奏回炉**：当日晚 + 次日早 + 次日晚共 3 次四选一测试
+2. 新学的词**按固定节奏回炉**：当日晚 + 次日早 + 次日晚共 3 次四选一测试
 3. 已掌握的词走**周复习**：每 7 天一次轻量测试，防遗忘
-4. 四选一测试会**动态更新卡片状态**（答错降 不熟、连对升 掌握）
 
-目的：把"刷了就忘"改造成"学一次 + 巩固数次 + 长期维护"。
+底层机制：四选一测试会**动态更新卡片状态**（答错降 不熟、连对升 掌握），形成最轻的 SRS-lite 回路。
+
+**每日仪式感**：一天分"早段 / 晚段"两个打卡点。全部完成时，日历上当日格子变金色——视觉上的"今日已了结"。
 
 **非目标**（YAGNI）：
 - 完整 SRS（SM-2 / FSRS 的指数间隔曲线）——只做 3 次短期 + 7 天周复习
 - 跨设备同步 / 账号
 - 每日通知 / 推送
 - 自定义学习配额（配额只随 streak 自动解锁）
+- 选级别 / 切级别的引导（app 自选"当前等级"，用户不操心）
 
 ---
 
@@ -74,23 +78,35 @@
 
 ### 3.2 每日 session 结构
 
-每天**最多 3 场** session（不含每日周复习独立一场）：
+一天分 **早段 / 晚段** 两个半日，每半日一个打卡点：
 
-| Session | 时段暗示 | 内容 | 题池 |
-|---|---|---|---|
-| 🌅 **早复习** | 上午 | 四选一 | **昨日 cohort** 中当前仍为 不熟 的词 |
-| 🌱 **学新** | 中午 | 滑动卡 | 按等级 id 升序，下 N 个"未学过" |
-| 🌙 **晚复习** | 晚间 | 四选一 | **今日 + 昨日 cohort** 中当前仍为 不熟 的词 |
-
-加一场**随时可做**的：
-
-| Session | 触发 | 题池 |
+| 段 | Sessions | 打卡触发 |
 |---|---|---|
-| 📆 **周复习** | 有 ≥1 张 掌握 词到期（距上次复习 ≥7 天） | 全部到期的 掌握 词 |
+| **早段** ☀️ | 🌅 早复习（可选） + 🌱 学新（必做） | 完成**学新** → 早打卡 ✓ |
+| **晚段** 🌙 | 🌙 晚复习（必做） + 📆 周复习（到期时可选） | 完成**晚复习** → 晚打卡 ✓ |
 
-**时段只是建议**：app 不按钟点判断，session 可按任意顺序进行。但推荐顺序是 早 → 学新 → 晚，保留"学完当天就趁热复习"的语感。
+每场 session 的题池：
 
-### 3.3 Cohort 定义
+| Session | 内容 | 题池 |
+|---|---|---|
+| 🌅 早复习 | 四选一 | **昨日 cohort** 中当前仍为 不熟 的词（Day 1 / 跳日时为空） |
+| 🌱 学新 | 滑动卡 | 按等级 id 升序，下 N 个"未学过" |
+| 🌙 晚复习 | 四选一 | **今日 + 昨日 cohort** 中当前仍为 不熟 的词 |
+| 📆 周复习 | 四选一 | 全部"掌握"且 `now - max(masteredAt, lastWeeklyReviewAt) ≥ 7 天` 的词 |
+
+**时段只是建议**：app 不按钟点判断，session 可按任意顺序进行。推荐 早复习 → 学新 → 晚复习，保留"学完当天就趁热复习"的语感。
+
+### 3.3 打卡规则（暴露给用户）
+
+- ☀️ **早打卡** = 完成今日「学新 session」
+- 🌙 **晚打卡** = 完成今日「晚复习 session」
+- 早复习 / 周复习是"加分项"——做了好，但不影响打卡
+- 两个打卡都做完 → 当日日历格子 **金色**；只做一半 → **半色（绿）**；未做 → 默认灰
+- 打卡状态**跨等级聚合**：任一等级的学新/晚复习完成即触发对应打卡（现状的全局 streak 语义保留）
+
+**streak（连续天数）**：以"当日是否至少有一个打卡"为锚——只要早或晚有一个 ✓，当日算"续上"；**两个都没做** → streak 断。这和金色无关，金色是更严格的"全完"信号。
+
+### 3.4 Cohort 定义
 
 - **Cohort of date D** = 在 D 这一天首次通过"学新 session"学完的那一批词的 id 集合
 - Cohort 在**创建后 2 天内**参与短期复习：
@@ -100,7 +116,7 @@
 - 第 3 天起，cohort 退出短期循环；其中仍为 不熟 的词靠**自由刷卡**或**再遇见**时重新巩固（不强制回炉，避免堆积）
 - 每张词的 3 次短期复习曝光后，若还是不熟，就走这种"被动再遇"路径
 
-### 3.4 单词在每场 quiz 的出现
+### 3.5 单词在每场 quiz 的出现
 
 一个在 Day D 被首次学的词，后续 quiz 出现轨迹（假设每场都做）：
 
@@ -198,83 +214,182 @@
     [dateStr: string]: {
       morning?: { status: "done", completedAt: number, correct: number, total: number },
       learn?:   { status: "done", completedAt: number, count: number },
-      evening?: { status: "done", completedAt: number, correct: number, total: number }
+      evening?: { status: "done", completedAt: number, correct: number, total: number },
+      weekly?:  { status: "done", completedAt: number, correct: number, total: number }
     }
   },
   lastWeeklyRun?: number        // 上次进入周复习的 ts（决定"到期"展示）
 }
 ```
 
-Cohort 只保留最近 7 天的记录，老数据清理（降低 localStorage 占用）。
+Cohort 保留最近 7 天，更老的清理（降低 localStorage 占用）。`sessions` 按日期无限保留（单个日期 object 很小），用于"回顾界面"。
 
-### 5.2 Streak（既有，微调）
+**`n1card:current-level`**（新，全局）：
 
-- `tick()` 触发条件改为"**完成当日学新 session**"或"**今日无学新但完成任一 session**"
-- 其他字段和 API 不动
+```typescript
+"n1" | "n2" | "n3" | "n4" | "n5"   // 当日界面默认展示的等级，首次为 "n1"
+```
+
+**`n1card:rules-seen`**（新，全局）：
+
+```typescript
+true  // 规则区是否已展示过，决定当日界面规则区默认折/展
+```
+
+### 5.2 Streak（既有，扩展）
+
+新增**早/晚打卡聚合**字段（跨等级全局）：
+
+```typescript
+{
+  lastDate: "YYYY-MM-DD",             // 既有：最近打卡日期
+  current: number,                    // 既有：连续天数
+  longest: number,                    // 既有
+  total: number,                      // 既有
+  dates: string[],                    // 既有：打卡日列表（只要早或晚有一个就入列）
+  checkIns: {                         // 新：每日的细分打卡状态
+    [dateStr: string]: {
+      morning?: boolean,              // 早打卡（任一等级学新完成 → true）
+      evening?: boolean               // 晚打卡（任一等级晚复习完成 → true）
+    }
+  }
+}
+```
+
+API 新增：
+
+- `Streak.markCheckIn(dateStr, kind)`：`kind ∈ {'morning', 'evening'}`；写入 `checkIns[dateStr][kind] = true`，若首次设置则加入 `dates`、重算 `current/longest/total/lastDate`
+- `Streak.isGold(dateStr)` → `checkIns[dateStr]?.morning && checkIns[dateStr]?.evening`
+- `Streak.getCheckIn(dateStr)` → `{ morning: bool, evening: bool }`
+
+**连续天数（current）规则微调**：
+- 以"当日至少有一个打卡"（morning 或 evening）为"续上"条件
+- 日期 D 有任一打卡 + D-1 也有 → current++
+- D 有任一打卡 + D-1 没有 → current = 1
+- D 完全没打卡 → current 当日仍按"最后一次打卡日是 D-1 or D" 判断（沿用现有 `getCurrent` 逻辑）
+
+移除 `Router.markAndNext` 里的 `Streak.tick()` 调用。滑动不再触打卡。
 
 ---
 
 ## 6. UX 设计
 
-### 6.1 等级页 — 顶部"今日"入口
+**核心原则**：日历是唯一入口。点一个日子 → 进入那一天的"**当日界面**"——今天是可交互的打卡面板，过去是只读回顾，未来不可点。
 
-在每级 `.html`（n1.html、n2.html…）的顶栏增加一个 `📅 今日` 按钮，位于 `🧠 洗脑` 旁边：
+### 6.1 首页（index.html）改造
 
-- 点击弹出**今日计划面板**（modal）
-- 面板展示 4 张 session 卡，依次：早复习 / 学新 / 晚复习 / 周复习
-- 每张卡：图标 + 名称 + 进度 + `[开始] / [已完成]` 按钮
+主体仍是现有的 streak-box（连续/最长/累计）+ 月历，但月历从"被动展示"升级为"交互入口"：
+
+**月历格子三态**：
+
+| 状态 | 样式 | 含义 |
+|---|---|---|
+| 默认 | 灰白数字 | 该日完全未做 |
+| 🟢 半完 | 绿色圆底（现有 `.checked`） | 早/晚 打卡只完成一个 |
+| 🟡 全完 | **金色圆底**（新） | 早+晚 都 ✓ |
+| 🔘 今日 | 外圈高亮描边（现有 `.today`） | 当日标识，独立于三态 |
+
+**点击行为**：
+
+- 点**今日**：进入「当日界面」（可交互）
+- 点**过去有打卡记录的日子**：进入「回顾界面」（只读；展示当天学了哪些词、打卡状态、那天的 cohort 列表）
+- 点**过去没记录 / 未来日子**：无响应（或极浅 toast "无记录 / 未来日子"）
+
+等级按钮列表保留，作为"想自由刷一下特定等级"的直达口。
+
+### 6.2 当日界面（今日，可交互）
+
+渲染为首页内视图切换（或独立 `day.html`，二选一，实现时定；推荐首页 view-switch 以省路由成本）。包括：
 
 ```
-┌─ 📅 今日 N1 · 🔥5 · 配额 30 ─────────────┐
-│                                          │
-│  🌅 早复习      昨日 不熟 · 22 题         │
-│                 [开始] / [已完成 18/22]    │
-│                                          │
-│  🌱 学新        0 / 30                    │
-│                 [开始]                    │
-│                                          │
-│  🌙 晚复习      今+昨 不熟 · 需先学新      │
-│                 [未解锁]                  │
-│                                          │
-│  📆 周复习      7 词到期                  │
-│                 [开始]                    │
-│                                          │
-│               [关闭]                      │
-└──────────────────────────────────────────┘
+┌ ← 返回  ───── 📅 4 月 23 日 · 周三 ─────  🔥 5 天 ┐
+│                                                   │
+│   打卡：☀️ 早 ○      🌙 晚 ○      （全完 → 金）    │
+│                                                   │
+│   ▾ 规则（可折叠）                                  │
+│     • 早打卡 = 完成「学新」                        │
+│     • 晚打卡 = 完成「晚复习」                      │
+│     • 连续打卡 7 天解锁 60 词/天，14 天→90 词      │
+│     • 答对 2 次升掌握，答错立刻回不熟              │
+│     • 已掌握的词每 7 天来一次周复习                │
+│                                                   │
+│  ─── 今日 N1（🎯 当前等级）·  配额 30 ───           │
+│                                                   │
+│   🌅 早复习     昨日 不熟 · 22 题      [开始]      │
+│   🌱 学新       0 / 30                  [开始]      │
+│   🌙 晚复习     需先学新                 [锁]       │
+│   📆 周复习     7 词到期                [开始]      │
+│                                                   │
+│                   [切换等级 ▾]                     │
+└───────────────────────────────────────────────────┘
 ```
 
-### 6.2 session 运行视图
+**规则区**首次进入自动展开，以后默认折叠（`n1card:rules-seen` 标志位）。
 
-**学新 session**：复用现有滑动卡界面，只是 `Router.visibleCards` 在进入时被设置为"今日配额词列表"。顶栏增加"1/30"进度指示（替换现有的 5/393）。完成后自动回到今日面板 + 弹提示"今日学新完成 🎉"。
+**当前等级**由 `n1card:current-level` 决定，默认 `n1`。用户通过底部"切换等级"下拉可改；改了后 session 基于新等级重算。**不强迫用户选**——默认 N1，反正最 popular。
 
-**四选一 session（早/晚/周复习共用）**：新增一个 `QuizMode` 视图：
-- 全屏，类似洗脑模式的沉浸感但带交互
-- 顶栏极简：`← 退出 · 12/22 · 正确率 72%`
-- 正中央题面卡，下方 4 个可点击选项
+**session 卡按钮**：
+- `[开始]` → 进入该 session（学新 → 跳转 `n1.html?session=learn`；quiz → 全屏 quiz 视图）
+- `[已完成 18/22]` → 再点可复看小结（不允许重刷当场拿双倍升级）
+- `[锁]` → 未解锁（如晚复习必须先学新），灰色不可点
+
+### 6.3 回顾界面（过去，只读）
+
+点击过去日期（有打卡记录）打开：
+
+```
+┌ ← 返回  ───── 📅 4 月 22 日 · 周二  ─────────── ┐
+│                                                │
+│   打卡：☀️ 早 ✓      🌙 晚 ✓      状态：🟡 金  │
+│                                                │
+│   当日学新（N1）：30 词                         │
+│     承る · 携わる · 賜る · …  [30 词]          │
+│                                                │
+│   四选一记录：                                   │
+│     🌅 早复习：答对 18 / 22（82%）              │
+│     🌙 晚复习：答对 41 / 50（82%）              │
+│     📆 周复习：—                                 │
+│                                                │
+│                                                │
+│                    [返回]                       │
+└────────────────────────────────────────────────┘
+```
+
+点词列表中的词可跳到该卡的正面视图（复用现有 `n1.html` + `lastCardId`）。
+
+### 6.4 Session 运行视图
+
+**学新 session**（复用现有滑动卡界面）：
+- 在等级页（`n1.html` 等）顶栏进入时，识别 URL `?session=learn`，把 `Router.visibleCards` 限定为"今日学新队列"
+- 顶栏进度改为 `学新 3/30`（替换现有 `3/393`）
+- 滑完 N 张自动回"当日界面"+ 弹 `🎉 早打卡完成` 提示
+- 退出按钮（顶栏"←"）返回当日界面，未完成的进度保留到下次继续
+
+**四选一 session（早/晚/周复习共用）**：新增 `QuizMode` 全屏视图
+- 顶栏：`← 退出 · 12/22 · 正确率 72%`
+- 正中央题面卡 + 下方 4 选项
 - 答完一题：300ms 反馈动画 → 自动下一题
-- 答完全部：展示小结页 `本轮 · 答对 X / 总 Y · 新升掌握 Z 词` → 回今日面板
+- 全部答完：小结页 `本轮 · 答对 X / 总 Y · 新升掌握 Z 词` + `[完成]` 按钮 → 回当日界面
+- 中途退出：部分进度不保存（quiz 必须一气呵成；设计决定，避免"分次答题"状态爆炸）
 
-### 6.3 首页 hub
+### 6.5 等级页（n1.html 等）保持最小改动
 
-在现有 streak-box 下面插一个"**今日进度条**"：
+- 不加"今日"入口按钮（原设计的 📅 去掉）
+- 唯一新东西：URL 支持 `?session=learn` 参数，进入"学新模式"
+- 顶栏"← 返回"（从学新 session 返回）逻辑加进来
+- **现有自由刷卡 + 筛选 + 洗脑完全保留**。用户随时可以直接进 `n1.html` 刷着玩，滑动仍改状态——但**不生成 cohort**，**不触发打卡**
 
-```
-N1 · 今日：学新 0/30 · 🌅 完成 · 🌙 待办 · 📆 7 词到期
-```
+### 6.6 打卡判定（代码位置）
 
-点击进 N1 等级页并自动打开今日面板。仅显示有 `cohorts` 或 `progress` 的等级。
+替换 `Router.markAndNext` 里的 `Streak.tick()`，改为在 session 完成回调里触发：
 
-### 6.4 自由模式保留
+| Session 完成 | 写入 |
+|---|---|
+| 学新 完成 | `Plan.markCheckIn(date, 'morning')` + 生成 cohort |
+| 晚复习 完成 | `Plan.markCheckIn(date, 'evening')` |
+| 早复习 / 周复习 完成 | 不触发打卡（不改变 morning/evening 标记） |
 
-既有"全部 / 只看待巩固 / 只看未学过 / 随机"筛选 + 滑动**继续保留**。用户可以不开今日面板、直接自由刷。滑动打的 up/down 仍写入 `progress`，但**不进当日 cohort**（cohort 只在走完整"学新 session"时才生成）。
-
-### 6.5 打卡判定
-
-`Streak.tick()` 触发时机改为：
-1. "学新 session"完成时（N 张全部滑完）
-2. 若今日无新词可学（全掌握），任一复习 session（早/晚/周）完成时也触发
-
-现有"任何 mark 都 tick"的行为**移除**，以免自由刷一下就算打卡（和"学习计划"的 streak 语义脱节）。
+`Plan.markCheckIn` 更新 `n1card:streak.checkIns[date]`，并调用 `Streak._recomputeStreak()` 把连续天数和金色日期重算（见 §5.2）。
 
 ---
 
@@ -293,37 +408,53 @@ N1 · 今日：学新 0/30 · 🌅 完成 · 🌙 待办 · 📆 7 词到期
 
 | 情况 | 行为 |
 |---|---|
-| Day 1（无昨日 cohort） | 早复习不可用，提示"今日无早复习" |
+| Day 1（无昨日 cohort） | 早复习不可用，当日界面显示"今日无早复习" |
 | 跳过一天 | 老 cohort 过期，不强塞回新的 cohort。用户看到"无早复习" |
-| 等级剩余"未学过"不足配额 | 学新 session 当日只学实际数量，完成即 tick |
-| 某等级全部 掌握 | 无学新；只有周复习（到期时） |
-| 学新 session 中途退出 | 未滑完的不计入 cohort；下次重开继续 |
-| 同一天多次开学新 session | 已完成则显示"已完成"，再次进入只能看不能重学（或加"再刷一轮"自由模式入口） |
+| 等级剩余"未学过"不足配额 | 学新 session 当日只学实际数量；滑完即早打卡 ✓ |
+| 某等级全部 掌握 | 无学新；当日界面只显示晚复习（若昨日 cohort 有不熟）+ 周复习。晚复习完成 = 晚打卡；无早打卡 |
+| 学新 session 中途退出 | 未滑完的不计入 cohort；下次重开继续；早打卡不触发 |
+| 同一天多次开学新 session | 已完成则"已完成"状态，不允许重刷（避免绕过 SRS）。想练更多用自由刷卡 |
 | 掌握 词升降反复 | 允许。每次降级清 `masteredAt`，升级重置 `correctStreak=0` |
-| localStorage 满 | 复用现有 `_available=false` 警告机制；plan 写失败降级为"今日不保存" |
+| 同日切换等级 | 切到另一等级后当日界面展示那级的 session；已完成打卡仍然保留（跨等级聚合） |
+| 点击未来日期 | 不响应（或极浅 toast） |
+| 点击过去无记录日期 | 不响应 |
+| 点击过去有记录日期 | 进入回顾界面（只读） |
+| localStorage 满 | 复用现有 `_available=false` 警告机制；plan/checkIn 写失败降级为"今日不保存" |
 | 时区 / 跨日 | 用本地 `Date`（和 `Streak` 保持一致） |
+| 用户在自由模式手动滑成"掌握" | `masteredAt=now`；7 天后周复习正常触发。不生成 cohort、不算打卡 |
 
 ---
 
 ## 9. 模块边界
 
-新增模块（延续现有 `app.js` 一体风格）：
+首页 `index.html` 的内嵌 `<script>` 会膨胀到需要拆文件。方案：新建 `hub.js`（首页专用）和复用 `app.js`（等级页专用），互不影响。
+
+首页新增模块（`hub.js`）：
 
 | 模块 | 职责 | 依赖 |
 |---|---|---|
-| `Plan` | 读写 `plan:<level>`，计算今日配额/cohort/session 状态，pool 计算 | Progress, Streak, DataStore |
-| `QuizMode` | 四选一题面渲染、答题交互、状态变更、完成回调 | Progress, DataStore, TTSEngine |
-| `TodayPanel` | 今日面板 modal（4 张 session 卡渲染 + 按钮分发） | Plan |
+| `Plan` | 读写 `plan:<level>`，计算配额/cohort/session 状态/pool 组合 | Progress（跨等级加载）, Streak, DataStore（按等级延迟加载） |
+| `Calendar` | 渲染月历（三态：灰/绿/金），点击分发到当日界面 / 回顾界面 | Streak, Plan |
+| `DayView` | 当日界面：规则区 + 4 session 卡 + 等级切换。派发按钮点击到 session 启动 | Plan, Streak |
+| `RetrospectView` | 回顾界面：只读展示过去某日的 cohort 与打卡结果 | Plan, Streak |
+| `QuizMode` | 四选一题面渲染、答题交互、状态变更、小结页 | Progress, DataStore, TTSEngine |
 
-修改模块：
+等级页（`app.js`）修改：
 
 | 模块 | 改动 |
 |---|---|
-| `Progress` | 字段扩展；新增 `markQuiz(id, correct)` 统一处理升降 |
-| `Streak` | `tick()` 触发点改为"session 完成"，移除 `Router.markAndNext` 里的 `Streak.tick()` |
-| `Router` | 支持 "plan learn mode"：`enterLearnSession(cardIds)` 设置 visibleCards + 进度计数 |
-| `TopBar` | 加 `📅` 入口按钮；学新模式下进度显示切换到 N/quota |
-| `index.html` | hub 加"今日进度条"段 |
+| `Progress` | 扩字段；新增 `markQuiz(id, correct)` 统一处理升降；新增 `markSwipe(id, status)` 明确"滑动写终态"（取代当前 `mark`） |
+| `Streak` | 扩 `checkIns` + `markCheckIn` + `isGold` API；移除 `Router.markAndNext` 里的 `Streak.tick()` |
+| `Router` | URL 带 `?session=learn` 时进入"学新模式"：`visibleCards` 替换为今日队列、顶栏进度变 N/配额、完成时调 `Plan.completeLearn` + `Streak.markCheckIn` + 回首页 |
+| `TopBar` | 学新模式下进度显示换为 N/配额；加"← 返回当日"按钮 |
+
+共享（两页都引用）：
+
+- `data-store.js`（抽现在的 `DataStore` 类出来，按等级 lazy load）
+- `progress.js`（抽 `Progress` 出来，支持传 level 构造）
+- `streak.js`（抽 `Streak` 出来，全局单例）
+
+若拆分实现成本太高，也可以先保持 `app.js`+ `<script>` 结构，在首页把 `app.js` 里的公用部分也 import 进来。实现时定。
 
 ---
 
@@ -331,44 +462,51 @@ N1 · 今日：学新 0/30 · 🌅 完成 · 🌙 待办 · 📆 7 词到期
 
 ### 10.1 单元测试（Node `--test`，新增 `scripts/plan.test.js`）
 
-- `computeQuota(streak)` → `{1:30, 2:30, ..., 6:30, 7:60, ..., 13:60, 14:90, ...}`
+- `computeQuota(streak)` → `{1:30, ..., 6:30, 7:60, ..., 13:60, 14:90, ...}`
 - `computeLearnQueue(cards, progress, quota)` → 下 N 个未学过 by id 升序
 - `computeMorningPool(cohorts, progress, today)` → 昨日 cohort ∩ 不熟
 - `computeEveningPool(cohorts, progress, today)` → (今日 ∪ 昨日) cohort ∩ 不熟
 - `computeWeeklyDue(progress, now)` → 所有 掌握 且 `now - max(masteredAt, lastWeeklyReviewAt) ≥ 7 天`
 - 状态机转移：`markQuiz` 各分支
 - `pickDistractors(correct, pool)` 返回 3 个不重复非正确答案
-- Cohort 过期清理
+- Cohort 过期清理（>7 天删除）
+- `Streak.markCheckIn` + `isGold`：单打卡/双打卡/零打卡三种，日期跨天场景
 
 ### 10.2 手动清单（`docs/testing-checklist.md` 增补）
 
-- [ ] 新用户 Day 1：开 N1 → 今日面板：早复习禁用、学新 30、晚复习等待、周复习无
-- [ ] Day 1 完成学新 30 → tick 打卡 + 晚复习解锁 + cohort 写入
-- [ ] Day 2 回来：早复习= Day 1 不熟、学新= 下一批 30、晚复习= 今+昨 不熟
-- [ ] quiz 连对 2 题：状态升 掌握，顶栏"已掌握"数+1
+- [ ] 新用户 Day 1：点首页"今天"→当日界面：早复习空态、学新 30、晚复习锁、周复习空态
+- [ ] Day 1 完成学新 30 → 早打卡 ✓、cohort 写入、晚复习解锁、日历当日变**半色**
+- [ ] Day 1 完成晚复习 → 晚打卡 ✓、日历当日变**金色**
+- [ ] Day 2 回来：早复习 = Day 1 不熟、学新下一批 30、晚复习 = 今+昨 不熟
+- [ ] Day 2 只完成学新不做晚复习 → 日历 Day 2 **半色**、streak=2
+- [ ] quiz 连对 2 题：状态升 掌握，等级页顶栏"已掌握"数 +1
 - [ ] quiz 答错 掌握 词：降 不熟，顶栏数调整
-- [ ] 跳 1 天回来：无早复习，昨日 cohort 已过期
+- [ ] 跳 1 天回来：无早复习，昨日 cohort 已过期；日历那天**灰色**
 - [ ] streak 到 7 天：配额升 60；到 14：升 90
-- [ ] streak 断：配额掉回 30
-- [ ] 自由刷卡滑动仍能改状态但不生成 cohort、不触 tick
-- [ ] 首页"今日进度条"点击跳转正确
-- [ ] localStorage 禁用：今日面板显示警告但仍可在内存运行一天
-- [ ] 所有等级独立：N1 完成学新不会影响 N5 配额
+- [ ] streak 断（两日都无打卡）：配额掉回 30
+- [ ] 点击日历过去某金色日：进入回顾界面，显示当日学的词列表和 quiz 正确率
+- [ ] 点击未来日期：无响应
+- [ ] 当日界面切换等级：session 内容切换、打卡不丢
+- [ ] 自由刷卡滑动仍能改状态但不生成 cohort、不触打卡
+- [ ] localStorage 禁用：当日界面显示警告但仍可在内存运行一天
+- [ ] 跨等级聚合：N1 完成学新 + N5 完成晚复习 = 当日双打卡金色
+- [ ] 规则区首次展示、之后折叠
 
 ---
 
 ## 11. 里程碑
 
-1. `Plan` 模块 + pool 计算 + 单元测试
-2. `Progress` 扩字段 + `markQuiz` + 兼容回填
-3. `QuizMode` 视图（独立可跑，假数据驱动）
-4. `TodayPanel` modal + session 分发
-5. `Router.enterLearnSession` + 学新进度显示
-6. `Streak.tick` 触发点迁移 + `markAndNext` 去 tick
-7. Hub 今日进度条
-8. 首次开启回填 `masteredAt`
-9. Mac Safari + iPhone Safari 清单过一遍
-10. 部署
+1. `Plan` 模块 + pool 计算 + 配额计算 + 单元测试
+2. `Progress` 扩字段 + `markQuiz` + `markSwipe` + 懒回填 `masteredAt`
+3. `Streak` 扩 `checkIns` + `markCheckIn` + `isGold` + 单元测试
+4. `QuizMode` 视图（独立可跑，假数据驱动）
+5. `Router` 学新模式（`?session=learn`）+ 顶栏进度 + 完成回调
+6. 首页 `Calendar` 升级为三态 + 可点击；`DayView` 当日界面
+7. `RetrospectView` 过去日期只读界面
+8. 首页 streak-box 配合金色打卡展示
+9. 移除 `Router.markAndNext` 里的 `Streak.tick()`
+10. Mac Safari + iPhone Safari 清单过一遍
+11. 部署
 
 ---
 
