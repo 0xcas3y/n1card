@@ -53,3 +53,51 @@ test('computeLearnQueue: quota exceeds available → returns what is available',
   const progress = {};
   assert.strictEqual(computeLearnQueue(cards, progress, 100).length, 2);
 });
+
+import { computeMorningPool, pruneOldCohorts } from '../plan.js';
+
+test('computeMorningPool: N-1 ∪ N-2 intersect unknown', () => {
+  const cohorts = {
+    '2026-04-21': { cardIds: [1, 2] },
+    '2026-04-22': { cardIds: [3, 4] },
+    '2026-04-23': { cardIds: [5, 6] }  // today's, excluded
+  };
+  const progress = {
+    1: { status: 'unknown' },
+    2: { status: 'known' },
+    3: { status: 'unknown' },
+    4: { status: 'unknown' },
+    5: { status: 'unknown' }
+  };
+  const ids = computeMorningPool(cohorts, progress, '2026-04-23').map(c => c);
+  assert.deepStrictEqual(ids.sort((a, b) => a - b), [1, 3, 4]);
+});
+
+test('computeMorningPool: Day 1 (no prior cohorts) → empty', () => {
+  const cohorts = { '2026-04-23': { cardIds: [1] } };
+  const progress = { 1: { status: 'unknown' } };
+  assert.deepStrictEqual(computeMorningPool(cohorts, progress, '2026-04-23'), []);
+});
+
+test('computeMorningPool: Day 2 (only N-1 exists)', () => {
+  const cohorts = { '2026-04-22': { cardIds: [1, 2] } };
+  const progress = { 1: { status: 'unknown' }, 2: { status: 'known' } };
+  assert.deepStrictEqual(
+    computeMorningPool(cohorts, progress, '2026-04-23'),
+    [1]
+  );
+});
+
+test('pruneOldCohorts: keeps D, D-1, D-2; drops older', () => {
+  const cohorts = {
+    '2026-04-20': { cardIds: [1] },
+    '2026-04-21': { cardIds: [2] },
+    '2026-04-22': { cardIds: [3] },
+    '2026-04-23': { cardIds: [4] }
+  };
+  const pruned = pruneOldCohorts(cohorts, '2026-04-23');
+  assert.deepStrictEqual(
+    Object.keys(pruned).sort(),
+    ['2026-04-21', '2026-04-22', '2026-04-23']
+  );
+});

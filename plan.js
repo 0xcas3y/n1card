@@ -18,3 +18,43 @@ export function computeLearnQueue(cards, progress, quota) {
   }
   return queue;
 }
+
+// YYYY-MM-DD → Date (local)
+function _parseDate(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Date → YYYY-MM-DD (local)
+function _fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function _shiftDays(dateStr, delta) {
+  const d = _parseDate(dateStr);
+  d.setDate(d.getDate() + delta);
+  return _fmtDate(d);
+}
+
+export function computeMorningPool(cohorts, progress, todayStr) {
+  const yesterday = _shiftDays(todayStr, -1);
+  const dayBefore = _shiftDays(todayStr, -2);
+  const ids = new Set();
+  for (const key of [yesterday, dayBefore]) {
+    const co = cohorts[key];
+    if (!co) continue;
+    for (const id of co.cardIds) ids.add(id);
+  }
+  return [...ids].filter(id => progress[id]?.status === 'unknown');
+}
+
+export function pruneOldCohorts(cohorts, todayStr) {
+  const keep = new Set([
+    todayStr,
+    _shiftDays(todayStr, -1),
+    _shiftDays(todayStr, -2)
+  ]);
+  const out = {};
+  for (const k of Object.keys(cohorts)) if (keep.has(k)) out[k] = cohorts[k];
+  return out;
+}
