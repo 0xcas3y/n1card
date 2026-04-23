@@ -1,4 +1,4 @@
-import { aggregateCheckIns } from './plan.js';
+import { aggregateCheckIns, pickDistractors } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -543,6 +543,111 @@ const BrainwashMode = {
     while (this._paused && !this._aborted) await this._sleep(100);
   }
 };
+
+const QuizMode = {
+  active: false,
+  _queue: [],
+  _pool: [],         // 全部同级别卡片池，用于抽干扰项
+  _idx: 0,
+  _correct: 0,
+  _promoted: 0,
+  _onComplete: null,
+
+  start({ queue, pool, title, onComplete }) {
+    this._queue = queue.slice();
+    this._pool = pool;
+    this._idx = 0;
+    this._correct = 0;
+    this._promoted = 0;
+    this._onComplete = onComplete;
+    this._title = title || '复习';
+    this.active = true;
+    document.body.classList.add('quiz-on');
+    this._renderCurrent();
+  },
+  exit() {
+    this.active = false;
+    document.body.classList.remove('quiz-on');
+    const stage = document.querySelector('#cardstage');
+    if (stage) stage.innerHTML = '';
+    TopBar.render();
+  },
+
+  _renderCurrent() {
+    if (this._idx >= this._queue.length) {
+      this._renderSummary();
+      return;
+    }
+    const card = this._queue[this._idx];
+    const distractors = pickDistractors(card.kana, this._pool, 3);
+    const options = [card.kana, ...distractors];
+    for (let i = options.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [options[i], options[j]] = [options[j], options[i]];
+    }
+
+    const stage = document.querySelector('#cardstage');
+    stage.innerHTML = `
+      <div class="quiz-card">
+        <div class="quiz-topbar">
+          <button class="quiz-exit" id="quiz-exit">← 退出</button>
+          <span class="quiz-progress">${this._idx + 1} / ${this._queue.length} · 正确 ${this._correct}</span>
+        </div>
+        <div class="quiz-word">${card.word}</div>
+        <div class="quiz-meaning">${(card.meanings && card.meanings[0]) || ''}</div>
+        <div class="quiz-options">
+          ${options.map(o => `<button class="quiz-opt" data-val="${o}">${o}</button>`).join('')}
+        </div>
+      </div>
+    `;
+    stage.querySelector('#quiz-exit').addEventListener('click', () => this.exit());
+    stage.querySelectorAll('.quiz-opt').forEach(btn => {
+      btn.addEventListener('click', () => this._handleAnswer(btn, card, options));
+    });
+  },
+
+  _handleAnswer(btn, card, options) {
+    const chosen = btn.dataset.val;
+    const correct = chosen === card.kana;
+    const before = Progress.getEntry(card.id)?.status;
+    Progress.markQuiz(card.id, correct);
+    const after = Progress.getEntry(card.id)?.status;
+    if (before !== 'known' && after === 'known') this._promoted++;
+    if (correct) this._correct++;
+
+    // 可视反馈
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.val === card.kana) b.classList.add('quiz-correct');
+      else if (b === btn) b.classList.add('quiz-wrong');
+    });
+    if (correct) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+
+    setTimeout(() => {
+      this._idx++;
+      this._renderCurrent();
+    }, 700);
+  },
+
+  _renderSummary() {
+    const total = this._queue.length;
+    const stage = document.querySelector('#cardstage');
+    stage.innerHTML = `
+      <div class="quiz-summary">
+        <div class="qs-title">${this._title} 完成</div>
+        <div class="qs-line">答对 ${this._correct} / ${total}</div>
+        <div class="qs-line">新升掌握 ${this._promoted} 词</div>
+        <button class="qs-done" id="qs-done">完成</button>
+      </div>
+    `;
+    stage.querySelector('#qs-done').addEventListener('click', () => {
+      const cb = this._onComplete;
+      this.exit();
+      if (cb) cb({ total, correct: this._correct, promoted: this._promoted });
+    });
+  }
+};
+window.QuizMode = QuizMode;  // 供 hub.js 调用
 
 const SettingsPanel = {
   open() {
