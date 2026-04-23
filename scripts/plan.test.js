@@ -101,3 +101,33 @@ test('pruneOldCohorts: keeps D, D-1, D-2; drops older', () => {
     ['2026-04-21', '2026-04-22', '2026-04-23']
   );
 });
+
+import { computeWeeklyDue } from '../plan.js';
+
+test('computeWeeklyDue: known card ≥7 days past masteredAt is due', () => {
+  const now = Date.parse('2026-04-23T00:00:00');
+  const weekAgo = now - 8 * 24 * 3600 * 1000;
+  const progress = {
+    1: { status: 'known', masteredAt: weekAgo },
+    2: { status: 'known', masteredAt: now - 3 * 86400000 },  // 3 days, not due
+    3: { status: 'unknown', masteredAt: weekAgo },            // not known
+  };
+  assert.deepStrictEqual(computeWeeklyDue(progress, now), [1]);
+});
+
+test('computeWeeklyDue: lastWeeklyReviewAt takes precedence over masteredAt', () => {
+  const now = Date.now();
+  const progress = {
+    1: {
+      status: 'known',
+      masteredAt: now - 30 * 86400000,
+      lastWeeklyReviewAt: now - 3 * 86400000  // reviewed 3 days ago → not due
+    }
+  };
+  assert.deepStrictEqual(computeWeeklyDue(progress, now), []);
+});
+
+test('computeWeeklyDue: known without masteredAt → not due (awaits backfill)', () => {
+  const progress = { 1: { status: 'known' } };
+  assert.deepStrictEqual(computeWeeklyDue(progress, Date.now()), []);
+});

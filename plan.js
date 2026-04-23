@@ -58,3 +58,17 @@ export function pruneOldCohorts(cohorts, todayStr) {
   for (const k of Object.keys(cohorts)) if (keep.has(k)) out[k] = cohorts[k];
   return out;
 }
+
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+
+export function computeWeeklyDue(progress, now) {
+  const due = [];
+  for (const id in progress) {
+    const p = progress[id];
+    if (p.status !== 'known') continue;
+    const last = p.lastWeeklyReviewAt || p.masteredAt;
+    if (!last) continue;
+    if (now - last >= WEEK_MS) due.push(parseInt(id, 10));
+  }
+  return due;
+}
