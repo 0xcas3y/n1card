@@ -347,9 +347,59 @@ function renderHubBody() {
 }
 window.renderHubBody = renderHubBody;
 
-// RetrospectView 占位（Task 13 填充）
+// RetrospectView（Task 13）
 const RetrospectView = {
-  render(dateStr) { alert(`回顾 ${dateStr} TODO Task 13`); }
+  async render(dateStr) {
+    document.querySelector('#hub-main').style.display = 'none';
+    document.querySelector('#day-view').style.display = 'none';
+    const el = document.querySelector('#retro-view');
+    el.style.display = 'block';
+
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const weekday = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
+    const checkIn = Streak.getCheckIn(dateStr);
+    const status = Streak.getStatus(dateStr);
+    const goldLabel = status === 'gold' ? '🟡 金' : (status === 'half' ? '🟢 半' : '—');
+
+    const sections = [];
+    for (const level of LEVELS) {
+      const plan = PlanStore.load(level);
+      const session = plan.sessions[dateStr];
+      const cohort = plan.cohorts[dateStr];
+      if (!session && !cohort) continue;
+      const cards = await CardCache.load(level).catch(() => []);
+      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+      const wordList = (cohort?.cardIds || [])
+        .map(id => byId[id]?.word)
+        .filter(Boolean)
+        .join(' · ');
+      sections.push(`
+        <div class="retro-level">
+          <div class="retro-level-title">${level.toUpperCase()}</div>
+          ${cohort ? `<div class="retro-line">当日学新 ${cohort.cardIds.length} 词${wordList ? '：' + wordList : ''}</div>` : ''}
+          ${session?.morning ? `<div class="retro-line">🌅 早复习：答对 ${session.morning.correct} / ${session.morning.total}</div>` : ''}
+          ${session?.weekly ? `<div class="retro-line">📆 周复习：答对 ${session.weekly.correct} / ${session.weekly.total}</div>` : ''}
+        </div>
+      `);
+    }
+
+    el.innerHTML = `
+      <div class="day-head">
+        <button class="day-back" id="retro-back">← 返回</button>
+        <div class="day-date">📅 ${m}月${d}日 · 周${weekday}</div>
+        <div class="day-streak">${goldLabel}</div>
+      </div>
+      <div class="day-checks">
+        打卡： 🌙 晚 ${checkIn.evening ? '✓' : '—'}  ·  🌅 早 ${checkIn.morning ? '✓' : '—'}
+      </div>
+      ${sections.length ? sections.join('') : '<div class="retro-empty">这一天没有记录</div>'}
+    `;
+    el.querySelector('#retro-back').addEventListener('click', () => {
+      el.style.display = 'none';
+      document.querySelector('#hub-main').style.display = 'block';
+      renderHubBody();
+    });
+  }
 };
 
 // 启动：页面加载时渲染首页

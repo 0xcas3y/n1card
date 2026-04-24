@@ -188,3 +188,8 @@ body.quiz-on #topbar { display: none; }
 .cal-day.gold { background: #D4A74F; color: #111; opacity: 1; font-weight: 600; box-shadow: 0 0 8px rgba(212, 167, 79, 0.5); }
 .cal-day.clickable { cursor: pointer; }
 .cal-day.clickable:hover { transform: scale(1.08); }
+
+.retro-level { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.retro-level-title { font-weight: 600; color: #4FA896; margin-bottom: 6px; }
+.retro-line { font-size: 13px; opacity: 0.85; line-height: 1.6; }
+.retro-empty { text-align: center; padding: 30px; opacity: 0.5; }
