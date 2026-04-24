@@ -128,4 +128,241 @@ const ProgressRO = {
   }
 };
 
-export { Streak, PlanStore, CurrentLevel, CardCache, ProgressRO, todayStr, LEVELS };
+const RULES_SEEN_KEY = 'n1card:rules-seen';
+
+async function _sessionStatus(level, dateStr) {
+  const plan = PlanStore.load(level);
+  const cards = await CardCache.load(level);
+  const prog = ProgressRO.get(level);
+  const streakState = Streak.load();
+  const quota = computeQuota(streakState.current || 0);
+  const learnDone = plan.sessions[dateStr]?.learn?.status === 'done';
+  const morningDone = plan.sessions[dateStr]?.morning?.status === 'done';
+  const weeklyDone = plan.sessions[dateStr]?.weekly?.status === 'done';
+  const learnQueue = learnDone ? [] : computeLearnQueue(cards, prog, quota);
+  const morningPool = computeMorningPool(plan.cohorts, prog, dateStr);
+  const weeklyDueIds = computeWeeklyDue(prog, Date.now());
+  return { plan, cards, prog, quota, learnDone, morningDone, weeklyDone, learnQueue, morningPool, weeklyDueIds };
+}
+
+const DayView = {
+  async render(dateStr) {
+    document.querySelector('#hub-main').style.display = 'none';
+    document.querySelector('#retro-view').style.display = 'none';
+    const el = document.querySelector('#day-view');
+    el.style.display = 'block';
+
+    const level = CurrentLevel.get();
+    const streakCurrent = Streak.load().current || 0;
+    const stat = await _sessionStatus(level, dateStr);
+
+    const rulesSeen = !!localStorage.getItem(RULES_SEEN_KEY);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const weekday = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
+
+    const morningStat = Streak.getCheckIn(dateStr).morning ? '✓' : '○';
+    const eveningStat = Streak.getCheckIn(dateStr).evening ? '✓' : '○';
+
+    el.innerHTML = `
+      <div class="day-head">
+        <button class="day-back" id="day-back">← 返回</button>
+        <div class="day-date">📅 ${m}月${d}日 · 周${weekday}</div>
+        <div class="day-streak">🔥 ${streakCurrent} 天</div>
+      </div>
+
+      <div class="day-checks">
+        打卡： 🌙 晚 ${eveningStat}  ·  🌅 早 ${morningStat}
+      </div>
+
+      <details class="day-rules" ${rulesSeen ? '' : 'open'}>
+        <summary>规则</summary>
+        <ul>
+          <li>🌙 晚打卡 = 完成「学新」（滑卡）</li>
+          <li>🌅 早打卡 = 完成「早复习」（四选一）</li>
+          <li>连续 7 天 → 60 词/天；14 天 → 90 词/天</li>
+          <li>答对 2 次升「掌握」，答错立刻回「不熟」</li>
+          <li>「掌握」每 7 天来一次周复习</li>
+        </ul>
+      </details>
+
+      <div class="day-level">
+        当前等级： <span class="day-level-val">${level.toUpperCase()}</span> · 配额 ${stat.quota} 词
+      </div>
+
+      <div class="day-sessions">
+        ${this._renderMorningCard(stat, dateStr)}
+        ${this._renderLearnCard(stat, level, dateStr)}
+        ${this._renderWeeklyCard(stat, level, dateStr)}
+      </div>
+
+      <div class="day-level-switch">
+        <label>切换等级：</label>
+        <select id="day-level-sel">
+          ${LEVELS.map(l => `<option value="${l}" ${l===level?'selected':''}>${l.toUpperCase()}</option>`).join('')}
+        </select>
+      </div>
+    `;
+
+    el.querySelector('#day-back').addEventListener('click', () => this.exit());
+    const details = el.querySelector('.day-rules');
+    details.addEventListener('toggle', () => { if (!details.open) localStorage.setItem(RULES_SEEN_KEY, '1'); });
+    el.querySelector('#day-level-sel').addEventListener('change', (e) => {
+      CurrentLevel.set(e.target.value);
+      this.render(dateStr);
+    });
+    this._attachSessionHandlers(el, stat, level, dateStr);
+  },
+
+  _renderMorningCard(stat, dateStr) {
+    if (dateStr !== todayStr()) return '';
+    const n = stat.morningPool.length;
+    const done = stat.morningDone;
+    const label = n === 0 ? '今日无早复习（自动 ✓）' : (done ? `✅ 已完成` : `昨+前日 不熟 · ${n} 题`);
+    const btn = done ? '' : (n === 0 ? `<button class="ds-btn" data-action="auto-morning">标记完成</button>` : `<button class="ds-btn" data-action="morning">开始</button>`);
+    return `<div class="day-session-card"><div class="dsc-icon">🌅</div><div class="dsc-body"><div class="dsc-title">早复习</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
+  },
+  _renderLearnCard(stat, level, dateStr) {
+    if (dateStr !== todayStr()) return '';
+    const n = stat.learnQueue.length;
+    const done = stat.learnDone;
+    const label = done ? `✅ 已完成` : (n === 0 ? `无未学过词（自动 ✓）` : `0 / ${n}`);
+    const btn = done ? '' : (n === 0 ? `<button class="ds-btn" data-action="auto-evening">标记完成</button>` : `<button class="ds-btn" data-action="learn">开始</button>`);
+    return `<div class="day-session-card"><div class="dsc-icon">🌙</div><div class="dsc-body"><div class="dsc-title">学新</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
+  },
+  _renderWeeklyCard(stat, level, dateStr) {
+    if (dateStr !== todayStr()) return '';
+    const n = stat.weeklyDueIds.length;
+    if (n === 0) return '';
+    const btn = stat.weeklyDone ? '' : `<button class="ds-btn" data-action="weekly">开始</button>`;
+    const label = stat.weeklyDone ? `✅ 已完成` : `${n} 词到期`;
+    return `<div class="day-session-card"><div class="dsc-icon">📆</div><div class="dsc-body"><div class="dsc-title">周复习</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
+  },
+
+  _attachSessionHandlers(el, stat, level, dateStr) {
+    el.querySelectorAll('.ds-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        switch (action) {
+          case 'morning': return SessionLauncher.launchMorning(level, dateStr, stat);
+          case 'learn': return SessionLauncher.launchLearn(level, dateStr, stat);
+          case 'weekly': return SessionLauncher.launchWeekly(level, dateStr, stat);
+          case 'auto-morning':
+            PlanStore.completeMorning(level, dateStr, { correct: 0, total: 0 });
+            Streak.markCheckIn(dateStr, 'morning');
+            this.render(dateStr);
+            return;
+          case 'auto-evening':
+            PlanStore.completeLearn(level, dateStr, []);
+            Streak.markCheckIn(dateStr, 'evening');
+            this.render(dateStr);
+            return;
+        }
+      });
+    });
+  },
+
+  exit() {
+    document.querySelector('#day-view').style.display = 'none';
+    document.querySelector('#retro-view').style.display = 'none';
+    document.querySelector('#hub-main').style.display = 'block';
+    renderHubBody();
+  }
+};
+
+const SessionLauncher = {
+  launchLearn(level, dateStr, stat) {
+    const ids = stat.learnQueue.map(c => c.id).join(',');
+    window.location.href = `/${level}.html?session=learn&ids=${ids}`;
+  },
+  // morning/weekly 留给 Task 12 填充
+  launchMorning(level, dateStr, stat) { alert('早复习 TODO Task 12'); },
+  launchWeekly(level, dateStr, stat) { alert('周复习 TODO Task 12'); }
+};
+
+// 渲染首页 streak-box + streak-cal + 月历（升级为三态 + 可点击）
+function renderHubBody() {
+  const state = Streak.load();
+  const dates = new Set(state.dates || []);
+  if ((state.longest || 0) === 0 && dates.size === 0) return;
+
+  const box = document.getElementById('streak-box');
+  if (box) {
+    box.style.display = 'flex';
+    const today = todayStr();
+    const current = state.current || 0;
+    const longest = state.longest || 0;
+    const total = state.total || 0;
+    const todayFlag = state.lastDate === today ? '✅' : '';
+    box.innerHTML = `
+      <div class="item"><div class="num">🔥 ${current}</div><div class="lbl">连续 ${todayFlag}</div></div>
+      <div class="item"><div class="num">${longest}</div><div class="lbl">最长</div></div>
+      <div class="item"><div class="num">${total}</div><div class="lbl">累计天数</div></div>
+    `;
+  }
+
+  const cal = document.getElementById('streak-cal');
+  if (!cal) return;
+  cal.style.display = 'block';
+  let viewY = new Date().getFullYear();
+  let viewM = new Date().getMonth();
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = (y, m, d) => `${y}-${pad(m+1)}-${pad(d)}`;
+  const todayKey = todayStr();
+
+  const render = () => {
+    document.getElementById('cal-month').textContent = `${viewY}年${viewM+1}月`;
+    const firstWd = new Date(viewY, viewM, 1).getDay();
+    const daysInMonth = new Date(viewY, viewM+1, 0).getDate();
+    let html = '';
+    for (let i = 0; i < firstWd; i++) html += '<div class="cal-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = fmt(viewY, viewM, d);
+      const cls = ['cal-day'];
+      const status = Streak.getStatus(ds);
+      if (status === 'gold') cls.push('gold');
+      else if (status === 'half') cls.push('checked');
+      if (ds === todayKey) cls.push('today');
+      const isPast = ds < todayKey;
+      const clickable = (ds === todayKey) || (isPast && (status === 'gold' || status === 'half'));
+      if (clickable) cls.push('clickable');
+      html += `<div class="${cls.join(' ')}" data-date="${ds}">${d}</div>`;
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+    document.getElementById('cal-grid').querySelectorAll('.cal-day.clickable').forEach(el => {
+      el.addEventListener('click', () => {
+        const ds = el.dataset.date;
+        if (ds === todayKey) DayView.render(ds);
+        else RetrospectView.render(ds);
+      });
+    });
+  };
+  document.getElementById('cal-prev').onclick = () => { viewM--; if (viewM < 0) { viewM = 11; viewY--; } render(); };
+  document.getElementById('cal-next').onclick = () => { viewM++; if (viewM > 11) { viewM = 0; viewY++; } render(); };
+  render();
+}
+window.renderHubBody = renderHubBody;
+
+// RetrospectView 占位（Task 13 填充）
+const RetrospectView = {
+  render(dateStr) { alert(`回顾 ${dateStr} TODO Task 13`); }
+};
+
+// 启动：页面加载时渲染首页
+document.addEventListener('DOMContentLoaded', () => {
+  renderHubBody();
+
+  // 处理 learn_completed 回流
+  const params = new URLSearchParams(location.search);
+  if (params.get('learn_completed') === '1') {
+    const level = params.get('level') || 'n1';
+    const ids = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+    const dateStr = todayStr();
+    PlanStore.completeLearn(level, dateStr, ids);
+    Streak.markCheckIn(dateStr, 'evening');
+    // 清 URL 参数后开 DayView
+    history.replaceState({}, '', '/');
+    DayView.render(dateStr);
+  }
+});
+
+export { renderHubBody, RetrospectView, DayView, SessionLauncher, Streak, PlanStore, CurrentLevel, CardCache, ProgressRO, todayStr, LEVELS };

@@ -149,3 +149,42 @@ body.quiz-on #topbar { display: none; }
   background: #4FA896; color: #fff; border: 0; border-radius: 10px;
   font-size: 16px; cursor: pointer; font-family: inherit;
 }
+
+/* DayView + RetrospectView */
+#day-view, #retro-view {
+  max-width: 600px; margin: 0 auto; padding: 20px 16px;
+}
+.day-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.day-back { background: none; border: 0; color: #ccc; font-size: 15px; cursor: pointer; padding: 4px 8px; }
+.day-date { font-size: 18px; font-weight: 500; }
+.day-streak { font-size: 14px; opacity: 0.8; }
+.day-checks { text-align: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 14px; font-size: 14px; }
+.day-rules { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px; }
+.day-rules summary { cursor: pointer; opacity: 0.8; font-weight: 500; }
+.day-rules ul { margin-top: 10px; padding-left: 20px; line-height: 1.7; opacity: 0.85; }
+.day-level { font-size: 14px; opacity: 0.75; margin: 10px 0; text-align: center; }
+.day-level-val { color: #4FA896; font-weight: 600; }
+.day-sessions { display: flex; flex-direction: column; gap: 10px; }
+.day-session-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; background: rgba(255,255,255,0.06);
+  border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+}
+.dsc-icon { font-size: 22px; }
+.dsc-body { flex: 1; }
+.dsc-title { font-size: 15px; font-weight: 500; }
+.dsc-sub { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+.ds-btn {
+  background: #4FA896; color: #fff; border: 0;
+  padding: 8px 18px; border-radius: 8px; font-size: 14px;
+  cursor: pointer; font-family: inherit;
+}
+.day-level-switch { margin-top: 20px; text-align: center; font-size: 13px; opacity: 0.7; }
+.day-level-switch select {
+  background: #1a1a1a; color: #fff; border: 1px solid #333;
+  padding: 6px 10px; border-radius: 6px; font-family: inherit;
+}
+
+.cal-day.gold { background: #D4A74F; color: #111; opacity: 1; font-weight: 600; box-shadow: 0 0 8px rgba(212, 167, 79, 0.5); }
+.cal-day.clickable { cursor: pointer; }
+.cal-day.clickable:hover { transform: scale(1.08); }
