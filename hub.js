@@ -274,9 +274,14 @@ const SessionLauncher = {
     const ids = stat.learnQueue.map(c => c.id).join(',');
     window.location.href = `/${level}.html?session=learn&ids=${ids}`;
   },
-  // morning/weekly 留给 Task 12 填充
-  launchMorning(level, dateStr, stat) { alert('早复习 TODO Task 12'); },
-  launchWeekly(level, dateStr, stat) { alert('周复习 TODO Task 12'); }
+  launchMorning(level, dateStr, stat) {
+    const ids = stat.morningPool.join(',');
+    window.location.href = `/${level}.html?session=review&kind=morning&ids=${ids}`;
+  },
+  launchWeekly(level, dateStr, stat) {
+    const ids = stat.weeklyDueIds.join(',');
+    window.location.href = `/${level}.html?session=review&kind=weekly&ids=${ids}`;
+  }
 };
 
 // 渲染首页 streak-box + streak-cal + 月历（升级为三态 + 可点击）
@@ -362,6 +367,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 清 URL 参数后开 DayView
     history.replaceState({}, '', '/');
     DayView.render(dateStr);
+  }
+  if (params.get('review_completed') === '1') {
+    const level = params.get('level') || 'n1';
+    const kind = params.get('kind') || 'morning';
+    const total = parseInt(params.get('total') || '0', 10);
+    const correct = parseInt(params.get('correct') || '0', 10);
+    const dateStr = todayStr();
+    if (kind === 'weekly') {
+      PlanStore.completeWeekly(level, dateStr, { correct, total });
+    } else {
+      PlanStore.completeMorning(level, dateStr, { correct, total });
+      Streak.markCheckIn(dateStr, 'morning');
+    }
+    history.replaceState({}, '', '/');
+    DayView.render(dateStr);
+    return;
   }
 });
 

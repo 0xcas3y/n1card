@@ -956,6 +956,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 若 URL 带 ?session=learn，进入学新模式
     const params = new URLSearchParams(location.search);
+    if (params.get('session') === 'review') {
+      const kind = params.get('kind') || 'morning';   // 'morning' | 'weekly'
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+      const queue = queueIds.map(id => DataStore.getCard(id)).filter(Boolean);
+      if (queue.length > 0) {
+        const title = kind === 'weekly' ? '周复习' : '早复习';
+        TTSEngine.init();
+        QuizMode.start({
+          queue,
+          pool: DataStore.allCards(),
+          title,
+          onComplete: ({ total, correct, promoted }) => {
+            const p = new URLSearchParams();
+            p.set('review_completed', '1');
+            p.set('level', LEVEL_KEY);
+            p.set('kind', kind);
+            p.set('total', String(total));
+            p.set('correct', String(correct));
+            window.location.href = '/?' + p.toString();
+          }
+        });
+        return;
+      } else {
+        // 空题池直接回去
+        window.location.href = `/?review_completed=1&level=${LEVEL_KEY}&kind=${kind}&total=0&correct=0`;
+        return;
+      }
+    }
     if (params.get('session') === 'learn') {
       const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
       const queue = queueIds
