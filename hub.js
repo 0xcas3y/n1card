@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(location.search);
   if (params.get('learn_completed') === '1') {
     const level = params.get('level') || 'n1';
-    const ids = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+    const ids = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
     const dateStr = todayStr();
     PlanStore.completeLearn(level, dateStr, ids);
     Streak.markCheckIn(dateStr, 'evening');

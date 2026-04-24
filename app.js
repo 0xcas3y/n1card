@@ -958,7 +958,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(location.search);
     if (params.get('session') === 'review') {
       const kind = params.get('kind') || 'morning';   // 'morning' | 'weekly'
-      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
       const queue = queueIds.map(id => DataStore.getCard(id)).filter(Boolean);
       if (queue.length > 0) {
         const title = kind === 'weekly' ? '周复习' : '早复习';
@@ -985,7 +985,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
     if (params.get('session') === 'learn') {
-      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(Boolean);
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
       const queue = queueIds
         .map(id => DataStore.getCard(id))
         .filter(Boolean);
