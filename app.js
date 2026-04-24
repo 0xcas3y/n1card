@@ -923,6 +923,23 @@ const Router = {
   }
 };
 
+function _attachKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea, select')) return;
+    switch (e.key) {
+      case ' ':         e.preventDefault(); Router.toggleFlip(); break;
+      case 'ArrowUp':   e.preventDefault(); Router.markAndNext('unknown'); break;
+      case 'ArrowDown': e.preventDefault(); Router.markAndNext('known'); break;
+      case 'ArrowRight':e.preventDefault(); Router.nextCard(); break;
+      case 'p': case 'P': Router.playCurrentWord(); break;
+      case 'Escape':
+        if (Router.learnMode) window.location.href = '/';
+        else if (BrainwashMode.active) BrainwashMode.exit();
+        break;
+    }
+  });
+}
+
 // 禁止 iOS Safari 双击缩放（user-scalable=no 在部分 iOS 版本仍允许双击缩放）
 document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
 // 禁止双指捏合缩放
@@ -945,13 +962,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         .map(id => DataStore.getCard(id))
         .filter(Boolean);
       if (queue.length > 0) {
+        TTSEngine.init();
+        if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
+        if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
         Router.enterLearnSession(queue, '/');
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && Router.learnMode) {
-            // 允许用户中途退出，回首页（未完成计数不入 cohort）
-            window.location.href = '/';
-          }
-        });
+        _attachKeyboard();
         return;
       }
     }
@@ -966,17 +981,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     Router.showCurrent();
 
-    document.addEventListener('keydown', (e) => {
-      if (e.target.matches('input, textarea, select')) return;
-      switch (e.key) {
-        case ' ':         e.preventDefault(); Router.toggleFlip(); break;
-        case 'ArrowUp':   e.preventDefault(); Router.markAndNext('unknown'); break;
-        case 'ArrowDown': e.preventDefault(); Router.markAndNext('known'); break;
-        case 'ArrowRight':e.preventDefault(); Router.nextCard(); break;
-        case 'p': case 'P': Router.playCurrentWord(); break;
-        case 'Escape': if (BrainwashMode.active) BrainwashMode.exit(); break;
-      }
-    });
+    _attachKeyboard();
   } catch (err) {
     document.querySelector('#topbar').textContent = '加载失败';
     document.querySelector('#cardstage').innerHTML = `
