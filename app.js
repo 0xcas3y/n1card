@@ -550,84 +550,6 @@ const BrainwashMode = {
   }
 };
 
-const LearnListMode = {
-  active: false,
-  _queue: [],
-  _checked: new Set(),
-  _onComplete: null,
-
-  start({ queue, onComplete }) {
-    this._queue = queue.slice();
-    this._checked = new Set();
-    this._onComplete = onComplete;
-    this.active = true;
-    document.body.classList.add('learnlist-on');
-    this._render();
-  },
-  exit() {
-    this.active = false;
-    document.body.classList.remove('learnlist-on');
-    const stage = document.querySelector('#cardstage');
-    if (stage) stage.innerHTML = '';
-  },
-  _render() {
-    const stage = document.querySelector('#cardstage');
-    const checked = this._checked.size;
-    const total = this._queue.length;
-    const rows = this._queue.map(card => {
-      const isChecked = this._checked.has(card.id);
-      const showKana = card.word !== card.kana;
-      const meaning = (card.meanings && card.meanings[0]) || '';
-      return `
-        <div class="ll-row${isChecked ? ' ll-checked' : ''}" data-id="${card.id}">
-          <div class="ll-check">${isChecked ? '☑' : '☐'}</div>
-          <div class="ll-word">${card.word}</div>
-          ${showKana ? `<div class="ll-kana">${card.kana}</div>` : ''}
-          <div class="ll-meaning">${meaning}</div>
-          <button class="ll-tts" data-id="${card.id}" title="听读音">🔊</button>
-        </div>
-      `;
-    }).join('');
-
-    stage.innerHTML = `
-      <div class="ll-container">
-        <div class="ll-header">
-          <a class="ll-exit" href="/">← 返回</a>
-          <span class="ll-progress">当日学习 · ${total} 词 · 不熟 ${checked}</span>
-        </div>
-        <div class="ll-hint">心里读一遍，不会的勾上 → 完成后做选择题巩固</div>
-        <div class="ll-list">${rows}</div>
-        <button class="ll-done" id="ll-done">${checked > 0 ? `完成 → 复习 ${checked} 词` : '完成（无不熟）'}</button>
-      </div>
-    `;
-
-    stage.querySelectorAll('.ll-row').forEach(row => {
-      row.addEventListener('click', (e) => {
-        if (e.target.closest('.ll-tts')) return;
-        const id = parseInt(row.dataset.id, 10);
-        if (this._checked.has(id)) this._checked.delete(id);
-        else this._checked.add(id);
-        this._render();
-      });
-    });
-    stage.querySelectorAll('.ll-tts').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = parseInt(btn.dataset.id, 10);
-        const card = DataStore.getCard(id);
-        if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
-      });
-    });
-    stage.querySelector('#ll-done').addEventListener('click', () => {
-      const checkedIds = [...this._checked];
-      const cb = this._onComplete;
-      this.exit();
-      if (cb) cb(checkedIds);
-    });
-  }
-};
-window.LearnListMode = LearnListMode;
-
 const QuizMode = {
   active: false,
   _queue: [],
@@ -872,6 +794,7 @@ const Router = {
   learnQueue: [],
   learnCompletedIds: [],
   learnReturnUrl: null,
+  learnRetakeDate: null,
 
   computeVisible() {
     const all = DataStore.allCards();
@@ -955,11 +878,12 @@ const Router = {
     this.showCurrent();
   },
 
-  async enterLearnSession(queue, returnUrl) {
+  async enterLearnSession(queue, returnUrl, retakeDate) {
     this.learnMode = true;
     this.learnQueue = queue.slice();
     this.learnCompletedIds = [];
     this.learnReturnUrl = returnUrl;
+    this.learnRetakeDate = retakeDate || null;
     this.visibleCards = queue;
     this.currentIndex = 0;
     this.currentColor = CardView.randomColor();
@@ -970,15 +894,21 @@ const Router = {
   _finishLearn() {
     const ids = this.learnCompletedIds.slice();
     const url = this.learnReturnUrl || '/';
+    const retakeDate = this.learnRetakeDate;
     this.learnMode = false;
     this.learnQueue = [];
     this.learnCompletedIds = [];
     this.learnReturnUrl = null;
-    // 把完成信号塞进 URL（hub.js 会读取后写 cohort 和 markCheckIn）
+    this.learnRetakeDate = null;
     const p = new URLSearchParams();
-    p.set('learn_completed', '1');
-    p.set('level', LEVEL_KEY);
-    p.set('ids', ids.join(','));
+    if (retakeDate) {
+      p.set('retake_completed', '1');
+      p.set('date', retakeDate);
+    } else {
+      p.set('learn_completed', '1');
+      p.set('level', LEVEL_KEY);
+      p.set('ids', ids.join(','));
+    }
     window.location.href = url + '?' + p.toString();
   },
 
@@ -1089,41 +1019,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         TTSEngine.init();
         if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
         if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
-        const allIds = queue.map(c => c.id);
         const retakeDate = params.get('retake');
-        const finishLearn = () => {
-          const p = new URLSearchParams();
-          if (retakeDate) {
-            p.set('retake_completed', '1');
-            p.set('date', retakeDate);
-          } else {
-            p.set('learn_completed', '1');
-            p.set('level', LEVEL_KEY);
-            p.set('ids', allIds.join(','));
-          }
-          window.location.href = '/?' + p.toString();
-        };
-        LearnListMode.start({
-          queue,
-          onComplete: (checked) => {
-            // checked = unknown，其余 = known
-            const checkedSet = new Set(checked);
-            for (const card of queue) {
-              Progress.mark(card.id, checkedSet.has(card.id) ? 'unknown' : 'known');
-            }
-            const checkedCards = queue.filter(c => checkedSet.has(c.id));
-            if (checkedCards.length === 0) {
-              finishLearn();
-              return;
-            }
-            QuizMode.start({
-              queue: checkedCards,
-              pool: DataStore.allCards(),
-              title: '当日不熟巩固',
-              onComplete: () => finishLearn()
-            });
-          }
-        });
+        Router.enterLearnSession(queue, '/', retakeDate);
+        _attachKeyboard();
         return;
       }
     }
