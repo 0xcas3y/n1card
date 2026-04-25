@@ -550,6 +550,88 @@ const BrainwashMode = {
   }
 };
 
+const LearnListMode = {
+  active: false,
+  _queue: [],
+  _checked: new Set(),
+  _onComplete: null,
+  _title: '',
+  _doneLabelFn: null,
+
+  start({ queue, prechecked, onComplete, title, doneLabel }) {
+    this._queue = queue.slice();
+    this._checked = new Set(prechecked || []);
+    this._onComplete = onComplete;
+    this._title = title || '复习选词';
+    this._doneLabelFn = doneLabel || ((n) => n > 0 ? `测试勾选的 ${n} 词` : '完成（无勾选）');
+    this.active = true;
+    document.body.classList.add('learnlist-on');
+    this._render();
+  },
+  exit() {
+    this.active = false;
+    document.body.classList.remove('learnlist-on');
+    const stage = document.querySelector('#cardstage');
+    if (stage) stage.innerHTML = '';
+  },
+  _render() {
+    const stage = document.querySelector('#cardstage');
+    const checked = this._checked.size;
+    const total = this._queue.length;
+    const rows = this._queue.map(card => {
+      const isChecked = this._checked.has(card.id);
+      const showKana = card.word !== card.kana;
+      const meaning = (card.meanings && card.meanings[0]) || '';
+      return `
+        <div class="ll-row${isChecked ? ' ll-checked' : ''}" data-id="${card.id}">
+          <div class="ll-check">${isChecked ? '☑' : '☐'}</div>
+          <div class="ll-word">${card.word}</div>
+          ${showKana ? `<div class="ll-kana">${card.kana}</div>` : ''}
+          <div class="ll-meaning">${meaning}</div>
+          <button class="ll-tts" data-id="${card.id}" title="听读音">🔊</button>
+        </div>
+      `;
+    }).join('');
+
+    stage.innerHTML = `
+      <div class="ll-container">
+        <div class="ll-header">
+          <a class="ll-exit" href="/">← 返回</a>
+          <span class="ll-progress">${this._title} · ${total} 词 · 已勾 ${checked}</span>
+        </div>
+        <div class="ll-hint">勾上要测试的词 → 点底部按钮做四选一</div>
+        <div class="ll-list">${rows}</div>
+        <button class="ll-done" id="ll-done">${this._doneLabelFn(checked)}</button>
+      </div>
+    `;
+
+    stage.querySelectorAll('.ll-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.ll-tts')) return;
+        const id = parseInt(row.dataset.id, 10);
+        if (this._checked.has(id)) this._checked.delete(id);
+        else this._checked.add(id);
+        this._render();
+      });
+    });
+    stage.querySelectorAll('.ll-tts').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id, 10);
+        const card = DataStore.getCard(id);
+        if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+      });
+    });
+    stage.querySelector('#ll-done').addEventListener('click', () => {
+      const checkedIds = [...this._checked];
+      const cb = this._onComplete;
+      this.exit();
+      if (cb) cb(checkedIds);
+    });
+  }
+};
+window.LearnListMode = LearnListMode;
+
 const QuizMode = {
   active: false,
   _queue: [],
@@ -1007,6 +1089,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         // 空题池直接回去
         window.location.href = `/?review_completed=1&level=${LEVEL_KEY}&kind=${kind}&total=0&correct=0`;
+        return;
+      }
+    }
+    if (params.get('session') === 'retake') {
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
+      const queue = queueIds.map(id => DataStore.getCard(id)).filter(Boolean);
+      const dateStr = params.get('date') || '';
+      if (queue.length > 0) {
+        TTSEngine.init();
+        if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
+        if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
+        const prechecked = queue.filter(c => Progress.getStatus(c.id) === 'unknown').map(c => c.id);
+        const goBack = () => {
+          const p = new URLSearchParams();
+          p.set('retake_completed', '1');
+          p.set('date', dateStr);
+          window.location.href = '/?' + p.toString();
+        };
+        LearnListMode.start({
+          queue,
+          prechecked,
+          title: '选词复习',
+          onComplete: (checked) => {
+            const checkedSet = new Set(checked);
+            const toQuiz = queue.filter(c => checkedSet.has(c.id));
+            if (toQuiz.length === 0) { goBack(); return; }
+            QuizMode.start({
+              queue: toQuiz,
+              pool: DataStore.allCards(),
+              title: '勾选词复习',
+              onComplete: () => goBack()
+            });
+          }
+        });
+        return;
+      } else {
+        const p = new URLSearchParams();
+        p.set('retake_completed', '1');
+        p.set('date', dateStr);
+        window.location.href = '/?' + p.toString();
         return;
       }
     }

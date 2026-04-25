@@ -115,8 +115,52 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
   border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer;
 }
 
-/* QuizMode */
-body.quiz-on #topbar { display: none; }
+/* QuizMode + LearnListMode */
+body.quiz-on #topbar, body.learnlist-on #topbar { display: none; }
+body.learnlist-on, body.learnlist-on html { height: auto; min-height: 100%; }
+body.learnlist-on #app { height: auto; min-height: 100vh; }
+body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: visible; }
+
+/* 选词复习 — 横排 checklist */
+.ll-container { width: min(96vw, 600px); display: flex; flex-direction: column; gap: 10px; padding: 12px 0; }
+.ll-header { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
+.ll-exit { color: #ccc; text-decoration: none; font-size: 14px; padding: 4px 8px; }
+.ll-progress { font-size: 13px; opacity: 0.85; }
+.ll-hint { font-size: 12px; opacity: 0.55; text-align: center; padding: 4px 8px 8px; }
+.ll-list { display: flex; flex-direction: column; gap: 6px; }
+.ll-row {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  user-select: none; -webkit-user-select: none;
+}
+.ll-row:hover { background: rgba(255,255,255,0.08); }
+.ll-row.ll-checked { background: rgba(217,123,95,0.18); border-color: rgba(217,123,95,0.5); }
+.ll-check { font-size: 20px; line-height: 1; min-width: 22px; text-align: center; }
+.ll-word { font-size: 17px; font-weight: 600; white-space: nowrap; }
+.ll-kana { font-size: 12px; opacity: 0.6; white-space: nowrap; }
+.ll-meaning { font-size: 13px; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ll-tts { background: none; border: 0; color: #aaa; font-size: 16px; cursor: pointer; padding: 4px 6px; }
+.ll-tts:hover { color: #fff; }
+.ll-done {
+  margin-top: 12px; padding: 14px;
+  background: #4FA896; color: #fff; border: 0; border-radius: 10px;
+  font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit;
+}
+.ll-done:hover { background: #5dc0ad; }
+@media (max-width: 480px) {
+  .ll-row { grid-template-columns: auto auto 1fr auto; gap: 8px; padding: 10px; }
+  .ll-row .ll-kana { display: none; }
+  .ll-word { font-size: 15px; }
+  .ll-meaning { font-size: 12px; }
+}
 
 .quiz-card {
   width: min(92vw, 420px);

@@ -386,7 +386,7 @@ const RetrospectView = {
         <div class="retro-level">
           <div class="retro-level-head">
             <span class="retro-level-title">${LEVEL_LABELS[level] || level.toUpperCase()}</span>
-            ${cohort && cohortIdsCsv ? `<a class="retro-retake" href="/${level}.html?session=learn&ids=${cohortIdsCsv}&retake=${dateStr}">📝 再过一遍</a>` : ''}
+            ${cohort && cohortIdsCsv ? `<a class="retro-retake" href="/${level}.html?session=retake&ids=${cohortIdsCsv}&date=${dateStr}">📝 再过一遍</a>` : ''}
           </div>
           ${cohort ? `<div class="retro-line retro-line-sub">当日学新 ${cohort.cardIds.length} 词</div>` : ''}
           ${rowsHtml ? `<div class="retro-rows">${rowsHtml}</div>` : ''}
