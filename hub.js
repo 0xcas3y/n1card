@@ -373,14 +373,23 @@ const RetrospectView = {
       if (!session && !cohort) continue;
       const cards = await CardCache.load(level).catch(() => []);
       const byId = Object.fromEntries(cards.map(c => [c.id, c]));
-      const wordList = (cohort?.cardIds || [])
-        .map(id => byId[id]?.word)
-        .filter(Boolean)
-        .join(' · ');
+      const cohortCards = (cohort?.cardIds || [])
+        .map(id => byId[id])
+        .filter(Boolean);
+      const rowsHtml = cohortCards.map(c => {
+        const showKana = c.word !== c.kana;
+        const meaning = (c.meanings && c.meanings[0]) || '';
+        return `<div class="retro-row"><span class="retro-word">${c.word}</span>${showKana ? `<span class="retro-kana">${c.kana}</span>` : ''}<span class="retro-meaning">${meaning}</span></div>`;
+      }).join('');
+      const cohortIdsCsv = (cohort?.cardIds || []).join(',');
       sections.push(`
         <div class="retro-level">
-          <div class="retro-level-title">${LEVEL_LABELS[level] || level.toUpperCase()}</div>
-          ${cohort ? `<div class="retro-line">当日学新 ${cohort.cardIds.length} 词${wordList ? '：' + wordList : ''}</div>` : ''}
+          <div class="retro-level-head">
+            <span class="retro-level-title">${LEVEL_LABELS[level] || level.toUpperCase()}</span>
+            ${cohort && cohortIdsCsv ? `<a class="retro-retake" href="/${level}.html?session=learn&ids=${cohortIdsCsv}&retake=${dateStr}">📝 再过一遍</a>` : ''}
+          </div>
+          ${cohort ? `<div class="retro-line retro-line-sub">当日学新 ${cohort.cardIds.length} 词</div>` : ''}
+          ${rowsHtml ? `<div class="retro-rows">${rowsHtml}</div>` : ''}
           ${session?.morning ? `<div class="retro-line">🌅 早复习：答对 ${session.morning.correct} / ${session.morning.total}</div>` : ''}
           ${session?.weekly ? `<div class="retro-line">📆 周复习：答对 ${session.weekly.correct} / ${session.weekly.total}</div>` : ''}
         </div>
@@ -436,6 +445,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     history.replaceState({}, '', '/');
     DayView.render(dateStr);
+    return;
+  }
+  if (params.get('retake_completed') === '1') {
+    const date = params.get('date') || todayStr();
+    history.replaceState({}, '', '/');
+    RetrospectView.render(date);
     return;
   }
 });

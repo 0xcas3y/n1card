@@ -238,6 +238,19 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
 .cal-day.clickable:hover { transform: scale(1.08); }
 
 .retro-level { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
-.retro-level-title { font-weight: 600; color: #4FA896; margin-bottom: 6px; }
+.retro-level-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.retro-level-title { font-weight: 600; color: #4FA896; }
+.retro-retake { background: #4FA896; color: #fff; text-decoration: none; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+.retro-retake:hover { background: #5dc0ad; }
 .retro-line { font-size: 13px; opacity: 0.85; line-height: 1.6; }
+.retro-line-sub { opacity: 0.55; font-size: 12px; margin-bottom: 4px; }
+.retro-rows { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 8px; }
+.retro-row { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; align-items: baseline; padding: 4px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 13px; }
+.retro-word { font-weight: 500; }
+.retro-kana { opacity: 0.6; font-size: 11px; }
+.retro-meaning { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .retro-empty { text-align: center; padding: 30px; opacity: 0.5; }
+@media (max-width: 480px) {
+  .retro-row { grid-template-columns: auto 1fr; gap: 8px; }
+  .retro-row .retro-kana { display: none; }
+}

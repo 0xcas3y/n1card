@@ -1090,11 +1090,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
         if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
         const allIds = queue.map(c => c.id);
+        const retakeDate = params.get('retake');
         const finishLearn = () => {
           const p = new URLSearchParams();
-          p.set('learn_completed', '1');
-          p.set('level', LEVEL_KEY);
-          p.set('ids', allIds.join(','));
+          if (retakeDate) {
+            p.set('retake_completed', '1');
+            p.set('date', retakeDate);
+          } else {
+            p.set('learn_completed', '1');
+            p.set('level', LEVEL_KEY);
+            p.set('ids', allIds.join(','));
+          }
           window.location.href = '/?' + p.toString();
         };
         LearnListMode.start({
