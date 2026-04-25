@@ -287,11 +287,10 @@ const SessionLauncher = {
 // 渲染首页 streak-box + streak-cal + 月历（升级为三态 + 可点击）
 function renderHubBody() {
   const state = Streak.load();
-  const dates = new Set(state.dates || []);
-  if ((state.longest || 0) === 0 && dates.size === 0) return;
+  const hasHistory = (state.longest || 0) > 0 || (state.dates || []).length > 0;
 
   const box = document.getElementById('streak-box');
-  if (box) {
+  if (box && hasHistory) {
     box.style.display = 'flex';
     const today = todayStr();
     const current = state.current || 0;
