@@ -50,7 +50,9 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .sentence-row .jp { font-size: 16px; line-height: 1.5; }
 .sentence-row .cn { font-size: 13px; opacity: 0.75; margin-top: 2px; }
 .flash-card.back { padding-top: 24px; padding-bottom: 40px; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
-.flash-card.back .hint-bottom { position: sticky; bottom: 0; padding-bottom: 8px; background: linear-gradient(to top, rgba(0,0,0,0.25), transparent 100%); }
+.flash-card.back .hint-bottom { position: sticky; bottom: 0; padding-bottom: 8px; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent 100%); }
+/* 正面也允许垂直滚动（少数情况用）→ 用 pan-y，水平划由 JS 检测 */
+.flash-card { touch-action: pan-y; }
 #topbar { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 8px 10px; background: #1a1a1a; font-size: 13px; flex-shrink: 0; min-height: 44px; }
 .topbar-left { font-weight: 500; white-space: nowrap; flex-shrink: 0; }
 .topbar-center { opacity: 0.8; text-align: center; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

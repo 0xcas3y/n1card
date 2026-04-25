@@ -308,10 +308,10 @@ const Gestures = {
       const dt = performance.now() - touchStart.t;
       const speed = Math.hypot(dx, dy) / dt;
 
-      // 滑动判定
-      if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx) * 1.5 && speed > 0.3) {
+      // 水平滑动判定（左右优先；垂直让给原生滚动）
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5 && speed > 0.3) {
         clearTap();
-        onSwipe?.(dy < 0 ? 'up' : 'down');
+        onSwipe?.(dx < 0 ? 'left' : 'right');
         touchStart = null;
         return;
       }
@@ -340,7 +340,7 @@ const CardView = {
     el.innerHTML = `
       <div class="card-id">${card.id}</div>
       <div class="front-center"><div class="front-word" data-len="${[...card.word].length}">${card.word}</div></div>
-      <div class="hint-bottom">单击发音 · 双击翻面 · ↑难 ↓易</div>
+      <div class="hint-bottom">单击发音 · 双击翻面 · ←难 →易</div>
     `;
     return el;
   },
@@ -956,7 +956,7 @@ const Router = {
       },
       onSwipe: (dir) => {
         if (BrainwashMode.active) BrainwashMode.skipToNext();
-        else this.markAndNext(dir === 'up' ? 'unknown' : 'known');
+        else this.markAndNext(dir === 'left' ? 'unknown' : 'known');
       }
     });
 
@@ -1071,9 +1071,9 @@ function _attachKeyboard() {
     if (e.target.matches('input, textarea, select')) return;
     switch (e.key) {
       case ' ':         e.preventDefault(); Router.toggleFlip(); break;
-      case 'ArrowUp':   e.preventDefault(); Router.markAndNext('unknown'); break;
-      case 'ArrowDown': e.preventDefault(); Router.markAndNext('known'); break;
-      case 'ArrowRight':e.preventDefault(); Router.nextCard(); break;
+      case 'ArrowLeft': e.preventDefault(); Router.markAndNext('unknown'); break;
+      case 'ArrowRight':e.preventDefault(); Router.markAndNext('known'); break;
+      case 'ArrowDown': e.preventDefault(); Router.nextCard(); break;
       case 'p': case 'P': Router.playCurrentWord(); break;
       case 'Escape':
         if (Router.learnMode) window.location.href = '/';
