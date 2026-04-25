@@ -4,13 +4,18 @@ import {
   pruneOldCohorts, aggregateCheckIns, pickDistractors
 } from './plan.js';
 
-const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5'];
+const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
   n1: 'data/cards.json',
   n2: 'data/cards-n2.json',
   n3: 'data/cards-n3.json',
   n4: 'data/cards-n4.json',
-  n5: 'data/cards-n5.json'
+  n5: 'data/cards-n5.json',
+  ono: 'onomatope/data/cards.json'
+};
+const LEVEL_LABELS = {
+  n1: 'N1', n2: 'N2', n3: 'N3', n4: 'N4', n5: 'N5',
+  ono: 'オノマトペ'
 };
 
 function todayStr() {
@@ -186,7 +191,7 @@ const DayView = {
       </details>
 
       <div class="day-level">
-        当前等级： <span class="day-level-val">${level.toUpperCase()}</span> · 配额 ${stat.quota} 词
+        当前等级： <span class="day-level-val">${LEVEL_LABELS[level] || level.toUpperCase()}</span> · 配额 ${stat.quota} 词
       </div>
 
       <div class="day-sessions">
@@ -198,7 +203,7 @@ const DayView = {
       <div class="day-level-switch">
         <label>切换等级：</label>
         <select id="day-level-sel">
-          ${LEVELS.map(l => `<option value="${l}" ${l===level?'selected':''}>${l.toUpperCase()}</option>`).join('')}
+          ${LEVELS.map(l => `<option value="${l}" ${l===level?'selected':''}>${LEVEL_LABELS[l] || l.toUpperCase()}</option>`).join('')}
         </select>
       </div>
     `;
@@ -374,7 +379,7 @@ const RetrospectView = {
         .join(' · ');
       sections.push(`
         <div class="retro-level">
-          <div class="retro-level-title">${level.toUpperCase()}</div>
+          <div class="retro-level-title">${LEVEL_LABELS[level] || level.toUpperCase()}</div>
           ${cohort ? `<div class="retro-line">当日学新 ${cohort.cardIds.length} 词${wordList ? '：' + wordList : ''}</div>` : ''}
           ${session?.morning ? `<div class="retro-line">🌅 早复习：答对 ${session.morning.correct} / ${session.morning.total}</div>` : ''}
           ${session?.weekly ? `<div class="retro-line">📆 周复习：答对 ${session.weekly.correct} / ${session.weekly.total}</div>` : ''}

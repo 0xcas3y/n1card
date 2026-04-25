@@ -489,23 +489,19 @@ const BrainwashMode = {
     Router.flipped = true;
     Router.showCurrent();
 
-    // 例句 1 × 2
-    for (let rep = 0; rep < 2 && !this._aborted; rep++) {
-      await this._waitIfPaused();
-      this._highlightExampleRow(0);
-      await TTSEngine.speak(card.examples[0].jp, { rate: Progress.getTTSRate() });
+    // 每条例句 × 2
+    for (let exIdx = 0; exIdx < card.examples.length && !this._aborted; exIdx++) {
+      const ex = card.examples[exIdx];
+      if (!ex || !ex.jp) continue;
+      for (let rep = 0; rep < 2 && !this._aborted; rep++) {
+        await this._waitIfPaused();
+        this._highlightExampleRow(exIdx);
+        await TTSEngine.speak(ex.jp, { rate: Progress.getTTSRate() });
+        if (this._aborted) return;
+        await this._sleep(300);
+      }
       if (this._aborted) return;
-      await this._sleep(300);
-    }
-    if (this._aborted) return;
-    await this._ding();
-    // 例句 2 × 2
-    for (let rep = 0; rep < 2 && !this._aborted; rep++) {
-      await this._waitIfPaused();
-      this._highlightExampleRow(1);
-      await TTSEngine.speak(card.examples[1].jp, { rate: Progress.getTTSRate() });
-      if (this._aborted) return;
-      await this._sleep(300);
+      if (exIdx < card.examples.length - 1) await this._ding();
     }
     await this._sleep(800);
   },
