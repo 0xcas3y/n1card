@@ -140,7 +140,7 @@ async function _sessionStatus(level, dateStr) {
   const cards = await CardCache.load(level);
   const prog = ProgressRO.get(level);
   const streakState = Streak.load();
-  const quota = computeQuota(streakState.current || 0);
+  const quota = computeQuota(streakState.total || 0);
   const learnDone = plan.sessions[dateStr]?.learn?.status === 'done';
   const morningDone = plan.sessions[dateStr]?.morning?.status === 'done';
   const weeklyDone = plan.sessions[dateStr]?.weekly?.status === 'done';
@@ -184,7 +184,7 @@ const DayView = {
         <ul>
           <li>🌙 晚打卡 = 完成「学新」（滑卡）</li>
           <li>🌅 早打卡 = 完成「早复习」（四选一）</li>
-          <li>连续 7 天 → 60 词/天；14 天 → 90 词/天</li>
+          <li>每日 30 词起；累计打卡每满 10 天 +10 词，上限 90（3 组/天）</li>
           <li>答对 2 次升「掌握」，答错立刻回「不熟」</li>
           <li>「掌握」每 7 天来一次周复习</li>
         </ul>

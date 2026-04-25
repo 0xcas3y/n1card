@@ -1,10 +1,10 @@
 // plan.js — 纯函数模块，可在 Node 和浏览器中使用
 // 不读写 storage、不碰 DOM
 
-export function computeQuota(streak) {
-  if (streak >= 14) return 90;
-  if (streak >= 7) return 60;
-  return 30;
+// 配额：基础 30 词；累计打卡每满 10 天 +10 词；上限 90（3 组）
+export function computeQuota(totalDays) {
+  const t = Math.max(0, totalDays | 0);
+  return Math.min(30 + Math.floor(t / 10) * 10, 90);
 }
 
 export function computeLearnQueue(cards, progress, quota) {
