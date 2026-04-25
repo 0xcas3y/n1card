@@ -585,36 +585,58 @@ const QuizMode = {
       return;
     }
     const card = this._queue[this._idx];
-    const distractors = pickDistractors(card.kana, this._pool, 3);
-    const options = [card.kana, ...distractors];
+    // 单词本身是假名（如オノマトペ）→ 选义题；否则 → 选读音题
+    const meaningMode = card.word === card.kana;
+    let answer, options, optionClass;
+    if (meaningMode) {
+      answer = (card.meanings && card.meanings[0]) || '';
+      const candidates = this._pool
+        .map(c => c.meanings && c.meanings[0])
+        .filter(m => m && m !== answer);
+      const unique = [...new Set(candidates)];
+      for (let i = unique.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [unique[i], unique[j]] = [unique[j], unique[i]];
+      }
+      options = [answer, ...unique.slice(0, 3)];
+      optionClass = 'quiz-opt quiz-opt-meaning';
+    } else {
+      answer = card.kana;
+      const distractors = pickDistractors(card.kana, this._pool, 3);
+      options = [card.kana, ...distractors];
+      optionClass = 'quiz-opt';
+    }
     for (let i = options.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [options[i], options[j]] = [options[j], options[i]];
     }
 
     const stage = document.querySelector('#cardstage');
+    const promptHtml = meaningMode
+      ? `<div class="quiz-word">${card.kana}</div>`
+      : `<div class="quiz-word">${card.word}</div>
+         <div class="quiz-meaning">${(card.meanings && card.meanings[0]) || ''}</div>`;
     stage.innerHTML = `
       <div class="quiz-card">
         <div class="quiz-topbar">
           <button class="quiz-exit" id="quiz-exit">← 退出</button>
           <span class="quiz-progress">${this._idx + 1} / ${this._queue.length} · 正确 ${this._correct}</span>
         </div>
-        <div class="quiz-word">${card.word}</div>
-        <div class="quiz-meaning">${(card.meanings && card.meanings[0]) || ''}</div>
+        ${promptHtml}
         <div class="quiz-options">
-          ${options.map(o => `<button class="quiz-opt" data-val="${o}">${o}</button>`).join('')}
+          ${options.map(o => `<button class="${optionClass}" data-val="${o.replace(/"/g, '&quot;')}">${o}</button>`).join('')}
         </div>
       </div>
     `;
     stage.querySelector('#quiz-exit').addEventListener('click', () => this.exit());
     stage.querySelectorAll('.quiz-opt').forEach(btn => {
-      btn.addEventListener('click', () => this._handleAnswer(btn, card, options));
+      btn.addEventListener('click', () => this._handleAnswer(btn, card, answer));
     });
   },
 
-  _handleAnswer(btn, card, options) {
+  _handleAnswer(btn, card, answer) {
     const chosen = btn.dataset.val;
-    const correct = chosen === card.kana;
+    const correct = chosen === answer;
     const before = Progress.getEntry(card.id)?.status;
     Progress.markQuiz(card.id, correct);
     const after = Progress.getEntry(card.id)?.status;
@@ -624,7 +646,7 @@ const QuizMode = {
     // 可视反馈
     document.querySelectorAll('.quiz-opt').forEach(b => {
       b.disabled = true;
-      if (b.dataset.val === card.kana) b.classList.add('quiz-correct');
+      if (b.dataset.val === answer) b.classList.add('quiz-correct');
       else if (b === btn) b.classList.add('quiz-wrong');
     });
     if (correct) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });

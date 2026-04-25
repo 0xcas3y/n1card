@@ -140,6 +140,7 @@ body.quiz-on #topbar { display: none; }
 .quiz-opt:hover:not(:disabled) { background: #2a2a2a; }
 .quiz-opt.quiz-correct { background: #2a5d3a; border-color: #4caf50; }
 .quiz-opt.quiz-wrong { background: #5d2a2a; border-color: #e57373; }
+.quiz-opt-meaning { font-size: 14px; line-height: 1.5; text-align: left; white-space: normal; }
 
 .quiz-summary { text-align: center; color: #fff; }
 .qs-title { font-size: 22px; margin-bottom: 16px; }
