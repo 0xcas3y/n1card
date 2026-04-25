@@ -43,6 +43,7 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .back-kana { font-size: 14px; opacity: 0.85; margin-bottom: 14px; }
 .section-title { font-size: 18px; font-weight: 500; margin: 12px 0 6px; opacity: 0.95; }
 .section-body { font-size: 17px; line-height: 1.7; opacity: 0.95; }
+.section-body-pre { white-space: pre-wrap; }
 .sentence-row { padding: 8px 10px; border-radius: 8px; margin: 4px -10px; cursor: pointer; transition: background 0.15s; }
 .sentence-row:hover, .sentence-row:active { background: rgba(255,255,255,0.14); }
 .sentence-row.brainwash-playing { background: rgba(255,255,255,0.28); box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
@@ -94,7 +95,8 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
   width: 100%; background: #111; color: #eee; border: 1px solid #444;
   border-radius: 6px; padding: 8px; font-family: inherit; font-size: 14px;
 }
-.modal textarea { min-height: 60px; resize: vertical; }
+.modal textarea { min-height: 80px; resize: vertical; white-space: pre-wrap; }
+.modal #edit-mnemonic { min-height: 100px; }
 .modal .row { display: flex; gap: 8px; margin-top: 16px; }
 .modal button {
   flex: 1; background: #2a2a2a; color: #eee; border: 1px solid #444;

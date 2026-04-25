@@ -1,4 +1,4 @@
-import { aggregateCheckIns, pickDistractors } from './plan.js';
+import { aggregateCheckIns, pickDistractors, computeQuota } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -355,7 +355,7 @@ const CardView = {
       <div class="section-title">注释</div>
       <div class="section-body">${meanings}</div>
       <div class="section-title">关联记忆</div>
-      <div class="section-body">${card.mnemonic}</div>
+      <div class="section-body section-body-pre">${card.mnemonic}</div>
       <div class="section-title">例句</div>
       <div class="section-body">
         ${card.examples.map((ex, i) => `
@@ -427,12 +427,32 @@ const BrainwashMode = {
     if (this.active) this.exit();
     else await this.enter();
   },
+  _savedVisibleCards: null,
+  _savedIndex: 0,
+
   async enter() {
+    // 池：只取已学过的词（status != null），按 lastSeen 倒序，cap 至 computeQuota(累计天数, 60)
+    const total = Streak.getTotal();
+    const limit = computeQuota(total, 60);
+    const learned = DataStore.allCards()
+      .filter(c => Progress.getStatus(c.id) !== null)
+      .sort((a, b) => (Progress.getEntry(b.id)?.lastSeen || 0) - (Progress.getEntry(a.id)?.lastSeen || 0))
+      .slice(0, limit);
+    if (learned.length === 0) {
+      TopBar.addWarning('还没学过的词，无法洗脑');
+      TopBar.render();
+      return;
+    }
+    this._savedVisibleCards = Router.visibleCards;
+    this._savedIndex = Router.currentIndex;
+    Router.visibleCards = learned;
+    Router.currentIndex = 0;
+    Router.currentColor = CardView.randomColor();
+
     this.active = true;
     this._aborted = false;
     this._paused = false;
     document.body.classList.add('brainwash-on');
-    // 确保在正面
     Router.flipped = false;
     Router.showCurrent();
     await this._runLoop();
@@ -442,7 +462,16 @@ const BrainwashMode = {
     this._aborted = true;
     TTSEngine.cancel();
     document.body.classList.remove('brainwash-on');
-    TopBar.render();
+    if (this._savedVisibleCards) {
+      Router.visibleCards = this._savedVisibleCards;
+      Router.currentIndex = Math.min(this._savedIndex || 0, this._savedVisibleCards.length - 1);
+      this._savedVisibleCards = null;
+      Router.currentColor = CardView.randomColor();
+      Router.flipped = false;
+      Router.showCurrent();
+    } else {
+      TopBar.render();
+    }
   },
   pauseToggle() {
     this._paused = !this._paused;

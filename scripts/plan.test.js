@@ -2,26 +2,31 @@ import { test } from 'node:test';
 import assert from 'node:assert';
 import { computeQuota, computeLearnQueue } from '../plan.js';
 
-test('computeQuota: 0–9 cumulative days → 30 (1 group)', () => {
+test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
 });
 
-test('computeQuota: every +10 cumulative days adds 10 words', () => {
-  assert.strictEqual(computeQuota(10), 40);
-  assert.strictEqual(computeQuota(19), 40);
-  assert.strictEqual(computeQuota(20), 50);
-  assert.strictEqual(computeQuota(30), 60);
-  assert.strictEqual(computeQuota(40), 70);
-  assert.strictEqual(computeQuota(50), 80);
+test('computeQuota default base 30: 10–19 days → 60 (2 groups)', () => {
+  for (const t of [10, 15, 19]) assert.strictEqual(computeQuota(t), 60);
 });
 
-test('computeQuota: cap at 90 (3 groups) from 60+ cumulative days', () => {
-  for (const t of [60, 100, 1000, 10000]) assert.strictEqual(computeQuota(t), 90);
+test('computeQuota default base 30: 20+ days → 90 (cap, 3 groups)', () => {
+  for (const t of [20, 50, 1000]) assert.strictEqual(computeQuota(t), 90);
 });
 
-test('computeQuota: 0 or negative → 30 (graceful)', () => {
+test('computeQuota base 60 (洗脑): 60 / 120 / 180 cap', () => {
+  assert.strictEqual(computeQuota(0, 60), 60);
+  assert.strictEqual(computeQuota(9, 60), 60);
+  assert.strictEqual(computeQuota(10, 60), 120);
+  assert.strictEqual(computeQuota(19, 60), 120);
+  assert.strictEqual(computeQuota(20, 60), 180);
+  assert.strictEqual(computeQuota(1000, 60), 180);
+});
+
+test('computeQuota: 0 or negative → 1 group (graceful)', () => {
   assert.strictEqual(computeQuota(0), 30);
   assert.strictEqual(computeQuota(-5), 30);
+  assert.strictEqual(computeQuota(-5, 60), 60);
 });
 
 test('computeLearnQueue: picks next N unseen by id order', () => {
