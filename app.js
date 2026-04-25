@@ -392,25 +392,31 @@ const TopBar = {
       leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
     }
 
-    topbar.innerHTML = `
-      ${leftHtml}
-      <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
-      <div class="topbar-right">
+    // 学新和洗脑模式下不显示筛选下拉（pool 已固定）
+    const showFilter = !Router.learnMode && !BrainwashMode.active;
+    const filterHtml = showFilter ? `
         <select id="filter-select">
           <option value="all">全部</option>
           <option value="unknown_only">只看待巩固</option>
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
-        </select>
+        </select>` : '';
+    topbar.innerHTML = `
+      ${leftHtml}
+      <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
+      <div class="topbar-right">
+        ${filterHtml}
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="settings-btn">⚙</button>
         <button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>
       </div>
     `;
-    topbar.querySelector('#filter-select').value = Progress.getFilter();
-    topbar.querySelector('#filter-select').addEventListener('change', (e) => {
-      Router.applyFilter(e.target.value);
-    });
+    if (showFilter) {
+      topbar.querySelector('#filter-select').value = Progress.getFilter();
+      topbar.querySelector('#filter-select').addEventListener('change', (e) => {
+        Router.applyFilter(e.target.value);
+      });
+    }
     topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();

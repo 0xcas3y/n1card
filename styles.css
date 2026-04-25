@@ -119,6 +119,7 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
 
 /* QuizMode + LearnListMode */
 body.quiz-on #topbar, body.learnlist-on #topbar { display: none; }
+body.brainwash-on .topbar-right select { display: none; }
 body.learnlist-on, body.learnlist-on html { height: auto; min-height: 100%; }
 body.learnlist-on #app { height: auto; min-height: 100vh; }
 body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: visible; }
