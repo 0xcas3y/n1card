@@ -280,9 +280,9 @@ const CardView = {
         </div>` : ''}
       ${hasAudio ? `<audio class="front-audio" preload="auto" src="${ex0.audio}"></audio>` : ''}
       <div class="hint-bottom">
-        <span class="hint-pill">双击翻面</span>
-        <span class="hint-pill">← 难</span>
-        <span class="hint-pill">→ 易</span>
+        <span class="hint-dir hint-hard">◀ 难</span>
+        <span class="hint-mid">双击翻面</span>
+        <span class="hint-dir hint-easy">易 ▶</span>
       </div>
     `;
     return el;
@@ -439,13 +439,23 @@ const Router = {
       }
     });
 
-    // Front sentence tap = play sentence audio (ignore taps on the 译 button)
+    // Front sentence: single tap = audio, double tap = flip
     const frontSentence = el.querySelector('.front-sentence');
     if (frontSentence) {
+      let sentenceTapTimer = null;
       frontSentence.addEventListener('pointerup', (e) => {
         if (e.target.closest('.cn-toggle-btn')) return;
         e.stopPropagation();
-        playAudioSrc(frontSentence.dataset.audio, frontSentence.dataset.jp, card.word);
+        if (sentenceTapTimer) {
+          clearTimeout(sentenceTapTimer);
+          sentenceTapTimer = null;
+          Router.flip();
+        } else {
+          sentenceTapTimer = setTimeout(() => {
+            sentenceTapTimer = null;
+            playAudioSrc(frontSentence.dataset.audio, frontSentence.dataset.jp, card.word);
+          }, 220);
+        }
       });
     }
 
