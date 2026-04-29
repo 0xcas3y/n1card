@@ -204,6 +204,14 @@ html, body {
   justify-content: center;
   margin-bottom: 10px;
 }
+.syn-label {
+  font-size: 10px;
+  opacity: 0.45;
+  letter-spacing: 1px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  align-self: center;
+}
 .syn-tag {
   font-size: 12px;
   padding: 3px 11px;

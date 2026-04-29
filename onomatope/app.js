@@ -120,29 +120,29 @@ const TTS = {
   cancel() { if ('speechSynthesis' in window) speechSynthesis.cancel(); }
 };
 
-// Gestures — sentence areas handled separately
+// Gestures
+// .sentence-row: fully excluded (back card examples, reference only)
+// .front-sentence: swipes pass through, taps handled by its own listener
 const Gestures = {
   attach(el, { onTap, onDoubleTap, onSwipe }) {
     let tapTimer = null;
     let touchStart = null;
     const clearTap = () => { if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; } };
 
-    const isExcluded = e =>
-      e.target.closest('.sentence-row') || e.target.closest('.front-sentence');
-
     el.addEventListener('pointerdown', (e) => {
-      if (isExcluded(e)) { touchStart = null; return; }
+      if (e.target.closest('.sentence-row')) { touchStart = null; return; }
       touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
     });
     el.addEventListener('pointercancel', () => { touchStart = null; clearTap(); });
     el.addEventListener('pointerup', (e) => {
-      if (isExcluded(e)) { touchStart = null; clearTap(); return; }
+      if (e.target.closest('.sentence-row')) { touchStart = null; clearTap(); return; }
       if (!touchStart) return;
       const dx = e.clientX - touchStart.x;
       const dy = e.clientY - touchStart.y;
       const dt = performance.now() - touchStart.t;
       const speed = Math.hypot(dx, dy) / dt;
 
+      // Swipes work everywhere on the card including the sentence area
       if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx) * 1.5 && speed > 0.3) {
         clearTap();
         onSwipe?.(dy < 0 ? 'up' : 'down');
@@ -155,6 +155,10 @@ const Gestures = {
         touchStart = null;
         return;
       }
+
+      // Taps on front-sentence are handled by its own listener
+      if (e.target.closest('.front-sentence')) { touchStart = null; return; }
+
       if (Math.hypot(dx, dy) < 10) {
         if (tapTimer) {
           clearTap();
@@ -263,7 +267,7 @@ const CardView = {
       </div>
       ${synonyms.length ? `
         <div class="front-synonyms">
-          ${synonyms.map(s => `<span class="syn-tag">${s}</span>`).join('')}
+          <span class="syn-label">近义</span>${synonyms.map(s => `<span class="syn-tag">${s}</span>`).join('')}
         </div>` : ''}
       ${hasImg
         ? `<div class="front-image"><img src="${ex0.image}" alt=""></div>`
@@ -439,12 +443,24 @@ const Router = {
       }
     });
 
-    // Front sentence: single tap = audio, double tap = flip
+    // Front sentence: tap = audio/flip, swipe = let bubble to card Gestures
     const frontSentence = el.querySelector('.front-sentence');
     if (frontSentence) {
+      let sentenceStart = null;
       let sentenceTapTimer = null;
+      frontSentence.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.cn-toggle-btn')) return;
+        sentenceStart = { x: e.clientX, y: e.clientY };
+      });
       frontSentence.addEventListener('pointerup', (e) => {
         if (e.target.closest('.cn-toggle-btn')) return;
+        if (!sentenceStart) return;
+        const dx = e.clientX - sentenceStart.x;
+        const dy = e.clientY - sentenceStart.y;
+        sentenceStart = null;
+        // If it looks like a swipe, let the event bubble to card Gestures
+        if (Math.abs(dx) > 30 || Math.abs(dy) > 30) return;
+        // It's a tap — handle here, stop propagation
         e.stopPropagation();
         if (sentenceTapTimer) {
           clearTimeout(sentenceTapTimer);
