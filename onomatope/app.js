@@ -458,17 +458,6 @@ const Router = {
       });
     }
 
-    // Back sentence rows tap = play via IK if no local audio
-    el.querySelectorAll('.sentence-row').forEach(row => {
-      const src = row.dataset.audio;
-      const jp  = row.dataset.jp || '';
-      if (src || jp) {
-        row.addEventListener('pointerup', (e) => {
-          e.stopPropagation();
-          playAudioSrc(src, jp, card.word);
-        });
-      }
-    });
 
     MiniNav.update();
   },

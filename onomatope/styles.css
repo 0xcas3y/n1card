@@ -219,9 +219,6 @@ html, body {
 .front-sentence.has-audio {
   cursor: pointer;
 }
-.sentence-row.has-audio {
-  cursor: pointer;
-}
 .front-jp {
   font-size: 16px;
   line-height: 1.55;
