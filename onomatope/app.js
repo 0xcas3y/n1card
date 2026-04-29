@@ -180,6 +180,24 @@ function escapeHTML(s) {
     .replace(/>/g, '&gt;');
 }
 
+function highlightWord(jp, word) {
+  if (!word) return escapeHTML(jp);
+  const escaped = escapeHTML(jp);
+  // Match the word and common katakana variants (e.g. ウキウキ alongside うきうき)
+  const variants = [...new Set([word, toKatakana(word), toHiragana(word)])].filter(Boolean);
+  const re = new RegExp(variants.map(v => escapeRe(v)).join('|'), 'g');
+  return escaped.replace(re, m => `<span class="word-hl">${m}</span>`);
+}
+
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function toKatakana(s) {
+  return s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+function toHiragana(s) {
+  return s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
 function getSynonyms(card) {
   if (!card.mnemonic) return [];
   const part = card.mnemonic.split('🔍 近义区别：')[1];
@@ -277,7 +295,7 @@ const CardView = {
              data-audio="${hasAudio ? ex0.audio : ''}"
              data-jp="${escapeHTML(ex0.jp)}">
           <div class="front-sentence-row">
-            <div class="front-jp">${escapeHTML(ex0.jp)}</div>
+            <div class="front-jp">${highlightWord(ex0.jp, card.word)}</div>
             ${ex0.cn ? `<button class="cn-toggle-btn" aria-label="显示翻译">译</button>` : ''}
           </div>
           ${ex0.cn ? `<div class="front-cn">${escapeHTML(ex0.cn)}</div>` : ''}
@@ -316,7 +334,7 @@ const CardView = {
           <div class="sentence-row${ex.audio ? ' has-audio' : ''}"
                data-audio="${ex.audio || ''}"
                data-jp="${escapeHTML(ex.jp)}">
-            <div class="jp">${escapeHTML(ex.jp)}</div>
+            <div class="jp">${highlightWord(ex.jp, card.word)}</div>
             <div class="cn">${escapeHTML(ex.cn)}</div>
           </div>`).join('')
       : '<div class="sentence-row"><div class="cn" style="opacity:0.5;">（正面已展示例句）</div></div>';

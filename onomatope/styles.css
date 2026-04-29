@@ -224,6 +224,11 @@ html, body {
 .front-sentence.has-audio {
   cursor: pointer;
 }
+.word-hl {
+  color: #FFE066;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(255, 220, 80, 0.35);
+}
 .front-jp {
   font-size: 16px;
   line-height: 1.55;
