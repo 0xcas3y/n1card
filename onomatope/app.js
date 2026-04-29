@@ -1,26 +1,29 @@
 // オノマトペ flashcard viewer
 const COLORS = ['pink', 'coral', 'teal', 'green', 'blue', 'purple'];
+const DAY_SIZE = 20;
 
 const urlParams = new URLSearchParams(location.search);
-const GYOU = urlParams.get('gyou') || 'a';
-const GYOU_JP = { a: 'あ', ka: 'か', sa: 'さ', ta: 'た', na: 'な', ha: 'は', ma: 'ま', ya: 'や', ra: 'ら', wa: 'わ' }[GYOU] || 'あ';
-const STORAGE_PREFIX = `onomatope:${GYOU}:`;
+const DAY = parseInt(urlParams.get('day') || '1', 10);
+const STORAGE_PREFIX = `onomatope:d${DAY}:`;
 
-// Data — sort by SRS: due first, then new cards
+// Data — load by day, sort by SRS
 const DataStore = {
   cards: [],
+  allCards: [],
+  _globalCards: [],  // all cards across all days (for synonym lookup)
   async load() {
     const res = await fetch('data/cards.json');
     if (!res.ok) throw new Error('加载 cards.json 失败');
     const data = await res.json();
-    const all = data.cards.filter(c => c.gyou === GYOU_JP);
+    this._globalCards = data.cards;
+    const dayCards = data.cards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
     const now = Date.now();
-    const due = all
+    const due = dayCards
       .filter(c => { const d = Progress.getDue(c.id); return d !== null && d <= now; })
       .sort((a, b) => (Progress.getDue(a.id) || 0) - (Progress.getDue(b.id) || 0));
-    const newCards = all.filter(c => Progress.isNew(c.id));
+    const newCards = dayCards.filter(c => Progress.isNew(c.id));
     this.cards = [...due, ...newCards];
-    this.allCards = all;
+    this.allCards = dayCards;
     return this.cards;
   }
 };
@@ -433,7 +436,8 @@ const Router = {
 
   jumpToWord(word) {
     const norm = w => toHiragana(w);
-    const target = DataStore.allCards.find(c =>
+    // Search across ALL cards (synonyms may be in other days)
+    const target = DataStore._globalCards.find(c =>
       norm(c.word) === norm(word) || c.word === word
     );
     if (!target) return;
@@ -573,7 +577,7 @@ const Router = {
 // Mini nav
 const MiniNav = {
   init() {
-    document.getElementById('mininav-gyou').textContent = GYOU_JP + '行';
+    document.getElementById('mininav-gyou').textContent = '第 ' + DAY + ' 天';
   },
   update() {
     const total = Router.cards.length;

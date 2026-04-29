@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>オノマトペ · 拟声拟态词速记</title>
+  <title>15天全掌握 · オノマトペ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=13">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 </head>
 <body>
@@ -17,78 +17,20 @@
 
     <h1 class="hub-title">
       <span class="hub-title-jp">オノマトペ</span>
-      <span class="hub-title-cn">拟声拟态词速记</span>
+      <span class="hub-title-cn">15天全掌握</span>
     </h1>
-    <p class="subtitle">选一个行开始刷卡。每行的学习进度独立保存。</p>
+    <p class="subtitle">选一天开始刷卡 · 完成后解锁下一天</p>
 
-    <div class="level-list">
-      <a class="level-btn lv-a" href="viewer.html?gyou=a">
-        <span class="lv">あ行</span>
-        <span class="meta"><span class="count">20 词</span>あ・い・う・え・お 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="a" data-total="20"></div></div>
-      </a>
-      <a class="level-btn lv-ka" href="viewer.html?gyou=ka">
-        <span class="lv">か行</span>
-        <span class="meta"><span class="count">77 词</span>か・き・く・け・こ 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ka" data-total="77"></div></div>
-      </a>
-      <a class="level-btn lv-sa" href="viewer.html?gyou=sa">
-        <span class="lv">さ行</span>
-        <span class="meta"><span class="count">43 词</span>さ・し・す・せ・そ 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="sa" data-total="43"></div></div>
-      </a>
-      <a class="level-btn lv-ta" href="viewer.html?gyou=ta">
-        <span class="lv">た行</span>
-        <span class="meta"><span class="count">37 词</span>た・ち・つ・て・と 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ta" data-total="37"></div></div>
-      </a>
-      <a class="level-btn lv-na" href="viewer.html?gyou=na">
-        <span class="lv">な行</span>
-        <span class="meta"><span class="count">12 词</span>な・に・ぬ・ね・の 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="na" data-total="12"></div></div>
-      </a>
-      <a class="level-btn lv-ha" href="viewer.html?gyou=ha">
-        <span class="lv">は行</span>
-        <span class="meta"><span class="count">71 词</span>は・ひ・ふ・へ・ほ 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ha" data-total="71"></div></div>
-      </a>
-      <a class="level-btn lv-ma" href="viewer.html?gyou=ma">
-        <span class="lv">ま行</span>
-        <span class="meta"><span class="count">25 词</span>ま・み・む・め・も 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ma" data-total="25"></div></div>
-      </a>
-      <a class="level-btn lv-ya" href="viewer.html?gyou=ya">
-        <span class="lv">や行</span>
-        <span class="meta"><span class="count">4 词</span>ゆ・よ 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ya" data-total="4"></div></div>
-      </a>
-      <a class="level-btn lv-ra" href="viewer.html?gyou=ra">
-        <span class="lv">ら行</span>
-        <span class="meta"><span class="count">1 词</span>り 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="ra" data-total="1"></div></div>
-      </a>
-      <a class="level-btn lv-wa" href="viewer.html?gyou=wa">
-        <span class="lv">わ行</span>
-        <span class="meta"><span class="count">2 词</span>わ 段</span>
-        <span class="arrow">›</span>
-        <div class="btn-progress"><div class="btn-progress-fill" data-gyou="wa" data-total="2"></div></div>
-      </a>
+    <div id="day-list" class="level-list">
+      <div style="opacity:0.4;padding:20px 0;font-size:14px;">加载中…</div>
     </div>
 
     <div class="footer">
-      <span class="footer-pill">单击播放</span>
+      <span class="footer-pill">点词发音</span>
       <span class="footer-pill">双击翻面</span>
-      <span class="footer-pill">上滑不熟</span>
-      <span class="footer-pill">下滑已掌握</span>
+      <span class="footer-pill">向左 难</span>
+      <span class="footer-pill">向右 易</span>
+      <span class="footer-pill">向上划 返回</span>
       <span class="footer-divider"></span>
       <span class="footer-pill">共 284 词</span>
       <span class="footer-pill">Immersion Kit + YouTube</span>
@@ -96,17 +38,54 @@
   </div>
 
   <script>
-    (function () {
-      document.querySelectorAll('.btn-progress-fill[data-gyou]').forEach(function (el) {
-        var gyou = el.dataset.gyou;
-        var total = parseInt(el.dataset.total, 10) || 1;
-        try {
-          var p = JSON.parse(localStorage.getItem('onomatope:' + gyou + ':progress') || '{}');
-          var known = Object.values(p).filter(function (v) { return v.status === 'known'; }).length;
-          if (known > 0) el.style.width = Math.round(known / total * 100) + '%';
-        } catch (e) {}
-      });
-    })();
+  const DAY_SIZE = 20;
+  const DAY_COLORS = ['lv-a','lv-ka','lv-sa','lv-ta','lv-na','lv-ha','lv-ma','lv-ya','lv-ra','lv-wa','lv-a','lv-sa','lv-ta','lv-ha','lv-ma'];
+
+  async function init() {
+    const res = await fetch('data/cards.json');
+    const data = await res.json();
+    const cards = data.cards;
+    const totalDays = Math.ceil(cards.length / DAY_SIZE);
+
+    // Compute progress for each day
+    const days = [];
+    for (let d = 1; d <= totalDays; d++) {
+      const dayCards = cards.slice((d - 1) * DAY_SIZE, d * DAY_SIZE);
+      const prog = JSON.parse(localStorage.getItem('onomatope:d' + d + ':progress') || '{}');
+      const reviewed = dayCards.filter(c => prog[c.id] !== undefined).length;
+      days.push({ day: d, total: dayCards.length, reviewed, done: reviewed === dayCards.length });
+    }
+
+    const list = document.getElementById('day-list');
+    list.innerHTML = '';
+
+    days.forEach(function(dp, i) {
+      const unlocked = i === 0 || days[i - 1].done;
+      const pct = dp.total > 0 ? Math.round(dp.reviewed / dp.total * 100) : 0;
+      const color = DAY_COLORS[i % DAY_COLORS.length];
+      const tag = unlocked ? 'a' : 'div';
+      const el = document.createElement(tag);
+      el.className = 'level-btn ' + color + (unlocked ? '' : ' disabled');
+      if (unlocked) el.href = 'viewer.html?day=' + dp.day;
+
+      var statusText = unlocked
+        ? (dp.done ? '已完成 ✓' : (dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词'))
+        : '🔒 完成第 ' + (dp.day - 1) + ' 天后解锁';
+
+      el.innerHTML =
+        '<span class="lv">第 ' + dp.day + ' 天</span>' +
+        '<span class="meta"><span class="count">' + (unlocked && !dp.done ? dp.total + ' 词' : '') + '</span>' + statusText + '</span>' +
+        '<span class="arrow">' + (unlocked ? '›' : '') + '</span>' +
+        '<div class="btn-progress"><div class="btn-progress-fill" style="width:' + pct + '%"></div></div>';
+
+      list.appendChild(el);
+    });
+  }
+
+  init().catch(function() {
+    document.getElementById('day-list').innerHTML =
+      '<div style="opacity:0.4;padding:20px 0;font-size:14px;">加载失败，请刷新</div>';
+  });
   </script>
 </body>
 </html>
