@@ -192,10 +192,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 6px 10px 6px 13px;
-  background: rgba(0,0,0,0.1);
-  border-radius: 6px;
-  border-left: 3px solid rgba(255,255,255,0.38);
+  padding: 4px 2px;
 }
 .front-synonyms {
   display: flex;

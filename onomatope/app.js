@@ -267,7 +267,7 @@ const CardView = {
       </div>
       ${synonyms.length ? `
         <div class="front-synonyms">
-          <span class="syn-label">近义</span>${synonyms.map(s => `<span class="syn-tag">${s}</span>`).join('')}
+          <span class="syn-label">近义词</span>${synonyms.map(s => `<span class="syn-tag">${s}</span>`).join('')}
         </div>` : ''}
       ${hasImg
         ? `<div class="front-image"><img src="${ex0.image}" alt=""></div>`
@@ -284,9 +284,9 @@ const CardView = {
         </div>` : ''}
       ${hasAudio ? `<audio class="front-audio" preload="auto" src="${ex0.audio}"></audio>` : ''}
       <div class="hint-bottom">
-        <span class="hint-dir hint-hard">◀ 难</span>
+        <span class="hint-dir hint-hard">向左滑动 难</span>
         <span class="hint-mid">双击翻面</span>
-        <span class="hint-dir hint-easy">易 ▶</span>
+        <span class="hint-dir hint-easy">向右滑动 易</span>
       </div>
     `;
     return el;
