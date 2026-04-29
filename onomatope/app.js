@@ -369,7 +369,7 @@ const CardView = {
           漫画例句
           <a class="ik-inline-link"
              href="https://www.immersionkit.com/dictionary?keyword=${encodeURIComponent(card.word)}&exact=true"
-             target="_blank" rel="noopener">IK ↗</a>
+             target="_blank" rel="noopener">🔊 听更多例句</a>
         </div>
         <div class="section-body">${examplesHTML}</div>
       </div>

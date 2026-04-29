@@ -221,19 +221,19 @@ html, body {
   justify-content: space-between;
 }
 .ik-inline-link {
-  font-size: 10px;
-  font-weight: 400;
-  padding: 2px 7px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.14);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.28);
   border-radius: 999px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.8);
   text-decoration: none;
   letter-spacing: 0.2px;
   transition: background 0.15s;
   flex-shrink: 0;
 }
-.ik-inline-link:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); }
+.ik-inline-link:hover { background: rgba(255,255,255,0.22); color: #fff; }
 .audio-badge {
   display: inline-block;
   margin-left: 4px;
