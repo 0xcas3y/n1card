@@ -130,12 +130,12 @@ const Gestures = {
     const clearTap = () => { if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; } };
 
     el.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sentence-row')) { touchStart = null; return; }
+      if (e.target.closest('.sentence-row') || e.target.closest('.front-synonyms') || e.target.closest('.card-back-btn')) { touchStart = null; return; }
       touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
     });
     el.addEventListener('pointercancel', () => { touchStart = null; clearTap(); });
     el.addEventListener('pointerup', (e) => {
-      if (e.target.closest('.sentence-row')) { touchStart = null; clearTap(); return; }
+      if (e.target.closest('.sentence-row') || e.target.closest('.front-synonyms') || e.target.closest('.card-back-btn')) { touchStart = null; clearTap(); return; }
       if (!touchStart) return;
       const dx = e.clientX - touchStart.x;
       const dy = e.clientY - touchStart.y;
@@ -279,13 +279,13 @@ const CardView = {
     const synonyms = getSynonyms(card);
 
     el.innerHTML = `
-      <div class="card-id"><span class="gyou">${card.gyou}</span>${card.id}</div>
+      ${NavHistory.canBack() ? '<button class="card-back-btn" aria-label="返回">←</button>' : ''}
       <div class="front-top">
         <div class="front-word" data-len="${[...card.word].length}">${card.word}</div>
       </div>
       ${synonyms.length ? `
         <div class="front-synonyms">
-          <span class="syn-label">近义词</span>${synonyms.map(s => `<span class="syn-tag">${s}</span>`).join('')}
+          <span class="syn-label">近义词</span>${synonyms.map(s => `<button class="syn-tag" data-word="${s}">${s}</button>`).join('')}
         </div>` : ''}
       ${hasImg
         ? `<div class="front-image"><img src="${ex0.image}" alt=""></div>`
@@ -340,7 +340,7 @@ const CardView = {
       : '<div class="sentence-row"><div class="cn" style="opacity:0.5;">（正面已展示例句）</div></div>';
 
     el.innerHTML = `
-      <div class="card-id"><span class="gyou">${card.gyou}</span>${card.id}</div>
+      ${NavHistory.canBack() ? '<button class="card-back-btn" aria-label="返回">←</button>' : ''}
       <div class="back-head">${card.word}</div>
       <div class="back-kana">副詞</div>
 
@@ -377,6 +377,14 @@ const CardView = {
   }
 };
 
+// Navigation history — for synonym jump → back
+const NavHistory = {
+  _stack: [],
+  push(idx, peek) { this._stack.push({ idx, peek: peek || null }); },
+  pop()  { return this._stack.pop(); },
+  canBack() { return this._stack.length > 0; }
+};
+
 // Chinese translation toggle — class on #app controls .front-cn visibility
 const CnToggle = {
   _show: false,
@@ -392,6 +400,7 @@ const Router = {
   currentIndex: 0,
   isBack: false,
   cards: [],
+  peekCard: null,   // non-null when viewing a synonym card outside the session
 
   init(cards) {
     this.cards = cards;
@@ -421,6 +430,33 @@ const Router = {
 
   flip() { this.isBack = !this.isBack; this.render(); },
 
+  jumpToWord(word) {
+    const norm = w => toHiragana(w);
+    const target = DataStore.allCards.find(c =>
+      norm(c.word) === norm(word) || c.word === word
+    );
+    if (!target) return;
+    NavHistory.push(this.currentIndex, this.peekCard);
+    const idx = this.cards.findIndex(c => c.id === target.id);
+    if (idx !== -1) {
+      this.peekCard = null;
+      this.currentIndex = idx;
+    } else {
+      this.peekCard = target;
+    }
+    this.isBack = false;
+    this.render();
+  },
+
+  goBack() {
+    const prev = NavHistory.pop();
+    if (!prev) return;
+    this.currentIndex = prev.idx;
+    this.peekCard = prev.peek;
+    this.isBack = false;
+    this.render();
+  },
+
   render() {
     const stage = document.getElementById('cardstage');
     stage.innerHTML = '';
@@ -439,7 +475,7 @@ const Router = {
       return;
     }
 
-    const card = this.cards[this.currentIndex];
+    const card = this.peekCard || this.cards[this.currentIndex];
     const el = this.isBack ? CardView.renderBack(card) : CardView.renderFront(card);
     stage.appendChild(el);
 
@@ -454,8 +490,8 @@ const Router = {
       },
       onDoubleTap: () => this.flip(),
       onSwipe: (dir) => {
-        if      (dir === 'left')  { Progress.grade(card.id, 1); this.next(); }
-        else if (dir === 'right') { Progress.grade(card.id, 4); this.next(); }
+        if      (dir === 'left')  { if (!this.peekCard) Progress.grade(card.id, 1); this.next(); }
+        else if (dir === 'right') { if (!this.peekCard) Progress.grade(card.id, 4); this.next(); }
         else if (dir === 'up')    this.prev();
         else if (dir === 'down')  this.next();
       }
@@ -492,6 +528,15 @@ const Router = {
         }
       });
     }
+
+    // Back button
+    const backBtn = el.querySelector('.card-back-btn');
+    if (backBtn) backBtn.addEventListener('pointerup', e => { e.stopPropagation(); Router.goBack(); });
+
+    // Synonym tag navigation
+    el.querySelectorAll('.syn-tag[data-word]').forEach(btn => {
+      btn.addEventListener('pointerup', e => { e.stopPropagation(); Router.jumpToWord(btn.dataset.word); });
+    });
 
     // 译 button on front card
     const cnBtn = el.querySelector('.cn-toggle-btn');
