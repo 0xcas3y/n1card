@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=14">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 </head>
 <body>
@@ -60,22 +60,52 @@
     list.innerHTML = '';
 
     days.forEach(function(dp, i) {
-      const unlocked = i === 0 || days[i - 1].done;
-      const pct = dp.total > 0 ? Math.round(dp.reviewed / dp.total * 100) : 0;
-      const color = DAY_COLORS[i % DAY_COLORS.length];
-      const tag = unlocked ? 'a' : 'div';
-      const el = document.createElement(tag);
-      el.className = 'level-btn ' + color + (unlocked ? '' : ' disabled');
-      if (unlocked) el.href = 'viewer.html?day=' + dp.day;
+      var quizComplete = localStorage.getItem('onomatope:d' + dp.day + ':quiz-complete') === '1';
+      var prevQuizComplete = i === 0 || localStorage.getItem('onomatope:d' + (dp.day - 1) + ':quiz-complete') === '1';
+      var reviewDone = i === 0 || localStorage.getItem('onomatope:d' + (dp.day - 1) + ':quiz-review') === '1';
 
-      var statusText = unlocked
-        ? (dp.done ? '已完成 ✓' : (dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词'))
-        : '🔒 完成第 ' + (dp.day - 1) + ' 天后解锁';
+      // Fully unlocked: prev day quiz-complete passed AND review done
+      var unlocked = i === 0 || (prevQuizComplete && reviewDone);
+      // Needs review quiz: prev quiz-complete done but review not yet done
+      var needsReview = i > 0 && prevQuizComplete && !reviewDone;
+      // Needs completion quiz: cards done but quiz not yet done
+      var needsQuiz = dp.done && !quizComplete;
+
+      var pct = dp.total > 0 ? Math.round(dp.reviewed / dp.total * 100) : 0;
+      var color = DAY_COLORS[i % DAY_COLORS.length];
+
+      var el = document.createElement(unlocked || needsReview ? 'a' : 'div');
+      el.className = 'level-btn ' + color + (unlocked || needsReview ? '' : ' disabled');
+
+      var href, statusText, arrow;
+      if (needsReview) {
+        href = 'quiz.html?day=' + (dp.day - 1) + '&type=review';
+        statusText = '📝 复习上一天后解锁';
+        arrow = '›';
+      } else if (!unlocked) {
+        href = null;
+        statusText = '🔒 完成第 ' + (dp.day - 1) + ' 天后解锁';
+        arrow = '';
+      } else if (quizComplete) {
+        href = 'viewer.html?day=' + dp.day;
+        statusText = dp.done ? '✅ 已完成' : (dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词');
+        arrow = '›';
+      } else if (needsQuiz) {
+        href = 'quiz.html?day=' + dp.day + '&type=complete';
+        statusText = '📝 做选择题完成当天';
+        arrow = '›';
+      } else {
+        href = 'viewer.html?day=' + dp.day;
+        statusText = dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词';
+        arrow = '›';
+      }
+
+      if (href) el.href = href;
 
       el.innerHTML =
         '<span class="lv">第 ' + dp.day + ' 天</span>' +
-        '<span class="meta"><span class="count">' + (unlocked && !dp.done ? dp.total + ' 词' : '') + '</span>' + statusText + '</span>' +
-        '<span class="arrow">' + (unlocked ? '›' : '') + '</span>' +
+        '<span class="meta"><span class="count"></span>' + statusText + '</span>' +
+        '<span class="arrow">' + arrow + '</span>' +
         '<div class="btn-progress"><div class="btn-progress-fill" style="width:' + pct + '%"></div></div>';
 
       list.appendChild(el);

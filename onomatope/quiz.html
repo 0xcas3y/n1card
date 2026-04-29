@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>选择题 · オノマトペ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%; background: #111; color: #fff;
+      font-family: "M PLUS Rounded 1c", "Hiragino Sans", "PingFang SC", -apple-system, sans-serif;
+      overscroll-behavior: none;
+    }
+    #app {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 40px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Progress bar */
+    #progress-bar-wrap {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      margin: 20px 0 0;
+      flex-shrink: 0;
+    }
+    #progress-bar-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.55);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    #progress-label {
+      margin-top: 10px;
+      font-size: 12px;
+      opacity: 0.4;
+      letter-spacing: 0.5px;
+      align-self: flex-end;
+    }
+
+    /* Word display */
+    #word-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 24px 0 20px;
+    }
+    #quiz-type-label {
+      font-size: 11px;
+      opacity: 0.38;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
+    }
+    #current-word {
+      font-size: clamp(44px, 12vw, 72px);
+      font-weight: 800;
+      letter-spacing: 3px;
+      -webkit-text-stroke: 1.5px rgba(255,255,255,0.4);
+      text-shadow: 3px 4px 0 rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    /* Options */
+    #options {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .opt-btn {
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .opt-btn:active { background: rgba(255,255,255,0.14); }
+    .opt-btn.correct {
+      background: rgba(79,184,158,0.25);
+      border-color: #4FB89E;
+    }
+    .opt-btn.wrong {
+      background: rgba(220,80,80,0.22);
+      border-color: rgba(220,80,80,0.6);
+    }
+    .opt-btn.show-correct {
+      background: rgba(79,184,158,0.18);
+      border-color: rgba(79,184,158,0.5);
+    }
+    .opt-btn.disabled { pointer-events: none; }
+
+    /* Result screen */
+    #result-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      width: 100%;
+      text-align: center;
+      gap: 12px;
+    }
+    .result-emoji { font-size: 56px; }
+    .result-title { font-size: 24px; font-weight: 700; }
+    .result-score { font-size: 42px; font-weight: 800; letter-spacing: 2px; }
+    .result-sub { font-size: 14px; opacity: 0.55; line-height: 1.6; }
+    .result-btn {
+      margin-top: 8px;
+      padding: 12px 32px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-pass { background: #4FB89E; color: #fff; }
+    .btn-fail { background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="progress-bar-wrap"><div id="progress-bar-fill" style="width:0%"></div></div>
+  <div id="progress-label">第 1 题 / 20</div>
+
+  <div id="word-area">
+    <div id="quiz-type-label">SELECT MEANING</div>
+    <div id="current-word">—</div>
+  </div>
+
+  <div id="options"></div>
+
+  <div id="result-screen">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title" id="result-title">通过！</div>
+    <div class="result-score" id="result-score">18 / 20</div>
+    <div class="result-sub" id="result-sub"></div>
+    <button class="result-btn btn-pass" id="result-btn" onclick="handleResult()">继续</button>
+  </div>
+</div>
+
+<script>
+const DAY_SIZE = 20;
+const PASS = 0.8;
+
+const params = new URLSearchParams(location.search);
+const DAY   = parseInt(params.get('day') || '1', 10);
+const TYPE  = params.get('type') || 'complete'; // 'complete' | 'review'
+
+let questions = [], current = 0, score = 0, locked = false;
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+  const res  = await fetch('data/cards.json');
+  const data = await res.json();
+  const all  = data.cards;
+  const day  = all.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
+
+  questions = shuffle([...day]).map(card => {
+    const correct = card.meanings[0];
+    const pool    = shuffle(all.filter(c => c.id !== card.id && c.meanings[0] !== correct));
+    const opts    = shuffle([correct, ...pool.slice(0, 3).map(c => c.meanings[0])]);
+    return { word: card.word, correct, opts };
+  });
+
+  document.getElementById('quiz-type-label').textContent =
+    TYPE === 'review' ? '复习测验 · 第 ' + DAY + ' 天' : '通关测验 · 第 ' + DAY + ' 天';
+
+  render();
+}
+
+// ── Render question ────────────────────────────────────
+function render() {
+  const q   = questions[current];
+  const pct = (current / questions.length * 100).toFixed(1);
+
+  document.getElementById('progress-bar-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = '第 ' + (current + 1) + ' 题 / ' + questions.length;
+  document.getElementById('current-word').textContent = q.word;
+
+  const box = document.getElementById('options');
+  box.innerHTML = '';
+  q.opts.forEach(function(opt) {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', function() { answer(opt, btn, q); });
+    box.appendChild(btn);
+  });
+
+  locked = false;
+}
+
+// ── Answer ─────────────────────────────────────────────
+function answer(opt, btn, q) {
+  if (locked) return;
+  locked = true;
+
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(function(b) { b.classList.add('disabled'); });
+
+  if (opt === q.correct) {
+    score++;
+    btn.classList.add('correct');
+    setTimeout(next, 650);
+  } else {
+    btn.classList.add('wrong');
+    btns.forEach(function(b) { if (b.textContent === q.correct) b.classList.add('show-correct'); });
+    setTimeout(next, 1000);
+  }
+}
+
+function next() {
+  current++;
+  if (current >= questions.length) { showResult(); return; }
+  render();
+}
+
+// ── Result ─────────────────────────────────────────────
+function showResult() {
+  document.getElementById('word-area').style.display  = 'none';
+  document.getElementById('options').style.display    = 'none';
+  document.getElementById('result-screen').style.display = 'flex';
+
+  const pct    = score / questions.length;
+  const passed = pct >= PASS;
+
+  document.getElementById('result-score').textContent = score + ' / ' + questions.length;
+
+  if (passed) {
+    const key = TYPE === 'complete'
+      ? 'onomatope:d' + DAY + ':quiz-complete'
+      : 'onomatope:d' + DAY + ':quiz-review';
+    localStorage.setItem(key, '1');
+
+    document.getElementById('result-emoji').textContent = score === questions.length ? '🎉' : '✅';
+    document.getElementById('result-title').textContent = '通过！';
+    document.getElementById('result-sub').textContent =
+      TYPE === 'complete' ? '第 ' + DAY + ' 天已完成，加油！' : '复习通过，可以开始第 ' + (DAY + 1) + ' 天了';
+    document.getElementById('result-btn').className = 'result-btn btn-pass';
+    document.getElementById('result-btn').textContent = TYPE === 'complete' ? '返回主页' : '开始第 ' + (DAY + 1) + ' 天';
+  } else {
+    document.getElementById('result-emoji').textContent = '😓';
+    document.getElementById('result-title').textContent = '未达到 80%';
+    document.getElementById('result-sub').textContent = '正确 ' + score + ' 题，还需 ' + Math.ceil(questions.length * PASS - score) + ' 题才能通过，再试一次！';
+    document.getElementById('result-btn').className = 'result-btn btn-fail';
+    document.getElementById('result-btn').textContent = '重新作答';
+  }
+
+  document.getElementById('progress-bar-fill').style.width = '100%';
+}
+
+function handleResult() {
+  const pct    = score / questions.length;
+  const passed = pct >= PASS;
+
+  if (!passed) {
+    // Reset and retry
+    current = 0; score = 0;
+    questions = shuffle(questions);
+    document.getElementById('word-area').style.display  = '';
+    document.getElementById('options').style.display    = '';
+    document.getElementById('result-screen').style.display = 'none';
+    render();
+    return;
+  }
+
+  if (TYPE === 'complete') {
+    location.href = 'index.html';
+  } else {
+    location.href = 'viewer.html?day=' + (DAY + 1);
+  }
+}
+
+// ── Util ───────────────────────────────────────────────
+function shuffle(a) {
+  const arr = [...a];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+init().catch(function(e) {
+  document.getElementById('current-word').textContent = '加载失败';
+  console.error(e);
+});
+</script>
+</body>
+</html>

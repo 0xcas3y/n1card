@@ -554,21 +554,26 @@ const Router = {
 
   showComplete() {
     const stage = document.getElementById('cardstage');
-    const s = Progress.stats(this.cards);
-    const next = Progress.nextDueDate();
+    const quizDone = localStorage.getItem('onomatope:d' + DAY + ':quiz-complete') === '1';
     stage.innerHTML = `
       <div style="text-align:center;padding:40px;max-width:300px;margin:0 auto;">
-        <div style="font-size:48px;margin-bottom:16px;">🎉</div>
-        <div style="font-size:22px;font-weight:600;margin-bottom:10px;">${GYOU_JP}行 刷完啦！</div>
-        <div style="opacity:0.65;font-size:14px;line-height:1.8;margin-bottom:18px;">
-          已学会 ${s.known} 词<br>
-          ${next ? `下次复习：${next}` : ''}
+        <div style="font-size:48px;margin-bottom:16px;">${quizDone ? '✅' : '🎉'}</div>
+        <div style="font-size:22px;font-weight:600;margin-bottom:10px;">第 ${DAY} 天刷完了！</div>
+        <div style="opacity:0.65;font-size:14px;line-height:1.8;margin-bottom:24px;">
+          ${quizDone ? '选择题已通过，当天完成 🎊' : '做选择题才算完成这一天'}
         </div>
-        <button onclick="location.reload()"
-          style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.22);
-                 padding:10px 24px;border-radius:999px;font-size:14px;cursor:pointer;font-family:inherit;">
-          再刷一遍
-        </button>
+        ${quizDone
+          ? `<button onclick="location.href='index.html'"
+               style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.22);
+                      padding:10px 28px;border-radius:999px;font-size:14px;cursor:pointer;font-family:inherit;">
+               返回主页
+             </button>`
+          : `<button onclick="location.href='quiz.html?day=${DAY}&type=complete'"
+               style="background:#4FB89E;color:#fff;border:none;
+                      padding:12px 32px;border-radius:999px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">
+               做选择题 →
+             </button>`
+        }
       </div>`;
     MiniNav.update();
   }
