@@ -279,7 +279,6 @@ const CardView = {
     const synonyms = getSynonyms(card);
 
     el.innerHTML = `
-      ${NavHistory.canBack() ? '<button class="card-back-btn" aria-label="返回">←</button>' : ''}
       <div class="front-top">
         <div class="front-word" data-len="${[...card.word].length}">${card.word}</div>
       </div>
@@ -302,9 +301,12 @@ const CardView = {
         </div>` : ''}
       ${hasAudio ? `<audio class="front-audio" preload="auto" src="${ex0.audio}"></audio>` : ''}
       <div class="hint-bottom">
-        <span class="hint-dir hint-hard">向左滑动 难</span>
-        <span class="hint-mid">双击翻面</span>
-        <span class="hint-dir hint-easy">向右滑动 易</span>
+        <div class="hint-row">
+          <span class="hint-dir">向左 难</span>
+          <span class="hint-mid">双击翻面</span>
+          <span class="hint-dir">向右 易</span>
+        </div>
+        <div class="hint-up">向上划 返回</div>
       </div>
     `;
     return el;
@@ -340,7 +342,6 @@ const CardView = {
       : '<div class="sentence-row"><div class="cn" style="opacity:0.5;">（正面已展示例句）</div></div>';
 
     el.innerHTML = `
-      ${NavHistory.canBack() ? '<button class="card-back-btn" aria-label="返回">←</button>' : ''}
       <div class="back-head">${card.word}</div>
       <div class="back-kana">副詞</div>
 
@@ -492,7 +493,7 @@ const Router = {
       onSwipe: (dir) => {
         if      (dir === 'left')  { if (!this.peekCard) Progress.grade(card.id, 1); this.next(); }
         else if (dir === 'right') { if (!this.peekCard) Progress.grade(card.id, 4); this.next(); }
-        else if (dir === 'up')    this.prev();
+        else if (dir === 'up')    { NavHistory.canBack() ? this.goBack() : this.prev(); }
         else if (dir === 'down')  this.next();
       }
     });
@@ -528,10 +529,6 @@ const Router = {
         }
       });
     }
-
-    // Back button
-    const backBtn = el.querySelector('.card-back-btn');
-    if (backBtn) backBtn.addEventListener('pointerup', e => { e.stopPropagation(); Router.goBack(); });
 
     // Synonym tag navigation
     el.querySelectorAll('.syn-tag[data-word]').forEach(btn => {

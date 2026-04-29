@@ -99,28 +99,6 @@ html, body {
 .flash-card.color-blue   { background: linear-gradient(140deg, #5AA8E0, #3C7EC0); }
 .flash-card.color-purple { background: linear-gradient(140deg, #9278C8, #6D57A0); }
 
-.card-back-btn {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 32px;
-  height: 32px;
-  background: rgba(0,0,0,0.2);
-  border: 1.5px solid rgba(255,255,255,0.45);
-  border-radius: 50%;
-  color: #fff;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-family: inherit;
-  z-index: 2;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s;
-  line-height: 1;
-}
-.card-back-btn:active { background: rgba(0,0,0,0.38); }
 
 .front-top {
   display: flex;
@@ -265,27 +243,39 @@ html, body {
 
 .hint-bottom {
   position: absolute;
-  bottom: 14px;
+  bottom: 12px;
   left: 18px;
   right: 18px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.hint-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 .hint-dir {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   opacity: 0.38;
   letter-spacing: 0.5px;
 }
 .hint-mid {
   font-size: 9.5px;
-  opacity: 0.3;
+  opacity: 0.28;
   letter-spacing: 1px;
   text-align: center;
   padding: 0 8px;
-  border-left: 1px solid rgba(255,255,255,0.15);
-  border-right: 1px solid rgba(255,255,255,0.15);
+  border-left: 1px solid rgba(255,255,255,0.13);
+  border-right: 1px solid rgba(255,255,255,0.13);
+}
+.hint-up {
+  font-size: 9.5px;
+  opacity: 0.26;
+  letter-spacing: 0.8px;
 }
 
 /* Back of card */
