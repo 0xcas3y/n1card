@@ -4,15 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>选择题 · オノマトペ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <title>测验 · オノマトペ</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%; background: #111; color: #fff;
-      font-family: "M PLUS Rounded 1c", "Hiragino Sans", "PingFang SC", -apple-system, sans-serif;
+      font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif;
       overscroll-behavior: none;
     }
     #app {
@@ -25,30 +22,46 @@
       margin: 0 auto;
     }
 
+    /* Back link */
+    .back-link {
+      align-self: flex-start;
+      margin-top: 16px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+    }
+
     /* Progress bar */
-    #progress-bar-wrap {
-      width: 100%;
-      height: 3px;
+    #progress-wrap {
+      width: 100%; height: 3px;
       background: rgba(255,255,255,0.1);
       border-radius: 999px;
-      margin: 20px 0 0;
+      margin: 14px 0 0;
       flex-shrink: 0;
     }
-    #progress-bar-fill {
+    #progress-fill {
       height: 100%;
-      background: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.5);
       border-radius: 999px;
       transition: width 0.3s ease;
     }
-    #progress-label {
+
+    /* Labels */
+    #type-label {
       margin-top: 10px;
+      font-size: 11px;
+      opacity: 0.35;
+      letter-spacing: 1.5px;
+      align-self: flex-start;
+    }
+    #progress-label {
+      margin-top: 6px;
       font-size: 12px;
-      opacity: 0.4;
-      letter-spacing: 0.5px;
+      opacity: 0.38;
       align-self: flex-end;
     }
 
-    /* Word display */
+    /* Word area */
     #word-area {
       flex: 1;
       display: flex;
@@ -56,21 +69,63 @@
       align-items: center;
       justify-content: center;
       width: 100%;
-      padding: 24px 0 20px;
-    }
-    #quiz-type-label {
-      font-size: 11px;
-      opacity: 0.38;
-      letter-spacing: 1.5px;
-      margin-bottom: 18px;
+      padding: 16px 0 14px;
+      gap: 10px;
     }
     #current-word {
       font-size: clamp(44px, 12vw, 72px);
       font-weight: 800;
       letter-spacing: 3px;
-      -webkit-text-stroke: 1.5px rgba(255,255,255,0.4);
-      text-shadow: 3px 4px 0 rgba(0,0,0,0.2);
       text-align: center;
+      line-height: 1.1;
+    }
+    #word-image-wrap {
+      width: 100%;
+      max-height: 180px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      display: none;
+      cursor: pointer;
+    }
+    #word-image-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      display: block;
+    }
+    #word-sentence {
+      font-size: 14px;
+      line-height: 1.55;
+      opacity: 0.82;
+      text-align: center;
+      display: none;
+    }
+
+    /* TF definition */
+    #tf-area {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: none;
+    }
+    #tf-label {
+      font-size: 11px;
+      opacity: 0.45;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    #tf-definition {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    #tf-correct-hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #4FB89E;
+      display: none;
     }
 
     /* Options */
@@ -78,7 +133,7 @@
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
     }
     .opt-btn {
       width: 100%;
@@ -92,22 +147,38 @@
       line-height: 1.5;
       text-align: left;
       cursor: pointer;
-      transition: background 0.12s, border-color 0.12s;
+      transition: background 0.1s, border-color 0.1s;
     }
     .opt-btn:active { background: rgba(255,255,255,0.14); }
-    .opt-btn.correct {
-      background: rgba(79,184,158,0.25);
-      border-color: #4FB89E;
-    }
-    .opt-btn.wrong {
-      background: rgba(220,80,80,0.22);
-      border-color: rgba(220,80,80,0.6);
-    }
-    .opt-btn.show-correct {
-      background: rgba(79,184,158,0.18);
-      border-color: rgba(79,184,158,0.5);
-    }
+    .opt-btn.correct { background: rgba(79,184,158,0.25); border-color: #4FB89E; }
+    .opt-btn.wrong   { background: rgba(220,80,80,0.22);  border-color: rgba(220,80,80,0.6); }
+    .opt-btn.hint    { background: rgba(79,184,158,0.12); border-color: rgba(79,184,158,0.4); }
     .opt-btn.disabled { pointer-events: none; }
+
+    /* TF buttons */
+    #tf-buttons {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      display: none;
+    }
+    .tf-btn {
+      padding: 18px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .tf-btn:active { background: rgba(255,255,255,0.14); }
+    .tf-btn.correct { background: rgba(79,184,158,0.25); border-color: #4FB89E; }
+    .tf-btn.wrong   { background: rgba(220,80,80,0.22);  border-color: rgba(220,80,80,0.6); }
+    .tf-btn.disabled { pointer-events: none; }
 
     /* Result screen */
     #result-screen {
@@ -119,14 +190,15 @@
       width: 100%;
       text-align: center;
       gap: 12px;
+      padding: 20px 0;
     }
-    .result-emoji { font-size: 56px; }
-    .result-title { font-size: 24px; font-weight: 700; }
-    .result-score { font-size: 42px; font-weight: 800; letter-spacing: 2px; }
-    .result-sub { font-size: 14px; opacity: 0.55; line-height: 1.6; }
+    .result-emoji { font-size: 52px; }
+    .result-title { font-size: 22px; font-weight: 700; }
+    .result-score { font-size: 40px; font-weight: 800; letter-spacing: 2px; }
+    .result-sub   { font-size: 14px; opacity: 0.55; line-height: 1.7; }
+    .result-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
     .result-btn {
-      margin-top: 8px;
-      padding: 12px 32px;
+      padding: 12px 28px;
       border-radius: 999px;
       font-family: inherit;
       font-size: 15px;
@@ -134,165 +206,131 @@
       cursor: pointer;
       border: none;
     }
-    .btn-pass { background: #4FB89E; color: #fff; }
-    .btn-fail { background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); }
+    .btn-primary { background: #4FB89E; color: #fff; }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); }
+
+    /* Round transition */
+    #round-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      width: 100%;
+      text-align: center;
+      gap: 14px;
+    }
+    .round-emoji { font-size: 52px; }
+    .round-title { font-size: 22px; font-weight: 700; }
+    .round-sub   { font-size: 14px; opacity: 0.6; line-height: 1.7; max-width: 280px; }
+    .round-btn {
+      margin-top: 8px;
+      padding: 13px 32px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: #4FB89E;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
 <div id="app">
-  <div id="progress-bar-wrap"><div id="progress-bar-fill" style="width:0%"></div></div>
-  <div id="progress-label">第 1 题 / 20</div>
+  <a class="back-link" href="index.html">← 返回</a>
+
+  <div id="progress-wrap"><div id="progress-fill" style="width:0%"></div></div>
+  <div id="type-label"></div>
+  <div id="progress-label"></div>
 
   <div id="word-area">
-    <div id="quiz-type-label">SELECT MEANING</div>
     <div id="current-word">—</div>
+    <div id="word-image-wrap"><img id="word-image" src="" alt=""></div>
+    <div id="word-sentence"></div>
+    <audio id="word-audio" preload="auto" style="display:none"></audio>
+    <div id="tf-area">
+      <div id="tf-label">这个解释正确吗？</div>
+      <div id="tf-definition"></div>
+      <div id="tf-correct-hint"></div>
+    </div>
   </div>
 
   <div id="options"></div>
-
-  <div id="result-screen">
-    <div class="result-emoji" id="result-emoji">🎉</div>
-    <div class="result-title" id="result-title">通过！</div>
-    <div class="result-score" id="result-score">18 / 20</div>
-    <div class="result-sub" id="result-sub"></div>
-    <button class="result-btn btn-pass" id="result-btn" onclick="handleResult()">继续</button>
+  <div id="tf-buttons">
+    <button class="tf-btn" id="tf-yes">✓ 对</button>
+    <button class="tf-btn" id="tf-no">✗ 错</button>
   </div>
+
+  <div id="result-screen"></div>
+  <div id="round-screen"></div>
 </div>
 
 <script>
-const DAY_SIZE = 20;
-const PASS = 0.8;
+// ── Constants ─────────────────────────────────────────────
+const DAY_SIZE   = 20;
+const REVIEW_MAX = 15;
+const FINAL_N    = 50;
+const PASS = { r1: 0.8, r2: 0.9, review: 0.7, final: 0.8 };
 
+// ── URL params ────────────────────────────────────────────
 const params = new URLSearchParams(location.search);
-const DAY   = parseInt(params.get('day') || '1', 10);
-const TYPE  = params.get('type') || 'complete'; // 'complete' | 'review'
+const TYPE = params.get('type') || 'complete';
+const DAY  = parseInt(params.get('day') || '1', 10);
 
-let questions = [], current = 0, score = 0, locked = false;
-
-// ── Init ──────────────────────────────────────────────
-async function init() {
-  const res  = await fetch('data/cards.json');
-  const data = await res.json();
-  const all  = data.cards;
-  const day  = all.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
-
-  questions = shuffle([...day]).map(card => {
-    const correct = card.meanings[0];
-    const pool    = shuffle(all.filter(c => c.id !== card.id && c.meanings[0] !== correct));
-    const opts    = shuffle([correct, ...pool.slice(0, 3).map(c => c.meanings[0])]);
-    return { word: card.word, correct, opts };
-  });
-
-  document.getElementById('quiz-type-label').textContent =
-    TYPE === 'review' ? '复习测验 · 第 ' + DAY + ' 天' : '通关测验 · 第 ' + DAY + ' 天';
-
-  render();
-}
-
-// ── Render question ────────────────────────────────────
-function render() {
-  const q   = questions[current];
-  const pct = (current / questions.length * 100).toFixed(1);
-
-  document.getElementById('progress-bar-fill').style.width = pct + '%';
-  document.getElementById('progress-label').textContent = '第 ' + (current + 1) + ' 题 / ' + questions.length;
-  document.getElementById('current-word').textContent = q.word;
-
-  const box = document.getElementById('options');
-  box.innerHTML = '';
-  q.opts.forEach(function(opt) {
-    const btn = document.createElement('button');
-    btn.className = 'opt-btn';
-    btn.textContent = opt;
-    btn.addEventListener('click', function() { answer(opt, btn, q); });
-    box.appendChild(btn);
-  });
-
-  locked = false;
-}
-
-// ── Answer ─────────────────────────────────────────────
-function answer(opt, btn, q) {
-  if (locked) return;
-  locked = true;
-
-  const btns = document.querySelectorAll('.opt-btn');
-  btns.forEach(function(b) { b.classList.add('disabled'); });
-
-  if (opt === q.correct) {
-    score++;
-    btn.classList.add('correct');
-    setTimeout(next, 650);
-  } else {
-    btn.classList.add('wrong');
-    btns.forEach(function(b) { if (b.textContent === q.correct) b.classList.add('show-correct'); });
-    setTimeout(next, 1000);
+// ── SRS (shared data format with app.js) ─────────────────
+const SRS = {
+  _key(cardId) { return `onomatope:d${Math.ceil(cardId / DAY_SIZE)}:progress`; },
+  _raw(cardId) {
+    try { return JSON.parse(localStorage.getItem(this._key(cardId)) || '{}'); }
+    catch { return {}; }
+  },
+  grade(cardId, quality) {  // quality: 1=wrong, 4=correct
+    const store = this._raw(cardId);
+    let { n = 0, ef = 2.5, interval = 0 } = store[cardId] || {};
+    if (quality >= 3) {
+      if (n === 0)      interval = 1;
+      else if (n === 1) interval = 6;
+      else              interval = Math.round(interval * ef);
+      n++;
+      ef = Math.max(1.3, ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    } else {
+      n = 0; interval = 1;
+    }
+    store[cardId] = { n, ef, interval, due: Date.now() + interval * 86400000 };
+    localStorage.setItem(this._key(cardId), JSON.stringify(store));
+  },
+  isDue(cardId) {
+    const s = this._raw(cardId)[cardId];
+    return s && s.due <= Date.now();
   }
+};
+
+// ── Question builders ─────────────────────────────────────
+function makeMC(card, pool, showHints) {
+  const correct = card.meanings[0];
+  const opts = shuffle(
+    [correct, ...shuffle(pool.filter(c => c.id !== card.id && c.meanings[0]))
+      .slice(0, 3).map(c => c.meanings[0])]
+  );
+  return { type: 'mc', card, correct, opts, showHints };
 }
 
-function next() {
-  current++;
-  if (current >= questions.length) { showResult(); return; }
-  render();
+function makeTF(card, pool, showHints) {
+  const isCorrectDef = Math.random() > 0.5;
+  const definition = isCorrectDef
+    ? card.meanings[0]
+    : (shuffle(pool.filter(c => c.id !== card.id && c.meanings[0]))[0]?.meanings[0] || card.meanings[0]);
+  return { type: 'tf', card, isCorrectDef, definition, showHints };
 }
 
-// ── Result ─────────────────────────────────────────────
-function showResult() {
-  document.getElementById('word-area').style.display  = 'none';
-  document.getElementById('options').style.display    = 'none';
-  document.getElementById('result-screen').style.display = 'flex';
-
-  const pct    = score / questions.length;
-  const passed = pct >= PASS;
-
-  document.getElementById('result-score').textContent = score + ' / ' + questions.length;
-
-  if (passed) {
-    const key = TYPE === 'complete'
-      ? 'onomatope:d' + DAY + ':quiz-complete'
-      : 'onomatope:d' + DAY + ':quiz-review';
-    localStorage.setItem(key, '1');
-
-    document.getElementById('result-emoji').textContent = score === questions.length ? '🎉' : '✅';
-    document.getElementById('result-title').textContent = '通过！';
-    document.getElementById('result-sub').textContent =
-      TYPE === 'complete' ? '第 ' + DAY + ' 天已完成，加油！' : '复习通过，可以开始第 ' + (DAY + 1) + ' 天了';
-    document.getElementById('result-btn').className = 'result-btn btn-pass';
-    document.getElementById('result-btn').textContent = TYPE === 'complete' ? '返回主页' : '开始第 ' + (DAY + 1) + ' 天';
-  } else {
-    document.getElementById('result-emoji').textContent = '😓';
-    document.getElementById('result-title').textContent = '未达到 80%';
-    document.getElementById('result-sub').textContent = '正确 ' + score + ' 题，还需 ' + Math.ceil(questions.length * PASS - score) + ' 题才能通过，再试一次！';
-    document.getElementById('result-btn').className = 'result-btn btn-fail';
-    document.getElementById('result-btn').textContent = '重新作答';
-  }
-
-  document.getElementById('progress-bar-fill').style.width = '100%';
+function buildQuestions(cards, pool, showHints, mixTF = false) {
+  return shuffle([...cards]).map(c =>
+    mixTF && Math.random() > 0.5 ? makeTF(c, pool, showHints) : makeMC(c, pool, showHints)
+  );
 }
 
-function handleResult() {
-  const pct    = score / questions.length;
-  const passed = pct >= PASS;
-
-  if (!passed) {
-    // Reset and retry
-    current = 0; score = 0;
-    questions = shuffle(questions);
-    document.getElementById('word-area').style.display  = '';
-    document.getElementById('options').style.display    = '';
-    document.getElementById('result-screen').style.display = 'none';
-    render();
-    return;
-  }
-
-  if (TYPE === 'complete') {
-    location.href = 'index.html';
-  } else {
-    location.href = 'viewer.html?day=' + (DAY + 1);
-  }
-}
-
-// ── Util ───────────────────────────────────────────────
 function shuffle(a) {
   const arr = [...a];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -302,9 +340,400 @@ function shuffle(a) {
   return arr;
 }
 
-init().catch(function(e) {
+// ── Quiz state ────────────────────────────────────────────
+let allCards   = [];
+let queue      = [];
+let qIndex     = 0;
+let initCount  = 0;
+let correct    = 0;
+let attempted  = new Set();  // card IDs graded this session
+let isLocked   = false;
+let round      = 1;
+
+// ── Init ──────────────────────────────────────────────────
+async function init() {
+  const res  = await fetch('data/cards.json');
+  const data = await res.json();
+  allCards   = data.cards;
+
+  if (TYPE === 'complete') startComplete(1);
+  else if (TYPE === 'review') startReview();
+  else if (TYPE === 'final')  startFinal();
+}
+
+function startComplete(r) {
+  round = r;
+  const dayCards = allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
+  if (r === 1) {
+    queue = buildQuestions(dayCards, allCards, false, false); // MC only, no hints
+    setTypeLabel(`通关测验 · 第 ${DAY} 天 · 第一轮`);
+  } else {
+    queue = buildQuestions(dayCards, allCards, true, true);  // MC+TF, with hints
+    setTypeLabel(`通关测验 · 第 ${DAY} 天 · 第二轮`);
+  }
+  resetRound();
+}
+
+function startReview() {
+  const todaySet  = new Set(allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE).map(c => c.id));
+  let pool = allCards.filter(c => !todaySet.has(c.id) && SRS.isDue(c.id))
+    .sort((a, b) => {
+      const da = JSON.parse(localStorage.getItem(SRS._key(a.id)) || '{}')[a.id]?.due || 0;
+      const db = JSON.parse(localStorage.getItem(SRS._key(b.id)) || '{}')[b.id]?.due || 0;
+      return da - db;
+    })
+    .slice(0, REVIEW_MAX);
+
+  // Fallback: use yesterday's cards if nothing is due
+  if (pool.length === 0) {
+    pool = allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
+  }
+
+  queue = buildQuestions(pool, allCards, true, true);
+  setTypeLabel(`复习测验 · 解锁第 ${DAY + 1} 天`);
+  resetRound();
+}
+
+function startFinal() {
+  const sample = shuffle([...allCards]).slice(0, FINAL_N);
+  queue = buildQuestions(sample, allCards, true, true);
+  setTypeLabel('全掌握最终测验');
+  resetRound();
+}
+
+function resetRound() {
+  qIndex    = 0;
+  initCount = queue.length;
+  correct   = 0;
+  attempted = new Set();
+  isLocked  = false;
+  showQuizUI();
+  render();
+}
+
+// ── Render question ───────────────────────────────────────
+function render() {
+  if (qIndex >= queue.length) { checkEnd(); return; }
+
+  const q = queue[qIndex];
+  isLocked = false;
+
+  updateProgress();
+  renderWordArea(q);
+
+  if (q.type === 'mc') renderMC(q);
+  else renderTF(q);
+}
+
+function renderWordArea(q) {
+  const card   = q.card;
+  const ex0    = card.examples?.[0] || null;
+  const hasImg = q.showHints && ex0?.image;
+  const hasAud = q.showHints && ex0?.audio;
+  const hasSen = q.showHints && q.type === 'mc' && ex0?.jp;
+
+  document.getElementById('current-word').textContent = card.word;
+
+  const imgWrap = document.getElementById('word-image-wrap');
+  const img     = document.getElementById('word-image');
+  if (hasImg) {
+    img.src = ex0.image;
+    imgWrap.style.display = 'block';
+    imgWrap.onclick = () => playAudio(ex0?.audio, card.word);
+  } else {
+    imgWrap.style.display = 'none';
+  }
+
+  const senEl = document.getElementById('word-sentence');
+  if (hasSen) {
+    senEl.textContent = ex0.jp;
+    senEl.style.display = 'block';
+  } else {
+    senEl.style.display = 'none';
+  }
+
+  const audio = document.getElementById('word-audio');
+  if (hasAud) {
+    audio.src = ex0.audio;
+    audio.play().catch(() => tts(card.word));
+  } else if (q.showHints) {
+    tts(card.word);
+  }
+
+  // hide TF area by default
+  document.getElementById('tf-area').style.display = 'none';
+  document.getElementById('tf-correct-hint').style.display = 'none';
+}
+
+function renderMC(q) {
+  document.getElementById('tf-buttons').style.display = 'none';
+  const box = document.getElementById('options');
+  box.style.display = 'flex';
+  box.innerHTML = '';
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => answerMC(opt, btn, q));
+    box.appendChild(btn);
+  });
+}
+
+function renderTF(q) {
+  document.getElementById('options').style.display = 'none';
+  document.getElementById('options').innerHTML = '';
+
+  const tfArea = document.getElementById('tf-area');
+  document.getElementById('tf-definition').textContent = q.definition;
+  document.getElementById('tf-correct-hint').style.display = 'none';
+  tfArea.style.display = 'block';
+
+  const btns = document.getElementById('tf-buttons');
+  btns.style.display = 'grid';
+  const yes = document.getElementById('tf-yes');
+  const no  = document.getElementById('tf-no');
+  yes.className = 'tf-btn';
+  no.className  = 'tf-btn';
+  yes.onclick = () => answerTF(true, q);
+  no.onclick  = () => answerTF(false, q);
+}
+
+// ── Answer handlers ───────────────────────────────────────
+function answerMC(opt, btn, q) {
+  if (isLocked) return;
+  isLocked = true;
+
+  const isCorrect = opt === q.correct;
+  const isFirst   = !attempted.has(q.card.id);
+
+  gradeCard(q.card.id, isCorrect, isFirst);
+
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.classList.add('disabled');
+    if (b.textContent === q.correct) b.classList.add(isCorrect ? 'correct' : 'hint');
+  });
+  if (!isCorrect) btn.classList.add('wrong');
+  else btn.classList.add('correct');
+
+  if (!isCorrect && TYPE === 'review') requeueFlipped(q);
+
+  setTimeout(advance, isCorrect ? 650 : 1100);
+}
+
+function answerTF(userSaysCorrect, q) {
+  if (isLocked) return;
+  isLocked = true;
+
+  const isCorrect = userSaysCorrect === q.isCorrectDef;
+  const isFirst   = !attempted.has(q.card.id);
+
+  gradeCard(q.card.id, isCorrect, isFirst);
+
+  const yes = document.getElementById('tf-yes');
+  const no  = document.getElementById('tf-no');
+  yes.classList.add('disabled');
+  no.classList.add('disabled');
+
+  // Highlight which answer was right
+  if (q.isCorrectDef) yes.classList.add(isCorrect ? 'correct' : 'hint');
+  else                 no.classList.add(isCorrect  ? 'correct' : 'hint');
+  if (!isCorrect) (userSaysCorrect ? yes : no).classList.add('wrong');
+
+  // Show correct meaning if definition was wrong and user said 对
+  if (!isCorrect && userSaysCorrect && !q.isCorrectDef) {
+    const hint = document.getElementById('tf-correct-hint');
+    hint.textContent = `正确解释：${q.card.meanings[0]}`;
+    hint.style.display = 'block';
+  }
+
+  if (!isCorrect && TYPE === 'review') requeueFlipped(q);
+
+  setTimeout(advance, isCorrect ? 650 : 1200);
+}
+
+function gradeCard(cardId, isCorrect, isFirst) {
+  if (isFirst) {
+    attempted.add(cardId);
+    if (isCorrect) correct++;
+    SRS.grade(cardId, isCorrect ? 4 : 1);
+  }
+}
+
+function requeueFlipped(q) {
+  const flipped = q.type === 'mc'
+    ? makeTF(q.card, allCards, true)
+    : makeMC(q.card, allCards, true);
+  queue.push(flipped);
+}
+
+function advance() {
+  qIndex++;
+  render();
+}
+
+// ── End of round ──────────────────────────────────────────
+function checkEnd() {
+  const pct = initCount > 0 ? correct / initCount : 0;
+
+  if (TYPE === 'complete') checkCompleteEnd(pct);
+  else if (TYPE === 'review') checkReviewEnd(pct);
+  else if (TYPE === 'final') checkFinalEnd(pct);
+}
+
+function checkCompleteEnd(pct) {
+  const pctDisp = Math.round(pct * 100);
+
+  if (round === 1) {
+    if (pct >= PASS.r1) {
+      showRoundScreen(
+        '🎯', `第一轮通过！${pctDisp}%`,
+        '答对 ' + correct + ' / ' + initCount + '\n接下来会加入图片、音频和判断题，继续！',
+        '开始第二轮 →',
+        () => startComplete(2)
+      );
+    } else {
+      showResult(false, pctDisp, correct, initCount,
+        `未达到 80%，再来一次！`,
+        [{ label: '🔄 重试第一轮', action: () => startComplete(1) },
+         { label: '← 返回', secondary: true, action: () => location.href = 'index.html' }]
+      );
+    }
+  } else {
+    if (pct >= PASS.r2) {
+      localStorage.setItem(`onomatope:d${DAY}:quiz-complete`, '1');
+      showResult(true, pctDisp, correct, initCount,
+        `第 ${DAY} 天通关！明天做复习测验后可解锁第 ${DAY + 1} 天`,
+        [{ label: '返回主页', action: () => location.href = 'index.html' }]
+      );
+    } else {
+      showResult(false, pctDisp, correct, initCount,
+        `未达到 90%，再来一次！`,
+        [{ label: '🔄 重试第二轮', action: () => startComplete(2) },
+         { label: '重试第一轮', secondary: true, action: () => startComplete(1) }]
+      );
+    }
+  }
+}
+
+function checkReviewEnd(pct) {
+  const pctDisp = Math.round(pct * 100);
+  if (pct >= PASS.review) {
+    localStorage.setItem(`onomatope:d${DAY}:quiz-review`, '1');
+    showResult(true, pctDisp, correct, initCount,
+      `复习通过！第 ${DAY + 1} 天已解锁`,
+      [{ label: `开始第 ${DAY + 1} 天 →`, action: () => location.href = `viewer.html?day=${DAY + 1}` },
+       { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
+    );
+  } else {
+    showResult(false, pctDisp, correct, initCount,
+      `未达到 70%，再来一次！`,
+      [{ label: '🔄 再试', action: () => startReview() },
+       { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
+    );
+  }
+}
+
+function checkFinalEnd(pct) {
+  const pctDisp = Math.round(pct * 100);
+  if (pct >= PASS.final) {
+    localStorage.setItem('onomatope:final-complete', '1');
+    showResult(true, pctDisp, correct, initCount,
+      '全掌握达成！SRS 复习将持续跟进',
+      [{ label: '返回主页', action: () => location.href = 'index.html' }]
+    );
+  } else {
+    showResult(false, pctDisp, correct, initCount,
+      `未达到 80%，继续加油！`,
+      [{ label: '🔄 再战', action: () => startFinal() },
+       { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
+    );
+  }
+}
+
+// ── UI helpers ────────────────────────────────────────────
+function showQuizUI() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('round-screen').style.display  = 'none';
+  document.getElementById('word-area').style.display     = '';
+  document.getElementById('options').style.display       = 'flex';
+}
+
+function showRoundScreen(emoji, title, sub, btnLabel, action) {
+  hideQuizUI();
+  const el = document.getElementById('round-screen');
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div class="round-emoji">${emoji}</div>
+    <div class="round-title">${title}</div>
+    <div class="round-sub">${sub.replace(/\n/g, '<br>')}</div>
+    <button class="round-btn">${btnLabel}</button>
+  `;
+  el.querySelector('.round-btn').onclick = action;
+}
+
+function showResult(passed, pct, got, total, sub, actions) {
+  hideQuizUI();
+  const el = document.getElementById('result-screen');
+  el.style.display = 'flex';
+  const emoji = passed ? (pct === 100 ? '🎉' : '✅') : '💪';
+  const actHTML = actions.map(a =>
+    `<button class="result-btn ${a.secondary ? 'btn-secondary' : 'btn-primary'}" data-action="${a.label}">${a.label}</button>`
+  ).join('');
+  el.innerHTML = `
+    <div class="result-emoji">${emoji}</div>
+    <div class="result-title">${passed ? '通过！' : '未通过'}</div>
+    <div class="result-score">${got} / ${total}</div>
+    <div class="result-sub">${pct}% · ${sub}</div>
+    <div class="result-actions">${actHTML}</div>
+  `;
+  actions.forEach(a => {
+    el.querySelector(`[data-action="${a.label}"]`).onclick = a.action;
+  });
+}
+
+function hideQuizUI() {
+  document.getElementById('word-area').style.display  = 'none';
+  document.getElementById('options').style.display    = 'none';
+  document.getElementById('tf-buttons').style.display = 'none';
+}
+
+function updateProgress() {
+  const shown = Math.min(qIndex + 1, initCount);
+  const pct   = initCount > 0 ? (qIndex / initCount * 100).toFixed(0) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent =
+    `第 ${shown} 题 / ${initCount} · 答对 ${correct}`;
+}
+
+function setTypeLabel(text) {
+  document.getElementById('type-label').textContent = text.toUpperCase();
+}
+
+// ── Audio ─────────────────────────────────────────────────
+let _currentAudio = null;
+function playAudio(src, word) {
+  if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
+  if (src) {
+    const a = new Audio(src);
+    _currentAudio = a;
+    a.play().catch(() => tts(word));
+  } else tts(word);
+}
+
+function tts(word) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'ja-JP';
+  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ja'));
+  if (v) u.voice = v;
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+}
+
+// ── Start ─────────────────────────────────────────────────
+init().catch(() => {
   document.getElementById('current-word').textContent = '加载失败';
-  console.error(e);
 });
 </script>
 </body>

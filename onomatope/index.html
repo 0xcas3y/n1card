@@ -4,118 +4,235 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>15天全掌握 · オノマトペ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=14">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-</head>
-<body>
-  <div class="hub">
-    <a class="back-link" href="../">← 返回动词主页</a>
+  <title>オノマトペ大魔王に挑む！</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif;
+      background: #1c2b24;
+      overscroll-behavior: none;
+    }
+    .page { max-width: 480px; margin: 0 auto; }
 
-    <h1 class="hub-title">
-      <span class="hub-title-jp">オノマトペ</span>
-      <span class="hub-title-cn">15天全掌握</span>
-    </h1>
-    <p class="subtitle">选一天开始刷卡 · 完成后解锁下一天</p>
-
-    <div id="day-list" class="level-list">
-      <div style="opacity:0.4;padding:20px 0;font-size:14px;">加载中…</div>
-    </div>
-
-    <div class="footer">
-      <span class="footer-pill">点词发音</span>
-      <span class="footer-pill">双击翻面</span>
-      <span class="footer-pill">向左 难</span>
-      <span class="footer-pill">向右 易</span>
-      <span class="footer-pill">向上划 返回</span>
-      <span class="footer-divider"></span>
-      <span class="footer-pill">共 284 词</span>
-      <span class="footer-pill">Immersion Kit + YouTube</span>
-    </div>
-  </div>
-
-  <script>
-  const DAY_SIZE = 20;
-  const DAY_COLORS = ['lv-a','lv-ka','lv-sa','lv-ta','lv-na','lv-ha','lv-ma','lv-ya','lv-ra','lv-wa','lv-a','lv-sa','lv-ta','lv-ha','lv-ma'];
-
-  async function init() {
-    const res = await fetch('data/cards.json');
-    const data = await res.json();
-    const cards = data.cards;
-    const totalDays = Math.ceil(cards.length / DAY_SIZE);
-
-    // Compute progress for each day
-    const days = [];
-    for (let d = 1; d <= totalDays; d++) {
-      const dayCards = cards.slice((d - 1) * DAY_SIZE, d * DAY_SIZE);
-      const prog = JSON.parse(localStorage.getItem('onomatope:d' + d + ':progress') || '{}');
-      const reviewed = dayCards.filter(c => prog[c.id] !== undefined).length;
-      days.push({ day: d, total: dayCards.length, reviewed, done: reviewed === dayCards.length });
+    .hero { position: relative; width: 100%; }
+    .hero img { width: 100%; display: block; }
+    .hero-back {
+      position: absolute; top: 14px; left: 16px;
+      font-size: 13px; color: rgba(60,40,10,0.5);
+      text-decoration: none; z-index: 2;
     }
 
-    const list = document.getElementById('day-list');
-    list.innerHTML = '';
+    .stage-list {
+      background: #1c2b24;
+      padding: 12px 14px 0;
+      display: flex; flex-direction: column; gap: 9px;
+    }
 
-    days.forEach(function(dp, i) {
-      var quizComplete = localStorage.getItem('onomatope:d' + dp.day + ':quiz-complete') === '1';
-      var prevQuizComplete = i === 0 || localStorage.getItem('onomatope:d' + (dp.day - 1) + ':quiz-complete') === '1';
-      var reviewDone = i === 0 || localStorage.getItem('onomatope:d' + (dp.day - 1) + ':quiz-review') === '1';
+    /* seigaiha SVG as data URL */
+    .card-active {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 14px;
+      background: #1e3326;
+      border: 1.5px solid #8a7240;
+      text-decoration: none; transition: transform 0.1s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15'%3E%3Cpath d='M0 15 A15 15 0 0 1 30 15' fill='none' stroke='rgba(138%2C114%2C64%2C0.15)' stroke-width='0.8'/%3E%3C/svg%3E");
+    }
+    .card-active:active { transform: scale(0.98); }
 
-      // Fully unlocked: prev day quiz-complete passed AND review done
-      var unlocked = i === 0 || (prevQuizComplete && reviewDone);
-      // Needs review quiz: prev quiz-complete done but review not yet done
-      var needsReview = i > 0 && prevQuizComplete && !reviewDone;
-      // Needs completion quiz: cards done but quiz not yet done
-      var needsQuiz = dp.done && !quizComplete;
+    .card-locked {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 14px;
+      background: #d8cfb8;
+      border: 1px solid rgba(120,100,60,0.15);
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='15'%3E%3Cpath d='M0 15 A15 15 0 0 1 30 15' fill='none' stroke='rgba(100%2C80%2C40%2C0.1)' stroke-width='0.8'/%3E%3C/svg%3E");
+    }
 
-      var pct = dp.total > 0 ? Math.round(dp.reviewed / dp.total * 100) : 0;
-      var color = DAY_COLORS[i % DAY_COLORS.length];
+    .badge {
+      width: 46px; height: 46px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; flex-shrink: 0; position: relative;
+    }
+    .badge-a {
+      border: 1.5px solid #b08c3c; color: #c8a432;
+      background: rgba(138,114,64,0.12);
+      box-shadow: 0 0 0 3px rgba(138,114,64,0.08);
+    }
+    .badge-a::after {
+      content: ''; position: absolute; inset: -5px;
+      border-radius: 50%; border: 1px solid rgba(200,164,50,0.25);
+    }
+    .badge-l {
+      border: 1.5px solid rgba(100,80,40,0.25); color: rgba(80,60,30,0.35);
+      background: rgba(120,100,60,0.06);
+      box-shadow: 0 0 0 3px rgba(100,80,40,0.05);
+    }
+    .badge-l::after {
+      content: ''; position: absolute; inset: -5px;
+      border-radius: 50%; border: 1px solid rgba(100,80,40,0.1);
+    }
 
-      var el = document.createElement(unlocked || needsReview ? 'a' : 'div');
-      el.className = 'level-btn ' + color + (unlocked || needsReview ? '' : ' disabled');
+    .stage-info { flex: 1; min-width: 0; }
+    .t-a { font-size: 17px; font-weight: 700; color: #e2d8b0; letter-spacing: 1px; }
+    .t-l { font-size: 17px; font-weight: 600; color: rgba(60,48,20,0.42); letter-spacing: 1px; }
+    .s-a { font-size: 11.5px; margin-top: 3px; color: rgba(200,185,130,0.6); }
+    .s-l { font-size: 11.5px; margin-top: 3px; color: rgba(60,48,20,0.35); }
 
-      var href, statusText, arrow;
-      if (needsReview) {
-        href = 'quiz.html?day=' + (dp.day - 1) + '&type=review';
-        statusText = '📝 复习上一天后解锁';
-        arrow = '›';
-      } else if (!unlocked) {
-        href = null;
-        statusText = '🔒 完成第 ' + (dp.day - 1) + ' 天后解锁';
-        arrow = '';
-      } else if (quizComplete) {
-        href = 'viewer.html?day=' + dp.day;
-        statusText = dp.done ? '✅ 已完成' : (dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词');
-        arrow = '›';
-      } else if (needsQuiz) {
-        href = 'quiz.html?day=' + dp.day + '&type=complete';
-        statusText = '📝 做选择题完成当天';
-        arrow = '›';
-      } else {
-        href = 'viewer.html?day=' + dp.day;
-        statusText = dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词';
-        arrow = '›';
-      }
+    .dots { display: flex; gap: 3px; margin-top: 6px; flex-wrap: wrap; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(200,164,50,0.2); }
+    .dot.on { background: #c8a432; }
 
-      if (href) el.href = href;
+    .arr-a { font-size: 18px; color: rgba(200,164,50,0.65); flex-shrink: 0; }
+    .arr-l { font-size: 14px; color: rgba(60,48,20,0.2); flex-shrink: 0; }
 
-      el.innerHTML =
-        '<span class="lv">第 ' + dp.day + ' 天</span>' +
-        '<span class="meta"><span class="count"></span>' + statusText + '</span>' +
-        '<span class="arrow">' + arrow + '</span>' +
-        '<div class="btn-progress"><div class="btn-progress-fill" style="width:' + pct + '%"></div></div>';
+    .chest-section {
+      background: #1c2b24; padding: 28px 14px 56px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .chest-label { font-size: 11px; color: rgba(200,164,50,0.6); letter-spacing: 1.5px; text-align: center; }
+    .chest-img { width: 160px; height: 160px; object-fit: contain; }
+    .chest-img.locked { opacity: 0.8; filter: grayscale(10%); }
+    @keyframes glow {
+      0%,100% { filter: drop-shadow(0 0 16px rgba(200,164,50,0.4)); }
+      50%      { filter: drop-shadow(0 0 36px rgba(200,164,50,0.8)); }
+    }
+    .chest-img.open { animation: glow 2.5s ease-in-out infinite; }
+    .chest-btn {
+      display: inline-block; padding: 12px 28px;
+      background: linear-gradient(135deg, #c8a432, #9a7818);
+      color: #1a1000; border: none; border-radius: 999px;
+      font-family: inherit; font-size: 14px; font-weight: 700;
+      cursor: pointer; text-decoration: none;
+    }
+    .chest-btn.dim {
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.08); pointer-events: none;
+    }
+    .loading { color: rgba(200,185,130,0.35); padding: 24px 0; font-size: 14px; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <a class="hero-back" href="../">← 返回</a>
+    <img src="assets/hero-cropped.png" alt="オノマトペ大魔王">
+  </div>
+  <div class="stage-list" id="stage-list">
+    <div class="loading">加载中…</div>
+  </div>
+  <div class="chest-section" id="chest-section"></div>
+</div>
+<script>
+var DAY_SIZE = 20;
 
-      list.appendChild(el);
-    });
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function init() {
+  var resp  = await fetch('data/cards.json');
+  var data  = await resp.json();
+  var cards = data.cards;
+  var total = Math.ceil(cards.length / DAY_SIZE);
+
+  var days = [];
+  for (var i = 0; i < total; i++) {
+    var d  = i + 1;
+    var dc = cards.slice(i * DAY_SIZE, d * DAY_SIZE);
+    var pg = JSON.parse(localStorage.getItem('onomatope:d' + d + ':progress') || '{}');
+    var rv = dc.filter(function(c) { return pg[c.id] !== undefined; }).length;
+    days.push({ day: d, total: dc.length, reviewed: rv, done: rv === dc.length });
   }
 
-  init().catch(function() {
-    document.getElementById('day-list').innerHTML =
-      '<div style="opacity:0.4;padding:20px 0;font-size:14px;">加载失败，请刷新</div>';
+  var list = document.getElementById('stage-list');
+  list.innerHTML = '';
+
+  for (var i = 0; i < days.length; i++) {
+    var dp = days[i];
+    var quizDone = localStorage.getItem('onomatope:d' + dp.day + ':quiz-complete') === '1';
+    var prevQuiz = i === 0 || localStorage.getItem('onomatope:d' + (dp.day-1) + ':quiz-complete') === '1';
+    var revDone  = i === 0 || localStorage.getItem('onomatope:d' + (dp.day-1) + ':quiz-review') === '1';
+    var unlocked  = i === 0 || (prevQuiz && revDone);
+    var needsRev  = i > 0 && prevQuiz && !revDone;
+    var needsQuiz = dp.done && !quizDone;
+    var num = String(dp.day).padStart(2, '0');
+
+    var active, href, sub, arrow;
+    if (needsRev) {
+      active = true; href = 'quiz.html?day=' + (dp.day-1) + '&type=review';
+      sub = '📝 复习第 ' + (dp.day-1) + ' 関后解锁'; arrow = '›';
+    } else if (!unlocked) {
+      active = false; href = null;
+      sub = '🔒 第 ' + (dp.day-1) + ' 関をクリアで解放'; arrow = '🔒';
+    } else if (quizDone) {
+      active = true; href = 'viewer.html?day=' + dp.day;
+      sub = dp.done ? '✅ 已通关' : (dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词');
+      arrow = '›';
+    } else if (needsQuiz) {
+      active = true; href = 'quiz.html?day=' + dp.day + '&type=complete';
+      sub = '📝 学完！挑战通关测验'; arrow = '›';
+    } else {
+      active = true; href = 'viewer.html?day=' + dp.day;
+      sub = dp.reviewed > 0 ? dp.reviewed + ' / ' + dp.total + ' 已学' : dp.total + ' 词';
+      arrow = '›';
+    }
+
+    var dots = '';
+    if (active) {
+      for (var k = 0; k < dp.total; k++)
+        dots += '<div class="dot' + (k < dp.reviewed ? ' on' : '') + '"></div>';
+      dots = '<div class="dots">' + dots + '</div>';
+    }
+
+    var el = document.createElement(href ? 'a' : 'div');
+    el.className = active ? 'card-active' : 'card-locked';
+    if (href) el.href = href;
+    el.innerHTML =
+      '<div class="badge ' + (active ? 'badge-a' : 'badge-l') + '">' + num + '</div>' +
+      '<div class="stage-info">' +
+        '<div class="' + (active ? 't-a' : 't-l') + '">第 ' + dp.day + ' 関</div>' +
+        '<div class="' + (active ? 's-a' : 's-l') + '">' + sub + '</div>' +
+        dots +
+      '</div>' +
+      '<div class="' + (active ? 'arr-a' : 'arr-l') + '">' + arrow + '</div>';
+    list.appendChild(el);
+  }
+
+  // Chest
+  var last = days[days.length - 1];
+  var allDone   = days.every(function(d) { return d.done; });
+  var lastQuiz  = localStorage.getItem('onomatope:d' + last.day + ':quiz-complete') === '1';
+  var finalDone = localStorage.getItem('onomatope:final-complete') === '1';
+  var open = allDone && lastQuiz;
+  var now = Date.now(), due = 0;
+  cards.forEach(function(c) {
+    try {
+      var p = JSON.parse(localStorage.getItem('onomatope:d' + Math.ceil(c.id / DAY_SIZE) + ':progress') || '{}');
+      if (p[c.id] && p[c.id].due <= now) due++;
+    } catch(e) {}
   });
-  </script>
+
+  var label = open
+    ? (finalDone ? '✨ 全掌握已达成' : '→ 全 15 関を制覇！宝箱を開けよう！ ←')
+    : '→ 全 15 関を制覇して宝箱を開けよう！ ←';
+  var btn = '';
+  if (open && !finalDone)
+    btn = '<a class="chest-btn" href="quiz.html?type=final">开启宝箱！挑战最终测验</a>';
+  else if (finalDone && due > 0)
+    btn = '<a class="chest-btn" href="quiz.html?type=review&day=' + last.day + '">📅 今日复习 ' + due + ' 词</a>';
+  else if (!open)
+    btn = '<div class="chest-btn dim">🔒 宝箱未解锁</div>';
+
+  document.getElementById('chest-section').innerHTML =
+    '<div class="chest-label">' + label + '</div>' +
+    '<img class="chest-img ' + (open ? 'open' : 'locked') + '" src="assets/' + (open ? 'chest-open.png' : 'chest-locked.png') + '" alt="宝箱">' +
+    btn;
+}
+
+init().catch(function(e) {
+  document.getElementById('stage-list').innerHTML = '<div class="loading">加载失败：' + e.message + '</div>';
+});
+</script>
 </body>
 </html>
