@@ -309,7 +309,7 @@ const CardView = {
           <span class="hint-mid">双击翻面</span>
           <span class="hint-dir">向右 易</span>
         </div>
-        <div class="hint-up">向上划 返回</div>
+        <div class="hint-up">向上划 返回上一张</div>
       </div>
     `;
     return el;
