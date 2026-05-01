@@ -8,9 +8,36 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      height: 100%; background: #111; color: #fff;
+      height: 100%; background: #08090d; color: #fff;
       font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif;
       overscroll-behavior: none;
+    }
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(242,76,92,0.22), transparent 30%),
+        radial-gradient(circle at 18% 64%, rgba(0,210,255,0.13), transparent 24%),
+        linear-gradient(135deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 14px),
+        linear-gradient(165deg, #07080c 0%, #151018 45%, #050607 100%);
+      background-size: auto, auto, 18px 18px, auto;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto -20% -18% -20%;
+      height: 42vh;
+      background: radial-gradient(ellipse at center, rgba(255,78,88,0.22), transparent 62%);
+      filter: blur(10px);
+      pointer-events: none;
+      z-index: 0;
     }
     #app {
       min-height: 100%;
@@ -20,6 +47,8 @@
       padding: 0 20px 40px;
       max-width: 480px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
 
     /* Back link */
@@ -30,6 +59,124 @@
       color: rgba(255,255,255,0.45);
       text-decoration: none;
     }
+    .top-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    #bgm-toggle {
+      margin-top: 16px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.72);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #bgm-toggle.active {
+      color: #fff;
+      border-color: rgba(0,210,255,0.45);
+      box-shadow: 0 0 16px rgba(0,210,255,0.16);
+    }
+
+    /* Battle HUD */
+    #battle-hud {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(112px, 0.9fr) minmax(0, 1.4fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .battle-panel {
+      min-height: 72px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.28), inset 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
+    }
+    .battle-kicker {
+      color: rgba(255,255,255,0.5);
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    #life-row {
+      display: flex;
+      gap: 5px;
+      min-height: 24px;
+      align-items: center;
+    }
+    .life-drop {
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 8px rgba(255,64,82,0.6));
+      transition: transform 0.18s, opacity 0.18s, filter 0.18s;
+    }
+    .life-drop.lost {
+      opacity: 0.22;
+      transform: scale(0.78);
+      filter: grayscale(1);
+    }
+    .boss-card {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+    .boss-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 0 20px rgba(255,78,88,0.28);
+    }
+    .boss-name {
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 7px;
+    }
+    #boss-bar {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(70,12,18,0.82);
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+    #boss-bar-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ff3858, #ffb347);
+      box-shadow: 0 0 14px rgba(255,64,82,0.55);
+      transition: width 0.28s ease-out;
+    }
+    #battle-feedback {
+      min-height: 22px;
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.6px;
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    #battle-feedback.show { animation: battle-pop 0.9s ease-out forwards; }
+    #battle-feedback.good { color: #75e6c7; text-shadow: 0 0 16px rgba(117,230,199,0.28); }
+    #battle-feedback.bad { color: #ff9ca8; text-shadow: 0 0 16px rgba(255,56,88,0.35); }
 
     /* Progress bar */
     #progress-wrap {
@@ -72,12 +219,15 @@
       padding: 16px 0 14px;
       gap: 10px;
     }
+    #word-area.boss-hit { animation: boss-hit 0.36s ease-out; }
+    #word-area.player-hit { animation: player-hit 0.38s ease-out; }
     #current-word {
       font-size: clamp(44px, 12vw, 72px);
       font-weight: 800;
       letter-spacing: 3px;
       text-align: center;
       line-height: 1.1;
+      text-shadow: 0 0 24px rgba(255,255,255,0.18), 4px 5px 0 rgba(0,0,0,0.35);
     }
     #word-image-wrap {
       width: 100%;
@@ -138,7 +288,7 @@
     .opt-btn {
       width: 100%;
       padding: 14px 18px;
-      background: rgba(255,255,255,0.07);
+      background: rgba(10,12,18,0.76);
       border: 1.5px solid rgba(255,255,255,0.14);
       border-radius: 14px;
       color: #fff;
@@ -148,6 +298,8 @@
       text-align: left;
       cursor: pointer;
       transition: background 0.1s, border-color 0.1s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+      backdrop-filter: blur(8px);
     }
     .opt-btn:active { background: rgba(255,255,255,0.14); }
     .opt-btn.correct { background: rgba(79,184,158,0.25); border-color: #4FB89E; }
@@ -167,13 +319,14 @@
       padding: 18px;
       border-radius: 14px;
       border: 1.5px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.07);
+      background: rgba(10,12,18,0.76);
       color: #fff;
       font-family: inherit;
       font-size: 18px;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.1s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.22);
     }
     .tf-btn:active { background: rgba(255,255,255,0.14); }
     .tf-btn.correct { background: rgba(79,184,158,0.25); border-color: #4FB89E; }
@@ -235,11 +388,48 @@
       background: #4FB89E;
       color: #fff;
     }
+    @keyframes battle-pop {
+      0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+      16% { opacity: 1; transform: translateY(0) scale(1); }
+      78% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    }
+    @keyframes boss-hit {
+      0% { transform: translateX(0) scale(1); filter: brightness(1); }
+      35% { transform: translateX(8px) scale(0.99); filter: brightness(1.45); }
+      70% { transform: translateX(-4px) scale(1.01); }
+      100% { transform: translateX(0) scale(1); filter: brightness(1); }
+    }
+    @keyframes player-hit {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-9px); }
+      42% { transform: translateX(8px); }
+      64% { transform: translateX(-5px); }
+    }
   </style>
 </head>
 <body>
 <div id="app">
-  <a class="back-link" href="index.html">← 返回</a>
+  <div class="top-row">
+    <a class="back-link" href="index.html">← 返回</a>
+    <button id="bgm-toggle" type="button">BGM OFF</button>
+  </div>
+
+  <div id="battle-hud">
+    <div class="battle-panel">
+      <div class="battle-kicker">challenger hp</div>
+      <div id="life-row"></div>
+    </div>
+    <div class="battle-panel boss-card">
+      <img class="boss-avatar" src="assets/boss-memory-beast.png" alt="">
+      <div>
+        <div class="battle-kicker">boss</div>
+        <div class="boss-name">オノマトペ記憶獣</div>
+        <div id="boss-bar"><div id="boss-bar-fill"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="battle-feedback" aria-live="polite"></div>
 
   <div id="progress-wrap"><div id="progress-fill" style="width:0%"></div></div>
   <div id="type-label"></div>
@@ -349,6 +539,11 @@ let correct    = 0;
 let attempted  = new Set();  // card IDs graded this session
 let isLocked   = false;
 let round      = 1;
+let lives      = 4;
+const MAX_LIVES = 4;
+let bgmCtx = null;
+let bgmNodes = null;
+let bgmOn = false;
 
 // ── Init ──────────────────────────────────────────────────
 async function init() {
@@ -361,8 +556,9 @@ async function init() {
   else if (TYPE === 'final')  startFinal();
 }
 
-function startComplete(r) {
+function startComplete(r, keepLives = false) {
   round = r;
+  if (!keepLives) resetBattle();
   const dayCards = allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
   if (r === 1) {
     queue = buildQuestions(dayCards, allCards, false, false); // MC only, no hints
@@ -375,6 +571,7 @@ function startComplete(r) {
 }
 
 function startReview() {
+  resetBattle();
   const todaySet  = new Set(allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE).map(c => c.id));
   let pool = allCards.filter(c => !todaySet.has(c.id) && SRS.isDue(c.id))
     .sort((a, b) => {
@@ -395,6 +592,7 @@ function startReview() {
 }
 
 function startFinal() {
+  resetBattle();
   const sample = shuffle([...allCards]).slice(0, FINAL_N);
   queue = buildQuestions(sample, allCards, true, true);
   setTypeLabel('全掌握最终测验');
@@ -408,6 +606,7 @@ function resetRound() {
   attempted = new Set();
   isLocked  = false;
   showQuizUI();
+  updateBattleHUD();
   render();
 }
 
@@ -419,6 +618,7 @@ function render() {
   isLocked = false;
 
   updateProgress();
+  updateBattleHUD();
   renderWordArea(q);
 
   if (q.type === 'mc') renderMC(q);
@@ -507,6 +707,7 @@ function answerMC(opt, btn, q) {
   const isFirst   = !attempted.has(q.card.id);
 
   gradeCard(q.card.id, isCorrect, isFirst);
+  applyBattleResult(isCorrect);
 
   document.querySelectorAll('.opt-btn').forEach(b => {
     b.classList.add('disabled');
@@ -517,7 +718,10 @@ function answerMC(opt, btn, q) {
 
   if (!isCorrect && TYPE === 'review') requeueFlipped(q);
 
-  setTimeout(advance, isCorrect ? 650 : 1100);
+  setTimeout(() => {
+    if (lives <= 0) showGameOver();
+    else advance();
+  }, isCorrect ? 650 : 1100);
 }
 
 function answerTF(userSaysCorrect, q) {
@@ -528,6 +732,7 @@ function answerTF(userSaysCorrect, q) {
   const isFirst   = !attempted.has(q.card.id);
 
   gradeCard(q.card.id, isCorrect, isFirst);
+  applyBattleResult(isCorrect);
 
   const yes = document.getElementById('tf-yes');
   const no  = document.getElementById('tf-no');
@@ -548,7 +753,10 @@ function answerTF(userSaysCorrect, q) {
 
   if (!isCorrect && TYPE === 'review') requeueFlipped(q);
 
-  setTimeout(advance, isCorrect ? 650 : 1200);
+  setTimeout(() => {
+    if (lives <= 0) showGameOver();
+    else advance();
+  }, isCorrect ? 650 : 1200);
 }
 
 function gradeCard(cardId, isCorrect, isFirst) {
@@ -589,7 +797,7 @@ function checkCompleteEnd(pct) {
         '🎯', `第一轮通过！${pctDisp}%`,
         '答对 ' + correct + ' / ' + initCount + '\n接下来会加入图片、音频和判断题，继续！',
         '开始第二轮 →',
-        () => startComplete(2)
+        () => startComplete(2, true)
       );
     } else {
       showResult(false, pctDisp, correct, initCount,
@@ -654,6 +862,11 @@ function checkFinalEnd(pct) {
 function showQuizUI() {
   document.getElementById('result-screen').style.display = 'none';
   document.getElementById('round-screen').style.display  = 'none';
+  document.getElementById('battle-hud').style.display    = 'grid';
+  document.getElementById('battle-feedback').style.display = 'block';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('type-label').style.display    = 'block';
+  document.getElementById('progress-label').style.display = 'block';
   document.getElementById('word-area').style.display     = '';
   document.getElementById('options').style.display       = 'flex';
 }
@@ -692,6 +905,11 @@ function showResult(passed, pct, got, total, sub, actions) {
 }
 
 function hideQuizUI() {
+  document.getElementById('battle-hud').style.display = 'none';
+  document.getElementById('battle-feedback').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('type-label').style.display = 'none';
+  document.getElementById('progress-label').style.display = 'none';
   document.getElementById('word-area').style.display  = 'none';
   document.getElementById('options').style.display    = 'none';
   document.getElementById('tf-buttons').style.display = 'none';
@@ -702,11 +920,120 @@ function updateProgress() {
   const pct   = initCount > 0 ? (qIndex / initCount * 100).toFixed(0) : 0;
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-label').textContent =
-    `第 ${shown} 题 / ${initCount} · 答对 ${correct}`;
+    `第 ${shown} 题 / ${initCount} · 命中 ${correct}`;
 }
 
 function setTypeLabel(text) {
   document.getElementById('type-label').textContent = text.toUpperCase();
+}
+
+// ── Battle shell ─────────────────────────────────────────
+function resetBattle() {
+  lives = MAX_LIVES;
+}
+
+function updateBattleHUD() {
+  const lifeRow = document.getElementById('life-row');
+  if (lifeRow) {
+    lifeRow.innerHTML = Array.from({ length: MAX_LIVES }, (_, i) =>
+      `<span class="life-drop ${i < lives ? '' : 'lost'}">🩸</span>`
+    ).join('');
+  }
+
+  const bossMax = Math.max(1, initCount);
+  const bossHp = Math.max(0, bossMax - correct);
+  const bossPct = Math.max(0, Math.round((bossHp / bossMax) * 100));
+  const bossFill = document.getElementById('boss-bar-fill');
+  if (bossFill) bossFill.style.width = bossPct + '%';
+}
+
+function applyBattleResult(isCorrect) {
+  const wordArea = document.getElementById('word-area');
+  const feedback = document.getElementById('battle-feedback');
+  if (!isCorrect) lives = Math.max(0, lives - 1);
+  updateBattleHUD();
+
+  wordArea.classList.remove('boss-hit', 'player-hit');
+  void wordArea.offsetWidth;
+  wordArea.classList.add(isCorrect ? 'boss-hit' : 'player-hit');
+
+  feedback.className = '';
+  feedback.textContent = isCorrect
+    ? '命中！Boss HP 下降'
+    : `受击！剩余 ${lives} 滴血`;
+  feedback.classList.add(isCorrect ? 'good' : 'bad', 'show');
+}
+
+function showGameOver() {
+  const pct = initCount > 0 ? Math.round(correct / initCount * 100) : 0;
+  showResult(false, pct, correct, initCount,
+    '血量耗尽，错了 4 次，需要重新挑战。',
+    [{ label: '重新挑战', action: () => restartCurrentBattle() },
+     { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
+  );
+}
+
+function restartCurrentBattle() {
+  if (TYPE === 'complete') startComplete(1);
+  else if (TYPE === 'review') startReview();
+  else startFinal();
+}
+
+function setupBgm() {
+  const btn = document.getElementById('bgm-toggle');
+  btn.onclick = () => {
+    if (bgmOn) stopBgm();
+    else startBgm();
+  };
+}
+
+function startBgm() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  if (!bgmCtx) bgmCtx = new AudioContext();
+
+  const master = bgmCtx.createGain();
+  const bass = bgmCtx.createOscillator();
+  const pulse = bgmCtx.createOscillator();
+  const bassGain = bgmCtx.createGain();
+  const pulseGain = bgmCtx.createGain();
+  const filter = bgmCtx.createBiquadFilter();
+
+  bass.type = 'sawtooth';
+  bass.frequency.value = 55;
+  pulse.type = 'square';
+  pulse.frequency.value = 110;
+  filter.type = 'lowpass';
+  filter.frequency.value = 520;
+  bassGain.gain.value = 0.035;
+  pulseGain.gain.value = 0.018;
+  master.gain.value = 0.55;
+
+  bass.connect(bassGain).connect(filter);
+  pulse.connect(pulseGain).connect(filter);
+  filter.connect(master).connect(bgmCtx.destination);
+  bass.start();
+  pulse.start();
+
+  bgmNodes = { master, bass, pulse, bassGain, pulseGain, filter };
+  bgmOn = true;
+  const btn = document.getElementById('bgm-toggle');
+  btn.textContent = 'BGM ON';
+  btn.classList.add('active');
+}
+
+function stopBgm() {
+  if (bgmNodes) {
+    bgmNodes.master.gain.setTargetAtTime(0, bgmCtx.currentTime, 0.03);
+    setTimeout(() => {
+      try { bgmNodes.bass.stop(); bgmNodes.pulse.stop(); } catch {}
+      bgmNodes = null;
+    }, 120);
+  }
+  bgmOn = false;
+  const btn = document.getElementById('bgm-toggle');
+  btn.textContent = 'BGM OFF';
+  btn.classList.remove('active');
 }
 
 // ── Audio ─────────────────────────────────────────────────
@@ -732,6 +1059,7 @@ function tts(word) {
 }
 
 // ── Start ─────────────────────────────────────────────────
+setupBgm();
 init().catch(() => {
   document.getElementById('current-word').textContent = '加载失败';
 });
