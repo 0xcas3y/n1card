@@ -66,6 +66,22 @@
       justify-content: space-between;
       gap: 12px;
     }
+    #bgm-toggle {
+      margin-top: 16px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.72);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #bgm-toggle.active {
+      color: #fff;
+      border-color: rgba(255,56,88,0.45);
+      box-shadow: 0 0 16px rgba(255,56,88,0.18);
+    }
     /* Battle HUD */
     #battle-hud {
       width: 100%;
@@ -95,6 +111,41 @@
       gap: 5px;
       min-height: 24px;
       align-items: center;
+    }
+    .timer-wrap {
+      margin-top: 8px;
+    }
+    .timer-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: rgba(255,255,255,0.68);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    #timer-count.danger {
+      color: #ff9ca8;
+      text-shadow: 0 0 14px rgba(255,56,88,0.45);
+    }
+    #timer-bar {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    #timer-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #75e6c7, #ffb347);
+      transition: width 0.2s linear, background 0.2s;
+    }
+    #timer-fill.danger {
+      background: linear-gradient(90deg, #ff3858, #ffb347);
+      box-shadow: 0 0 12px rgba(255,56,88,0.5);
     }
     .life-drop {
       display: inline-flex;
@@ -160,6 +211,68 @@
     #battle-feedback.show { animation: battle-pop 0.9s ease-out forwards; }
     #battle-feedback.good { color: #75e6c7; text-shadow: 0 0 16px rgba(117,230,199,0.28); }
     #battle-feedback.bad { color: #ff9ca8; text-shadow: 0 0 16px rgba(255,56,88,0.35); }
+    #taunt-bubble {
+      width: 100%;
+      min-height: 0;
+      padding: 0 4px;
+      opacity: 0;
+      transform: translateY(-8px) scale(0.98);
+      pointer-events: none;
+    }
+    #taunt-bubble.show {
+      min-height: 52px;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .taunt-inner {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(33,9,22,0.92), rgba(9,16,28,0.9));
+      border: 1px solid rgba(255,80,110,0.34);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.3), 0 0 20px rgba(255,50,88,0.12);
+      backdrop-filter: blur(10px);
+    }
+    .taunt-face {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      font-size: 22px;
+    }
+    .taunt-copy {
+      color: #ffd7de;
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+    .taunt-copy.thinking {
+      color: rgba(255,215,222,0.7);
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+    .taunt-dots::after {
+      content: "";
+      animation: dots 1s steps(4, end) infinite;
+    }
+    .result-taunt {
+      max-width: 320px;
+      margin-top: 4px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,56,88,0.1);
+      border: 1px solid rgba(255,56,88,0.24);
+      color: #ffd7de;
+      font-size: 13px;
+      line-height: 1.55;
+    }
 
     /* Progress bar */
     #progress-wrap {
@@ -344,6 +457,45 @@
     }
     .btn-primary { background: #4FB89E; color: #fff; }
     .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1.5px solid rgba(255,255,255,0.2); }
+    .result-screen-defeat {
+      gap: 14px;
+    }
+    .result-screen-defeat .result-emoji {
+      width: 96px;
+      height: 96px;
+      border-radius: 28px;
+      background: url("assets/boss-memory-beast.png") center / cover;
+      box-shadow: 0 0 30px rgba(255,56,88,0.35), 0 16px 34px rgba(0,0,0,0.38);
+      color: transparent;
+    }
+    .result-screen-defeat .result-title {
+      color: #ffd7de;
+      text-shadow: 0 0 20px rgba(255,56,88,0.3);
+    }
+    .result-screen-defeat .result-sub {
+      opacity: 1;
+    }
+    .result-screen-defeat .result-actions {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 9px;
+      max-width: 320px;
+    }
+    .result-screen-defeat .result-btn {
+      width: 100%;
+      border-radius: 14px;
+    }
+    .result-screen-defeat .btn-primary {
+      background: linear-gradient(135deg, #ff3858, #8a2cff);
+      box-shadow: 0 0 28px rgba(255,56,88,0.28);
+      font-size: 16px;
+    }
+    .exit-locked {
+      opacity: 0.42;
+      cursor: wait;
+      pointer-events: none;
+    }
 
     /* Round transition */
     #round-screen {
@@ -389,18 +541,32 @@
       42% { transform: translateX(8px); }
       64% { transform: translateX(-5px); }
     }
+    @keyframes dots {
+      0% { content: ""; }
+      25% { content: "."; }
+      50% { content: ".."; }
+      75%, 100% { content: "..."; }
+    }
   </style>
 </head>
 <body>
 <div id="app">
   <div class="top-row">
     <a class="back-link" href="index.html">← 返回</a>
+    <button id="bgm-toggle" type="button">BGM OFF</button>
   </div>
 
   <div id="battle-hud">
     <div class="battle-panel">
       <div class="battle-kicker">challenger hp</div>
       <div id="life-row"></div>
+      <div class="timer-wrap">
+        <div class="timer-head">
+          <span>TIME</span>
+          <span id="timer-count">20</span>
+        </div>
+        <div id="timer-bar"><div id="timer-fill"></div></div>
+      </div>
     </div>
     <div class="battle-panel boss-card">
       <img class="boss-avatar" src="assets/boss-memory-beast.png" alt="">
@@ -412,6 +578,7 @@
     </div>
   </div>
   <div id="battle-feedback" aria-live="polite"></div>
+  <div id="taunt-bubble" aria-live="polite"></div>
 
   <div id="progress-wrap"><div id="progress-fill" style="width:0%"></div></div>
   <div id="type-label"></div>
@@ -444,12 +611,15 @@
 const DAY_SIZE   = 20;
 const REVIEW_MAX = 15;
 const FINAL_N    = 50;
+const QUESTION_TIME = 20;
 const PASS = { r1: 0.8, r2: 0.9, review: 0.7, final: 0.8 };
 
 // ── URL params ────────────────────────────────────────────
 const params = new URLSearchParams(location.search);
 const TYPE = params.get('type') || 'complete';
 const DAY  = parseInt(params.get('day') || '1', 10);
+const IS_REPEAT_COMPLETE = TYPE === 'complete' &&
+  localStorage.getItem(`onomatope:d${DAY}:quiz-complete`) === '1';
 
 // ── SRS (shared data format with app.js) ─────────────────
 const SRS = {
@@ -512,6 +682,14 @@ function shuffle(a) {
   return arr;
 }
 
+function escapeHTML(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ── Quiz state ────────────────────────────────────────────
 let allCards   = [];
 let queue      = [];
@@ -523,6 +701,15 @@ let isLocked   = false;
 let round      = 1;
 let lives      = 4;
 const MAX_LIVES = 4;
+let currentQuestion = null;
+let timeLeft = QUESTION_TIME;
+let countdownTimer = null;
+let bgmCtx = null;
+let bgmTimer = null;
+let bgmOn = false;
+let bgmIntervalMs = 0;
+let studyStartedAt = Date.now();
+let studyFlushedAt = studyStartedAt;
 // ── Init ──────────────────────────────────────────────────
 async function init() {
   const res  = await fetch('data/cards.json');
@@ -539,13 +726,14 @@ function startComplete(r, keepLives = false) {
   if (!keepLives) resetBattle();
   const dayCards = allCards.slice((DAY - 1) * DAY_SIZE, DAY * DAY_SIZE);
   if (r === 1) {
-    queue = buildQuestions(dayCards, allCards, false, false); // MC only, no hints
+    queue = buildQuestions(dayCards, allCards, true, true); // MC+TF, with hints
     setTypeLabel(`通关测验 · 第 ${DAY} 天 · 第一轮`);
   } else {
-    queue = buildQuestions(dayCards, allCards, true, true);  // MC+TF, with hints
+    queue = buildQuestions(dayCards, allCards, false, false);  // MC only, no hints
     setTypeLabel(`通关测验 · 第 ${DAY} 天 · 第二轮`);
   }
   resetRound();
+  if (shouldUseBgm()) startBgm();
 }
 
 function startReview() {
@@ -593,6 +781,7 @@ function render() {
   if (qIndex >= queue.length) { checkEnd(); return; }
 
   const q = queue[qIndex];
+  currentQuestion = q;
   isLocked = false;
 
   updateProgress();
@@ -601,6 +790,12 @@ function render() {
 
   if (q.type === 'mc') renderMC(q);
   else renderTF(q);
+  if (shouldUseTimer()) startCountdown();
+  else {
+    stopCountdown();
+    timeLeft = QUESTION_TIME;
+    updateTimerUI();
+  }
 }
 
 function renderWordArea(q) {
@@ -676,15 +871,56 @@ function renderTF(q) {
   no.onclick  = () => answerTF(false, q);
 }
 
+function handleTimeout() {
+  if (isLocked || !currentQuestion) return;
+  const q = currentQuestion;
+  isLocked = true;
+  stopCountdown();
+  gradeCard(q.card.id, false, !attempted.has(q.card.id));
+  recordWrong(q.card);
+  applyBattleResult(false, true);
+  revealTimeoutAnswer(q);
+  triggerTaunt('wrong', q);
+  if (TYPE === 'review') requeueFlipped(q);
+  setTimeout(() => {
+    if (lives <= 0) showGameOver();
+    else advance();
+  }, 1250);
+}
+
+function revealTimeoutAnswer(q) {
+  if (q.type === 'mc') {
+    document.querySelectorAll('.opt-btn').forEach(b => {
+      b.classList.add('disabled');
+      if (b.textContent === q.correct) b.classList.add('hint');
+    });
+    return;
+  }
+  const yes = document.getElementById('tf-yes');
+  const no = document.getElementById('tf-no');
+  yes.classList.add('disabled');
+  no.classList.add('disabled');
+  if (q.isCorrectDef) yes.classList.add('hint');
+  else no.classList.add('hint');
+  if (!q.isCorrectDef) {
+    const hint = document.getElementById('tf-correct-hint');
+    hint.textContent = `正确解释：${q.card.meanings[0]}`;
+    hint.style.display = 'block';
+  }
+}
+
 // ── Answer handlers ───────────────────────────────────────
 function answerMC(opt, btn, q) {
   if (isLocked) return;
+  ensureBgmAfterGesture();
+  stopCountdown();
   isLocked = true;
 
   const isCorrect = opt === q.correct;
   const isFirst   = !attempted.has(q.card.id);
 
   gradeCard(q.card.id, isCorrect, isFirst);
+  if (!isCorrect) recordWrong(q.card);
   applyBattleResult(isCorrect);
 
   document.querySelectorAll('.opt-btn').forEach(b => {
@@ -694,6 +930,7 @@ function answerMC(opt, btn, q) {
   if (!isCorrect) btn.classList.add('wrong');
   else btn.classList.add('correct');
 
+  if (!isCorrect) triggerTaunt('wrong', q);
   if (!isCorrect && TYPE === 'review') requeueFlipped(q);
 
   setTimeout(() => {
@@ -704,12 +941,15 @@ function answerMC(opt, btn, q) {
 
 function answerTF(userSaysCorrect, q) {
   if (isLocked) return;
+  ensureBgmAfterGesture();
+  stopCountdown();
   isLocked = true;
 
   const isCorrect = userSaysCorrect === q.isCorrectDef;
   const isFirst   = !attempted.has(q.card.id);
 
   gradeCard(q.card.id, isCorrect, isFirst);
+  if (!isCorrect) recordWrong(q.card);
   applyBattleResult(isCorrect);
 
   const yes = document.getElementById('tf-yes');
@@ -729,6 +969,7 @@ function answerTF(userSaysCorrect, q) {
     hint.style.display = 'block';
   }
 
+  if (!isCorrect) triggerTaunt('wrong', q);
   if (!isCorrect && TYPE === 'review') requeueFlipped(q);
 
   setTimeout(() => {
@@ -773,9 +1014,9 @@ function checkCompleteEnd(pct) {
     if (pct >= PASS.r1) {
       showRoundScreen(
         '🎯', `第一轮通过！${pctDisp}%`,
-        '答对 ' + correct + ' / ' + initCount + '\n接下来会加入图片、音频和判断题，继续！',
+        '答对 ' + correct + ' / ' + initCount + '\n接下来撤掉提示，进入纯选择题决战！',
         '开始第二轮 →',
-        () => startComplete(2, true)
+        () => startComplete(2)
       );
     } else {
       showResult(false, pctDisp, correct, initCount,
@@ -842,6 +1083,7 @@ function showQuizUI() {
   document.getElementById('round-screen').style.display  = 'none';
   document.getElementById('battle-hud').style.display    = 'grid';
   document.getElementById('battle-feedback').style.display = 'block';
+  document.getElementById('taunt-bubble').style.display = 'block';
   document.getElementById('progress-wrap').style.display = 'block';
   document.getElementById('type-label').style.display    = 'block';
   document.getElementById('progress-label').style.display = 'block';
@@ -850,6 +1092,9 @@ function showQuizUI() {
 }
 
 function showRoundScreen(emoji, title, sub, btnLabel, action) {
+  flushStudyTime();
+  stopCountdown();
+  stopBgm();
   hideQuizUI();
   const el = document.getElementById('round-screen');
   el.style.display = 'flex';
@@ -863,12 +1108,16 @@ function showRoundScreen(emoji, title, sub, btnLabel, action) {
 }
 
 function showResult(passed, pct, got, total, sub, actions) {
+  flushStudyTime();
+  stopCountdown();
+  stopBgm();
   hideQuizUI();
   const el = document.getElementById('result-screen');
   el.style.display = 'flex';
+  el.className = actions.some(a => a.defeat) ? 'result-screen-defeat' : '';
   const emoji = passed ? (pct === 100 ? '🎉' : '✅') : '💪';
   const actHTML = actions.map(a =>
-    `<button class="result-btn ${a.secondary ? 'btn-secondary' : 'btn-primary'}" data-action="${a.label}">${a.label}</button>`
+    `<button class="result-btn ${a.secondary ? 'btn-secondary' : 'btn-primary'} ${a.className || ''}" data-action="${a.label}">${a.label}</button>`
   ).join('');
   el.innerHTML = `
     <div class="result-emoji">${emoji}</div>
@@ -885,6 +1134,7 @@ function showResult(passed, pct, got, total, sub, actions) {
 function hideQuizUI() {
   document.getElementById('battle-hud').style.display = 'none';
   document.getElementById('battle-feedback').style.display = 'none';
+  document.getElementById('taunt-bubble').style.display = 'none';
   document.getElementById('progress-wrap').style.display = 'none';
   document.getElementById('type-label').style.display = 'none';
   document.getElementById('progress-label').style.display = 'none';
@@ -905,6 +1155,80 @@ function setTypeLabel(text) {
   document.getElementById('type-label').textContent = text.toUpperCase();
 }
 
+function getStats() {
+  try { return JSON.parse(localStorage.getItem('onomatope:stats') || '{}'); }
+  catch { return {}; }
+}
+
+function saveStats(stats) {
+  localStorage.setItem('onomatope:stats', JSON.stringify(stats));
+}
+
+function flushStudyTime() {
+  const now = Date.now();
+  const delta = Math.max(0, Math.round((now - studyFlushedAt) / 1000));
+  if (delta < 3) return;
+  const stats = getStats();
+  stats.studySeconds = (stats.studySeconds || 0) + delta;
+  stats.lastStudiedAt = now;
+  saveStats(stats);
+  studyFlushedAt = now;
+}
+
+function recordWrong(card) {
+  if (!card) return;
+  const stats = getStats();
+  stats.wrongs = stats.wrongs || {};
+  const item = stats.wrongs[card.id] || { word: card.word, count: 0 };
+  item.word = card.word;
+  item.meaning = card.meanings?.[0] || item.meaning || '';
+  item.count++;
+  stats.wrongs[card.id] = item;
+  saveStats(stats);
+}
+
+function shouldUseTimer() {
+  return TYPE !== 'complete' || round === 2;
+}
+
+function shouldUseBgm() {
+  return TYPE !== 'complete' || round === 2;
+}
+
+// ── Timer ────────────────────────────────────────────────
+function startCountdown() {
+  stopCountdown();
+  timeLeft = QUESTION_TIME;
+  updateTimerUI();
+  updateBgmMode();
+  countdownTimer = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    updateBgmMode();
+    if (timeLeft <= 0) handleTimeout();
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+  }
+}
+
+function updateTimerUI() {
+  const wrap = document.querySelector('.timer-wrap');
+  const count = document.getElementById('timer-count');
+  const fill = document.getElementById('timer-fill');
+  if (!count || !fill) return;
+  if (wrap) wrap.style.display = shouldUseTimer() ? 'block' : 'none';
+  const pct = Math.max(0, Math.round(timeLeft / QUESTION_TIME * 100));
+  count.textContent = String(Math.max(0, timeLeft));
+  fill.style.width = pct + '%';
+  count.classList.toggle('danger', timeLeft <= 5);
+  fill.classList.toggle('danger', timeLeft <= 5);
+}
+
 // ── Battle shell ─────────────────────────────────────────
 function resetBattle() {
   lives = MAX_LIVES;
@@ -923,9 +1247,10 @@ function updateBattleHUD() {
   const bossPct = Math.max(0, Math.round((bossHp / bossMax) * 100));
   const bossFill = document.getElementById('boss-bar-fill');
   if (bossFill) bossFill.style.width = bossPct + '%';
+  updateBgmMode();
 }
 
-function applyBattleResult(isCorrect) {
+function applyBattleResult(isCorrect, timedOut = false) {
   const wordArea = document.getElementById('word-area');
   const feedback = document.getElementById('battle-feedback');
   if (!isCorrect) lives = Math.max(0, lives - 1);
@@ -938,23 +1263,258 @@ function applyBattleResult(isCorrect) {
   feedback.className = '';
   feedback.textContent = isCorrect
     ? '命中！Boss HP 下降'
-    : `受击！剩余 ${lives} 滴血`;
+    : timedOut
+      ? `时间耗尽！剩余 ${lives} 滴血`
+      : `受击！剩余 ${lives} 滴血`;
   feedback.classList.add(isCorrect ? 'good' : 'bad', 'show');
 }
 
 function showGameOver() {
   const pct = initCount > 0 ? Math.round(correct / initCount * 100) : 0;
+  const q = queue[Math.min(qIndex, queue.length - 1)];
+  const fallback = fallbackTaunt('defeat', q);
   showResult(false, pct, correct, initCount,
-    '血量耗尽，错了 4 次，需要重新挑战。',
-    [{ label: '重新挑战', action: () => restartCurrentBattle() },
-     { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
+    '血量耗尽。Boss 已完成战斗分析。<div class="result-taunt" id="result-taunt">Boss：' + escapeHTML(fallback) + '</div>',
+    [{ label: '不服，再战一次', action: () => restartCurrentBattle(), defeat: true },
+     { label: '3秒后返回主页', secondary: true, className: 'exit-locked', action: () => {} }]
   );
+  unlockExitAfterTaunt();
+}
+
+function unlockExitAfterTaunt() {
+  let left = 3;
+  const btn = document.querySelector('.exit-locked');
+  if (!btn) return;
+  const timer = setInterval(() => {
+    left--;
+    if (left > 0) {
+      btn.textContent = `${left}秒后返回主页`;
+      return;
+    }
+    clearInterval(timer);
+    btn.textContent = '算了，先撤退';
+    btn.classList.remove('exit-locked');
+    btn.onclick = () => { location.href = 'index.html'; };
+  }, 1000);
 }
 
 function restartCurrentBattle() {
   if (TYPE === 'complete') startComplete(1);
   else if (TYPE === 'review') startReview();
   else startFinal();
+}
+
+// ── AI taunts ────────────────────────────────────────────
+function triggerTaunt(kind, q) {
+  showThinkingTaunt(kind);
+  setTimeout(() => {
+    showTaunt(kind, fallbackTaunt(kind, q));
+  }, 420 + Math.floor(Math.random() * 260));
+}
+
+function showTaunt(kind, text) {
+  const el = document.getElementById('taunt-bubble');
+  if (!el) return;
+  const friendly = IS_REPEAT_COMPLETE && kind !== 'defeat';
+  const face = kind === 'defeat' ? '👹' : friendly ? '🛡️' : '👾';
+  const speaker = kind === 'defeat' ? 'Boss' : friendly ? '小兵助教' : '小兵';
+  el.innerHTML = `
+    <div class="taunt-inner">
+      <div class="taunt-face">${face}</div>
+      <div class="taunt-copy">${speaker}：${escapeHTML(text)}</div>
+    </div>
+  `;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function showThinkingTaunt(kind) {
+  const el = document.getElementById('taunt-bubble');
+  if (!el) return;
+  const friendly = IS_REPEAT_COMPLETE && kind !== 'defeat';
+  const face = kind === 'defeat' ? '👹' : friendly ? '🛡️' : '👾';
+  const speaker = kind === 'defeat' ? 'Boss' : friendly ? '小兵助教' : '小兵';
+  el.innerHTML = `
+    <div class="taunt-inner">
+      <div class="taunt-face">${face}</div>
+      <div class="taunt-copy thinking">${speaker}正在分析你的失误<span class="taunt-dots"></span></div>
+    </div>
+  `;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function fallbackTaunt(kind, q) {
+  const word = q?.card?.word || '这个词';
+  const meaning = q?.card?.meanings?.[0] || '解释';
+  const danger = lives <= 1 ? '你只剩最后一滴血了，' : lives <= 2 ? '血量已经危险了，' : '';
+  const phase = TYPE === 'complete'
+    ? `第 ${DAY} 天第 ${round} 轮`
+    : TYPE === 'review'
+      ? '复习战'
+      : '最终战';
+  const wrongLines = [
+    `${word} 都没拿下？小兵都替你着急。`,
+    `刚才那下偏得漂亮，Boss 已经开始笑了。`,
+    `${word} 的核心是「${meaning}」，别让它再偷你一滴血。`,
+    `这题不是陷阱，是你刚刚自己跳进去了。再来。`,
+    `记住 ${word}，下一次把它打回去。`,
+    `你刚刚不是答错，是给 Boss 递刀。`,
+    `小兵记录：${word}，弱点未识破。`,
+    `这滴血掉得不冤，解释都站你面前了。`,
+    `别急着眨眼，Boss 就等你忘这个。`,
+    `错一次可以，错到记不住就不礼貌了。`,
+    `这题先记账，下一轮把它连本带利拿回来。`,
+    `${danger}${phase} 的 ${word} 又漏了，系统都看不下去。`,
+    `我刚算过了，你不是差很多，是差一次认真看解释。`,
+    `当前弱点锁定：${word}。建议立刻反击，不建议逃跑。`,
+    `根据你的手速判断，你刚才点得很自信，也很错误。`,
+    `记忆兽提示：${meaning}。再错它就要加餐了。`
+  ];
+  const friendlyWrongLines = [
+    `别慌，${word} 这里记成「${meaning}」就稳了。`,
+    `你已经通关过了，我有点怕你认真起来。先把 ${word} 捡回来。`,
+    `这题只是手滑，${word} 的感觉再看一眼就回来了。`,
+    `提示一下：${meaning}。慢一点，你肯定能拿回这分。`,
+    `别急着打 Boss，先把 ${word} 这个破绽补上。`,
+    `我不嘲讽你了，你都通关过。这里更像是在磨刀。`,
+    `这次错得很有价值，说明 ${word} 正好该复习。`
+  ];
+  const defeatLines = [
+    `四滴血全没了？记忆兽都还没热身。重来，把它打到闭嘴。`,
+    `你不是不会，你是刚才没盯紧。回第一轮，重新砍。`,
+    `今天先输给我一次也行，但别把这个词留到明天。`,
+    `这局归我。下一局，把错的那些全部讨回来。`,
+    `退出？可以。只要你愿意承认这个词今天赢了。`,
+    `我会在这里等你重来，尤其等你再错同一个。`,
+    `差一点就能记住了，所以现在退出最亏。`,
+    `你已经付了四滴血，不把经验拿走就太便宜我了。`,
+    `回去重打。把刚才那几个错题变成 Boss 的伤口。`,
+    `战斗记录分析完毕：你不是被打败，是把复习按钮漏点了。`,
+    `${phase} 失败原因：最后几题开始慌。解决方案：立刻再战。`,
+    `我已经记住你错过的节奏了。下一局，别让我猜中。`,
+    `现在退出，Boss 会把这局存档循环播放。`,
+    `四滴血换来的情报已经到手，撤退等于白挨打。`
+  ];
+  const pool = kind === 'defeat' ? defeatLines : IS_REPEAT_COMPLETE ? friendlyWrongLines : wrongLines;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ── Battle BGM ───────────────────────────────────────────
+function setupBgmToggle() {
+  const btn = document.getElementById('bgm-toggle');
+  if (!btn) return;
+  btn.onclick = () => {
+    if (bgmOn) stopBgm();
+    else startBgm();
+  };
+}
+
+function ensureBgmAfterGesture() {
+  if (shouldUseBgm() && !bgmOn) startBgm();
+}
+
+function startBgm() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return;
+  if (!bgmCtx) bgmCtx = new AudioContext();
+  if (bgmCtx.state === 'suspended') bgmCtx.resume();
+  bgmOn = true;
+  const btn = document.getElementById('bgm-toggle');
+  if (btn) {
+    btn.textContent = 'BGM ON';
+    btn.classList.add('active');
+  }
+  updateBgmMode(true);
+}
+
+function stopBgm() {
+  if (bgmTimer) {
+    clearInterval(bgmTimer);
+    bgmTimer = null;
+  }
+  bgmOn = false;
+  bgmIntervalMs = 0;
+  const btn = document.getElementById('bgm-toggle');
+  if (btn) {
+    btn.textContent = 'BGM OFF';
+    btn.classList.remove('active');
+  }
+}
+
+function getBgmInterval() {
+  if (timeLeft <= 5) return 480;
+  if (timeLeft <= 10) return 650;
+  if (lives <= 1) return 620;
+  if (lives <= 2) return 820;
+  if (lives <= 3) return 1050;
+  return 1400;
+}
+
+function updateBgmMode(force = false) {
+  if (!bgmOn || !bgmCtx) return;
+  const next = getBgmInterval();
+  if (!force && next === bgmIntervalMs) return;
+  if (bgmTimer) clearInterval(bgmTimer);
+  bgmIntervalMs = next;
+  playBgmTick();
+  bgmTimer = setInterval(playBgmTick, bgmIntervalMs);
+}
+
+function playBgmTick() {
+  if (!bgmOn || !bgmCtx) return;
+  const now = bgmCtx.currentTime;
+  const urgency = timeLeft <= 5 ? 1 : timeLeft <= 10 ? 0.7 : lives <= 2 ? 0.55 : 0.25;
+  const beat = Math.floor((QUESTION_TIME - timeLeft) / 2);
+  const progression = [
+    [55.00, 65.41, 82.41, 98.00],   // A dark minor color
+    [49.00, 58.27, 73.42, 87.31],   // G tension
+    [43.65, 55.00, 65.41, 82.41],   // F pull
+    [51.91, 61.74, 77.78, 92.50]    // Ab unresolved
+  ];
+  const chord = progression[beat % progression.length];
+  playChord(chord, 1.35, 0.022 + urgency * 0.012, now);
+  playBass(chord[0] / 2, 0.42, 0.055 + urgency * 0.018, now);
+  if (timeLeft <= 10 || lives <= 2) {
+    playPulse(chord, now, urgency);
+  }
+}
+
+function playChord(freqs, duration, gainValue, when) {
+  freqs.forEach((freq, i) => {
+    playTone(freq * 2, duration, gainValue * (i === 0 ? 0.9 : 0.72), 'triangle', when + i * 0.018, 900);
+    playTone(freq * 4.01, duration * 0.9, gainValue * 0.22, 'sine', when + i * 0.02, 1400);
+  });
+}
+
+function playBass(freq, duration, gainValue, when) {
+  playTone(freq, duration, gainValue, 'sine', when, 420);
+  playTone(freq * 2, duration * 0.55, gainValue * 0.26, 'triangle', when + 0.035, 520);
+}
+
+function playPulse(chord, when, urgency) {
+  const note = chord[(Math.floor(timeLeft) + lives) % chord.length] * 4;
+  playTone(note, 0.07, 0.025 + urgency * 0.02, 'triangle', when + 0.08, 1800);
+  if (timeLeft <= 5) playTone(note * 1.5, 0.055, 0.018 + urgency * 0.015, 'sine', when + 0.24, 2200);
+}
+
+function playTone(freq, duration, gainValue, type, when, cutoff = 720) {
+  const osc = bgmCtx.createOscillator();
+  const gain = bgmCtx.createGain();
+  const filter = bgmCtx.createBiquadFilter();
+  osc.type = type;
+  osc.frequency.value = freq;
+  filter.type = 'lowpass';
+  filter.frequency.value = timeLeft <= 5 ? cutoff * 1.35 : lives <= 2 ? cutoff * 1.12 : cutoff;
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.exponentialRampToValueAtTime(gainValue, when + 0.035);
+  gain.gain.exponentialRampToValueAtTime(Math.max(gainValue * 0.38, 0.0002), when + duration * 0.55);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+  osc.connect(filter).connect(gain).connect(bgmCtx.destination);
+  osc.start(when);
+  osc.stop(when + duration + 0.05);
 }
 
 // ── Audio ─────────────────────────────────────────────────
@@ -980,6 +1540,8 @@ function tts(word) {
 }
 
 // ── Start ─────────────────────────────────────────────────
+setupBgmToggle();
+window.addEventListener('beforeunload', flushStudyTime);
 init().catch(() => {
   document.getElementById('current-word').textContent = '加载失败';
 });

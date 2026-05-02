@@ -5,6 +5,27 @@ const DAY_SIZE = 20;
 const urlParams = new URLSearchParams(location.search);
 const DAY = parseInt(urlParams.get('day') || '1', 10);
 const STORAGE_PREFIX = `onomatope:d${DAY}:`;
+let studyFlushedAt = Date.now();
+
+function getGlobalStats() {
+  try { return JSON.parse(localStorage.getItem('onomatope:stats') || '{}'); }
+  catch { return {}; }
+}
+
+function saveGlobalStats(stats) {
+  localStorage.setItem('onomatope:stats', JSON.stringify(stats));
+}
+
+function flushStudyTime() {
+  const now = Date.now();
+  const delta = Math.max(0, Math.round((now - studyFlushedAt) / 1000));
+  if (delta < 3) return;
+  const stats = getGlobalStats();
+  stats.studySeconds = (stats.studySeconds || 0) + delta;
+  stats.lastStudiedAt = now;
+  saveGlobalStats(stats);
+  studyFlushedAt = now;
+}
 
 // Data — load by day, sort by SRS
 const DataStore = {
@@ -615,3 +636,5 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowDown' || e.key === ' ') Router.next();
   else if (e.key === 'Enter' || e.key === 'f') Router.flip();
 });
+
+window.addEventListener('beforeunload', flushStudyTime);

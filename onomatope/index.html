@@ -107,6 +107,16 @@
     .title-l { font-size: 19px; font-weight: 600; color: rgba(255,255,255,0.22); letter-spacing: 1.5px; }
     .sub-a   { font-size: 12px; margin-top: 3px; color: rgba(200,170,255,0.6); }
     .sub-l   { font-size: 12px; margin-top: 3px; color: rgba(255,255,255,0.2); }
+    .stage-actions {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 9px;
+    }
+    .stage-mini {
+      padding: 5px 10px; border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(240,230,255,0.86);
+      font-size: 12px; text-decoration: none; font-weight: 700;
+    }
 
     /* Dot progress */
     .dots { display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap; }
@@ -160,6 +170,11 @@
       background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.18);
       border: 1px solid rgba(255,255,255,0.08); pointer-events: none;
       box-shadow: none;
+    }
+    .chest-summary {
+      max-width: 360px; position: relative; z-index: 1;
+      color: rgba(230,215,255,0.72); font-size: 13px;
+      line-height: 1.7; text-align: center;
     }
     .loading { color: rgba(180,150,240,0.35); padding: 24px 0; font-size: 14px; text-align: center; }
   </style>
@@ -215,7 +230,7 @@ async function init() {
     var needsQuiz = dp.done && !quizDone;
     var num = String(dp.day).padStart(2, '0');
 
-    var active, href, sub, arrow;
+    var active, href, sub, arrow, actions = '';
     if (needsRev) {
       active = true;
       href = 'quiz.html?day=' + (dp.day-1) + '&type=review';
@@ -228,9 +243,14 @@ async function init() {
       arrow = '🔒';
     } else if (quizDone) {
       active = true;
-      href = 'viewer.html?day=' + dp.day;
-      sub  = dp.done ? '✅ 已通关' : dp.total + ' 词';
-      arrow = '›';
+      href = null;
+      sub  = dp.done ? '✅ 已通关 · 可重复学习/挑战' : dp.total + ' 词';
+      arrow = '✓';
+      actions =
+        '<div class="stage-actions">' +
+          '<a class="stage-mini" href="viewer.html?day=' + dp.day + '">重复学习</a>' +
+          '<a class="stage-mini" href="quiz.html?day=' + dp.day + '&type=complete">再次挑战</a>' +
+        '</div>';
     } else if (needsQuiz) {
       active = true;
       href = 'quiz.html?day=' + dp.day + '&type=complete';
@@ -261,6 +281,7 @@ async function init() {
         '<div class="' + (active ? 'title-a' : 'title-l') + '">第 ' + dp.day + ' 関</div>' +
         '<div class="' + (active ? 'sub-a' : 'sub-l') + '">' + sub + '</div>' +
         dots +
+        actions +
       '</div>' +
       '<div class="' + (active ? 'arr-a' : 'arr-l') + '">' + arrow + '</div>';
     list.appendChild(el);
@@ -270,7 +291,6 @@ async function init() {
   var last      = days[days.length - 1];
   var allDone   = days.every(function(d) { return d.done; });
   var lastQuiz  = localStorage.getItem('onomatope:d' + last.day + ':quiz-complete') === '1';
-  var finalDone = localStorage.getItem('onomatope:final-complete') === '1';
   var open      = allDone && lastQuiz;
   var now = Date.now(), due = 0;
   cards.forEach(function(c) {
@@ -281,12 +301,13 @@ async function init() {
   });
 
   var label = open
-    ? (finalDone ? '✨ 全掌握已达成' : '→ 全 15 関を制覇！宝箱を開けよう！ ←')
+    ? '✨ 全 15 関制覇！宝箱里是一份你的学习总结'
     : '→ 全 15 関を制覇して宝箱を開けよう！ ←';
   var btn = '';
-  if (open && !finalDone)
-    btn = '<a class="chest-btn" href="quiz.html?type=final">开启宝箱！挑战最终测验</a>';
-  else if (finalDone && due > 0)
+  var summary = open ? '<div class="chest-summary">你一路打到这里，留下的不是一个分数，而是一串真正被你啃下来的词。打开它，看看自己走了多远。</div>' : '';
+  if (open)
+    btn = '<button class="chest-btn" onclick="downloadSummary()">开启宝箱：领取学习总结</button>';
+  else if (due > 0)
     btn = '<a class="chest-btn" href="quiz.html?type=review&day=' + last.day + '">📅 今日复习 ' + due + ' 词</a>';
   else if (!open)
     btn = '<div class="chest-btn dim">🔒 宝箱未解锁</div>';
@@ -295,7 +316,60 @@ async function init() {
     '<div class="chest-label">' + label + '</div>' +
     '<img class="chest-img ' + (open ? 'open-img' : 'locked-img') + '" src="assets/' +
       (open ? 'chest-open-dark.png' : 'chest-locked-dark.png') + '" alt="宝箱">' +
+    summary +
     btn;
+}
+
+function downloadSummary() {
+  fetch('data/cards.json').then(function(resp) { return resp.json(); }).then(function(data) {
+    var cards = data.cards || [];
+    var stats = {};
+    try { stats = JSON.parse(localStorage.getItem('onomatope:stats') || '{}'); } catch(e) {}
+    var minutes = Math.max(1, Math.round((stats.studySeconds || 0) / 60));
+    var learned = 0;
+    cards.forEach(function(c) {
+      try {
+        var pg = JSON.parse(localStorage.getItem('onomatope:d' + Math.ceil(c.id / DAY_SIZE) + ':progress') || '{}');
+        if (pg[c.id] !== undefined) learned++;
+      } catch(e) {}
+    });
+    var wrongs = Object.keys(stats.wrongs || {}).map(function(id) {
+      return stats.wrongs[id];
+    }).sort(function(a, b) { return (b.count || 0) - (a.count || 0); });
+    var wrongText = wrongs.length
+      ? wrongs.slice(0, 20).map(function(w, i) {
+          return (i + 1) + '. ' + w.word + '：错 ' + w.count + ' 次' + (w.meaning ? '｜' + w.meaning : '');
+        }).join('\n')
+      : '没有记录到错题。你不是没有摔倒，而是每次都站得太快。';
+    var text =
+`オノマトペ 15关学习总结
+
+总学习时间：约 ${minutes} 分钟
+学习词条：${learned} / ${cards.length}
+
+错题记录：
+${wrongText}
+
+给未来的你：
+你把一串原本陌生、飘忽、很难抓住的声音，一关一关地按进了自己的记忆里。
+有些词你错过，有些解释你犹豫过，有些题甚至把你的血量打空过。
+但你没有停在那些地方。
+
+学习语言最难的部分，从来不是记住某一个词，而是在忘记以后还愿意回来。
+这份总结不是终点，它更像一张战斗后的地图：
+哪里受过伤，哪里变强了，哪里还值得再去打一遍。
+
+下一次你听到这些オノマトペ时，它们不会再只是书上的符号。
+它们会带着声音、画面、节奏，还有你亲手打赢它们的记忆回来。
+
+继续前进。你已经证明了，你不是靠热情学完的，你是靠一次次回来学完的。`;
+    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'onomatope-learning-summary.txt';
+    a.click();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+  });
 }
 
 init().catch(function(e) {
