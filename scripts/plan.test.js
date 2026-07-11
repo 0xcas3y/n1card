@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen } from '../plan.js';
+import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool } from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
@@ -241,4 +241,50 @@ test('isLearnWindowOpen: 01:01 → false', () => {
 
 test('isLearnWindowOpen: 无参数用当前时间也能跑（不报错）', () => {
   assert.strictEqual(typeof isLearnWindowOpen(), 'boolean');
+});
+
+test('computeGeneralReviewPool: 排除从没学过的词', () => {
+  const cards = [{ id: 1 }, { id: 2 }];
+  const progress = { 1: { status: 'known', masteredAt: Date.now() } };
+  const pool = computeGeneralReviewPool(cards, progress, Date.now(), 10);
+  assert.deepStrictEqual(pool.map(c => c.id), [1]);
+});
+
+test('computeGeneralReviewPool: 不超过 size，也不超过可选池大小，且不重复', () => {
+  const cards = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const progress = { 1: { status: 'unknown' }, 2: { status: 'unknown' }, 3: { status: 'unknown' } };
+  const pool = computeGeneralReviewPool(cards, progress, Date.now(), 2);
+  assert.strictEqual(pool.length, 2);
+  assert.strictEqual(new Set(pool.map(c => c.id)).size, 2);
+});
+
+test('computeGeneralReviewPool: 不熟词的抽中概率明显高于刚复习过的已掌握词', () => {
+  const cards = [];
+  for (let i = 1; i <= 20; i++) cards.push({ id: i });
+  const now = Date.now();
+  const progress = {};
+  for (let i = 1; i <= 10; i++) progress[i] = { status: 'unknown' };
+  for (let i = 11; i <= 20; i++) progress[i] = { status: 'known', masteredAt: now, lastSeen: now };
+
+  let unknownPicks = 0, knownPicks = 0;
+  for (let t = 0; t < 500; t++) {
+    const pool = computeGeneralReviewPool(cards, progress, now, 5);
+    for (const c of pool) { if (c.id <= 10) unknownPicks++; else knownPicks++; }
+  }
+  assert.ok(unknownPicks > knownPicks * 2, `expected unknown to dominate, got unknown=${unknownPicks} known=${knownPicks}`);
+});
+
+test('computeGeneralReviewPool: 很久没复习的已掌握词，抽中概率明显高于刚复习过的', () => {
+  const cards = [{ id: 1 }, { id: 2 }];
+  const now = Date.now();
+  const progress = {
+    1: { status: 'known', masteredAt: now, lastSeen: now },
+    2: { status: 'known', masteredAt: now - 30 * 86400000, lastSeen: now - 30 * 86400000 }
+  };
+  let staleCount = 0, freshCount = 0;
+  for (let t = 0; t < 500; t++) {
+    const pool = computeGeneralReviewPool(cards, progress, now, 1);
+    if (pool[0].id === 2) staleCount++; else freshCount++;
+  }
+  assert.ok(staleCount > freshCount * 2, `expected stale to dominate, got stale=${staleCount} fresh=${freshCount}`);
 });

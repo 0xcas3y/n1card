@@ -104,3 +104,40 @@ export function isLearnWindowOpen(now = new Date()) {
   const h = now.getHours();
   return h >= 20 || h < 1;
 }
+
+// 一般复习：全部"学过"的词（known/unknown），按简化遗忘曲线权重加权随机不放回抽样
+// unknown 固定权重 5；known 权重随距上次复习天数增长，封顶 4、保底 0.5
+export function computeGeneralReviewPool(cards, progress, now, size = 20) {
+  const DAY_MS = 86400000;
+  const weighted = [];
+  for (const c of cards) {
+    const p = progress[c.id];
+    if (!p || !p.status) continue;
+    let weight;
+    if (p.status === 'unknown') {
+      weight = 5;
+    } else {
+      const last = Math.max(p.masteredAt || 0, p.lastWeeklyReviewAt || 0, p.lastSeen || 0);
+      const daysSince = last ? (now - last) / DAY_MS : 999;
+      weight = Math.min(4, Math.max(0.5, daysSince / 3));
+    }
+    weighted.push({ card: c, weight });
+  }
+
+  const picked = [];
+  const pool = weighted;
+  const n = Math.min(size, pool.length);
+  for (let i = 0; i < n; i++) {
+    const total = pool.reduce((s, w) => s + w.weight, 0);
+    if (total <= 0) break;
+    let r = Math.random() * total;
+    let idx = 0;
+    for (; idx < pool.length - 1; idx++) {
+      r -= pool[idx].weight;
+      if (r <= 0) break;
+    }
+    picked.push(pool[idx].card);
+    pool.splice(idx, 1);
+  }
+  return picked;
+}
