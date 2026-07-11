@@ -832,6 +832,46 @@ const ChoiceScreen = {
   }
 };
 
+const HardReviewMode = {
+  cards: [],
+  idx: 0,
+  flipped: false,
+  onDone: null,
+  start(ids, onDone) {
+    this.cards = ids.map(id => DataStore.getCard(id)).filter(Boolean);
+    this.idx = 0;
+    this.flipped = false;
+    this.onDone = onDone;
+    document.body.classList.add('hardreview-on');
+    this._render();
+  },
+  _render() {
+    if (this.idx >= this.cards.length) {
+      document.body.classList.remove('hardreview-on');
+      const cb = this.onDone;
+      this.onDone = null;
+      cb?.();
+      return;
+    }
+    const card = this.cards[this.idx];
+    const color = CardView.randomColor();
+    const stage = document.querySelector('#cardstage');
+    stage.innerHTML = '';
+    const el = this.flipped ? CardView.renderBack(card, color) : CardView.renderFront(card, color);
+    stage.appendChild(el);
+    Gestures.attach(el, {
+      onTap: () => TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() }),
+      onDoubleTap: () => { this.flipped = !this.flipped; this._render(); },
+      onSwipe: (dir) => {
+        Progress.mark(card.id, dir === 'left' ? 'unknown' : 'known');
+        this.idx++;
+        this.flipped = false;
+        this._render();
+      }
+    });
+  }
+};
+
 const SettingsPanel = {
   open() {
     const backdrop = document.createElement('div');
