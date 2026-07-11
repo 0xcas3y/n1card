@@ -196,17 +196,18 @@ const DayView = {
       <details class="day-rules" ${rulesSeen ? '' : 'open'}>
         <summary>规则</summary>
         <ul>
-          <li>🌙 晚打卡 = 完成「学新」（滑卡）</li>
+          <li>🌙 晚打卡 = 完成 1 批「学新」（30 词滑卡 + 强制通关测验）</li>
           <li>🌅 早打卡 = 完成「早复习」（四选一）</li>
-          <li>每日学新 30 词；累计打卡每满 10 天 +1 组，上限 3 组（90 词/天）</li>
+          <li>学新只能在 <strong>晚 8 点-凌晨 1 点</strong> 进行；早复习/一般复习随时可用</li>
+          <li>每日批数上限：累计打卡每满 10 天 +1 批，上限 3 批（90 词/天）</li>
           <li>洗脑模式 60 词起，同步每 10 天 +1 组（上限 180 词）</li>
           <li>答对 2 次升「掌握」，答错立刻回「不熟」</li>
-          <li>「掌握」每 7 天来一次周复习</li>
+          <li>「掌握」每 7 天来一次周复习；🔁 一般复习按遗忘曲线随时补练老词</li>
         </ul>
       </details>
 
       <div class="day-level">
-        当前等级： <span class="day-level-val">${LEVEL_LABELS[level] || level.toUpperCase()}</span> · 配额 ${stat.quota} 词
+        当前等级： <span class="day-level-val">${LEVEL_LABELS[level] || level.toUpperCase()}</span> · 今日 ${stat.batchesAllowed} 批
       </div>
 
       <div class="day-sessions">
@@ -243,10 +244,26 @@ const DayView = {
   },
   _renderLearnCard(stat, level, dateStr) {
     if (dateStr !== todayStr()) return '';
-    const n = stat.learnQueue.length;
-    const done = stat.learnDone;
-    const label = done ? `✅ 已完成` : (n === 0 ? `无未学过词（自动 ✓）` : `0 / ${n}`);
-    const btn = done ? '' : (n === 0 ? `<button class="ds-btn" data-action="auto-evening">标记完成</button>` : `<button class="ds-btn" data-action="learn">开始</button>`);
+    const { batchesDone, batchesAllowed, learnWindowOpen, learnQueue } = stat;
+    const n = learnQueue.length;
+    const batchLabel = `${batchesDone}/${batchesAllowed} 批`;
+    let label, btn;
+    if (n === 0 && batchesDone === 0) {
+      label = '无未学过词（自动 ✓）';
+      btn = '<button class="ds-btn" data-action="auto-evening">标记完成</button>';
+    } else if (n === 0) {
+      label = `✅ ${batchLabel} · 无更多新词`;
+      btn = '';
+    } else if (batchesDone >= batchesAllowed) {
+      label = `✅ 今日 ${batchLabel} 已完成`;
+      btn = '';
+    } else if (!learnWindowOpen) {
+      label = `⏰ 学习窗口：晚8点-凌晨1点（${batchLabel}）`;
+      btn = '';
+    } else {
+      label = `${batchLabel} · 下一批 ${n} 词`;
+      btn = `<button class="ds-btn" data-action="learn">${batchesDone > 0 ? '继续下一批' : '开始学习'}</button>`;
+    }
     return `<div class="day-session-card"><div class="dsc-icon">🌙</div><div class="dsc-body"><div class="dsc-title">学新</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
   },
   _renderWeeklyCard(stat, level, dateStr) {
