@@ -297,6 +297,14 @@ const DayView = {
           case 'morning': return SessionLauncher.launchMorning(level, dateStr, stat);
           case 'learn': return SessionLauncher.launchLearn(level, dateStr, stat);
           case 'weekly': return SessionLauncher.launchWeekly(level, dateStr, stat);
+          case 'general-review-swipe': {
+            const pool = computeGeneralReviewPool(stat.cards, stat.prog, Date.now());
+            return SessionLauncher.launchGeneralReview(level, 'swipe', pool.map(c => c.id));
+          }
+          case 'general-review-quiz': {
+            const pool = computeGeneralReviewPool(stat.cards, stat.prog, Date.now());
+            return SessionLauncher.launchGeneralReview(level, 'quiz', pool.map(c => c.id));
+          }
           case 'auto-morning':
             PlanStore.completeMorning(level, dateStr, { correct: 0, total: 0 });
             Streak.markCheckIn(dateStr, 'morning');
@@ -332,6 +340,9 @@ const SessionLauncher = {
   launchWeekly(level, dateStr, stat) {
     const ids = stat.weeklyDueIds.join(',');
     window.location.href = `/${level}.html?session=review&kind=weekly&ids=${ids}`;
+  },
+  launchGeneralReview(level, mode, ids) {
+    window.location.href = `/${level}.html?session=general-review&mode=${mode}&ids=${ids.join(',')}`;
   }
 };
 
