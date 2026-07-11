@@ -214,6 +214,7 @@ const DayView = {
         ${this._renderMorningCard(stat, dateStr)}
         ${this._renderLearnCard(stat, level, dateStr)}
         ${this._renderWeeklyCard(stat, level, dateStr)}
+        ${this._renderGeneralReviewCard(stat, dateStr)}
       </div>
 
       <div class="day-level-switch">
@@ -273,6 +274,19 @@ const DayView = {
     const btn = stat.weeklyDone ? '' : `<button class="ds-btn" data-action="weekly">开始</button>`;
     const label = stat.weeklyDone ? `✅ 已完成` : `${n} 词到期`;
     return `<div class="day-session-card"><div class="dsc-icon">📆</div><div class="dsc-body"><div class="dsc-title">周复习</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
+  },
+  _renderGeneralReviewCard(stat, dateStr) {
+    if (dateStr !== todayStr()) return '';
+    const hasPool = Object.keys(stat.prog).some(id => stat.prog[id]?.status);
+    if (!hasPool) return '';
+    return `<div class="day-session-card">
+      <div class="dsc-icon">🔁</div>
+      <div class="dsc-body"><div class="dsc-title">一般复习</div><div class="dsc-sub">随时可刷，不算打卡</div></div>
+      <div class="dsc-actions">
+        <button class="ds-btn ds-btn-small" data-action="general-review-swipe">滑卡</button>
+        <button class="ds-btn ds-btn-small" data-action="general-review-quiz">测验</button>
+      </div>
+    </div>`;
   },
 
   _attachSessionHandlers(el, stat, level, dateStr) {
