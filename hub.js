@@ -248,14 +248,14 @@ const DayView = {
     const n = learnQueue.length;
     const batchLabel = `${batchesDone}/${batchesAllowed} 批`;
     let label, btn;
-    if (n === 0 && batchesDone === 0) {
+    if (batchesDone >= batchesAllowed) {
+      label = `✅ 今日 ${batchLabel} 已完成`;
+      btn = '';
+    } else if (n === 0 && batchesDone === 0) {
       label = '无未学过词（自动 ✓）';
       btn = '<button class="ds-btn" data-action="auto-evening">标记完成</button>';
     } else if (n === 0) {
       label = `✅ ${batchLabel} · 无更多新词`;
-      btn = '';
-    } else if (batchesDone >= batchesAllowed) {
-      label = `✅ 今日 ${batchLabel} 已完成`;
       btn = '';
     } else if (!learnWindowOpen) {
       label = `⏰ 学习窗口：晚8点-凌晨1点（${batchLabel}）`;
