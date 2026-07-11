@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { computeQuota, computeLearnQueue, computeBatchesAllowed } from '../plan.js';
+import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen } from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
@@ -209,4 +209,36 @@ test('computeBatchesAllowed: 20+ days → 3 (cap)', () => {
 
 test('computeBatchesAllowed: negative → 1 (graceful)', () => {
   assert.strictEqual(computeBatchesAllowed(-5), 1);
+});
+
+test('isLearnWindowOpen: 19:59 → false', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 19, 59)), false);
+});
+
+test('isLearnWindowOpen: 20:00 → true', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 20, 0)), true);
+});
+
+test('isLearnWindowOpen: 23:59 → true', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 23, 59)), true);
+});
+
+test('isLearnWindowOpen: 00:00 → true', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 0, 0)), true);
+});
+
+test('isLearnWindowOpen: 00:59 → true', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 0, 59)), true);
+});
+
+test('isLearnWindowOpen: 01:00 → false', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 1, 0)), false);
+});
+
+test('isLearnWindowOpen: 01:01 → false', () => {
+  assert.strictEqual(isLearnWindowOpen(new Date(2026, 0, 1, 1, 1)), false);
+});
+
+test('isLearnWindowOpen: 无参数用当前时间也能跑（不报错）', () => {
+  assert.strictEqual(typeof isLearnWindowOpen(), 'boolean');
 });

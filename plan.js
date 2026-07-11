@@ -98,3 +98,9 @@ export function aggregateCheckIns(checkIns, dateStr) {
   if (c.morning || c.evening) return 'half';
   return 'none';
 }
+
+// 学习窗口：本地时间 20:00–00:59（含）
+export function isLearnWindowOpen(now = new Date()) {
+  const h = now.getHours();
+  return h >= 20 || h < 1;
+}
