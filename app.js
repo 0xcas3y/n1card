@@ -1,4 +1,4 @@
-import { aggregateCheckIns, pickDistractors, computeQuota } from './plan.js';
+import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -912,6 +912,7 @@ const Router = {
   learnCompletedIds: [],
   learnReturnUrl: null,
   learnRetakeDate: null,
+  generalReviewMode: false,
 
   computeVisible() {
     const all = DataStore.allCards();
@@ -981,7 +982,13 @@ const Router = {
       if (this.learnMode) this.learnCompletedIds.push(card.id);
     }
     if (this.learnMode && this.learnCompletedIds.length >= this.learnQueue.length) {
-      this._finishLearn();
+      if (this.learnRetakeDate) this._finishLearn();
+      else this._finishBatch();
+      return;
+    }
+    if (this.generalReviewMode && this.currentIndex >= this.visibleCards.length - 1) {
+      this.generalReviewMode = false;
+      window.location.href = '/';
       return;
     }
     this.nextCard();
@@ -1027,6 +1034,29 @@ const Router = {
       p.set('ids', ids.join(','));
     }
     window.location.href = url + '?' + p.toString();
+  },
+
+  enterGeneralReviewSession(cards) {
+    this.generalReviewMode = true;
+    this.visibleCards = cards;
+    this.currentIndex = 0;
+    this.currentColor = CardView.randomColor();
+    this.flipped = false;
+    this.showCurrent();
+  },
+
+  _finishBatch() {
+    const batchIds = this.learnCompletedIds.slice();
+    this.learnMode = false;
+    this.learnQueue = [];
+    this.learnCompletedIds = [];
+    const batchCards = batchIds.map(id => DataStore.getCard(id)).filter(Boolean);
+    QuizMode.start({
+      queue: batchCards,
+      pool: DataStore.allCards(),
+      title: '通关测验',
+      onComplete: () => ChoiceScreen.show(batchIds)
+    });
   },
 
   toggleFlip() {
