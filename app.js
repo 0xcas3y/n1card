@@ -794,6 +794,44 @@ const QuizMode = {
 };
 window.QuizMode = QuizMode;  // 供 hub.js 调用
 
+const ChoiceScreen = {
+  show(batchIds) {
+    document.body.classList.add('choice-on');
+    const hardIds = batchIds.filter(id => Progress.getStatus(id) === 'unknown');
+    const hasMoreWords = DataStore.allCards().some(c => !Progress.getStatus(c.id));
+    const canContinue = hasMoreWords && isLearnWindowOpen();
+    const stage = document.querySelector('#cardstage');
+    stage.innerHTML = `
+      <div class="quiz-summary">
+        <div class="qs-title">这一批通关了！</div>
+        <div class="qs-line">本批 ${batchIds.length} 词</div>
+        <div class="choice-actions">
+          ${canContinue ? '<button class="qs-done" id="cs-continue">继续下一批</button>' : ''}
+          ${hardIds.length > 0 ? '<button class="qs-done" id="cs-review">复习刚才的不熟词</button>' : ''}
+          <button class="qs-done" id="cs-end">结束</button>
+        </div>
+      </div>
+    `;
+    const continueBtn = stage.querySelector('#cs-continue');
+    if (continueBtn) continueBtn.addEventListener('click', () => this._finish(batchIds, true));
+    const reviewBtn = stage.querySelector('#cs-review');
+    if (reviewBtn) reviewBtn.addEventListener('click', () => {
+      document.body.classList.remove('choice-on');
+      HardReviewMode.start(hardIds, () => this.show(batchIds));
+    });
+    stage.querySelector('#cs-end').addEventListener('click', () => this._finish(batchIds, false));
+  },
+  _finish(batchIds, wantsContinue) {
+    document.body.classList.remove('choice-on');
+    const p = new URLSearchParams();
+    p.set('learn_completed', '1');
+    p.set('level', LEVEL_KEY);
+    p.set('ids', batchIds.join(','));
+    if (wantsContinue) p.set('continue', '1');
+    window.location.href = '/?' + p.toString();
+  }
+};
+
 const SettingsPanel = {
   open() {
     const backdrop = document.createElement('div');
