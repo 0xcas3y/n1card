@@ -1,8 +1,11 @@
 // hub.js — 首页（index.html）逻辑：PlanStore + DayView + RetrospectView + Calendar
 import {
-  computeQuota, computeLearnQueue, computeMorningPool, computeWeeklyDue,
-  pruneOldCohorts, aggregateCheckIns, pickDistractors
+  computeLearnQueue, computeMorningPool, computeWeeklyDue,
+  pruneOldCohorts, aggregateCheckIns, pickDistractors,
+  computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool
 } from './plan.js';
+
+const BATCH_SIZE = 30;
 
 const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
@@ -89,7 +92,13 @@ const PlanStore = {
       data.cohorts[dateStr] = { cardIds: [...merged], completedAt: Date.now() };
     }
     if (!data.sessions[dateStr]) data.sessions[dateStr] = {};
-    data.sessions[dateStr].learn = { status: 'done', completedAt: Date.now(), count: cardIds.length };
+    const prevBatchCount = data.sessions[dateStr].learn?.batchCount || 0;
+    data.sessions[dateStr].learn = {
+      status: 'done',
+      completedAt: Date.now(),
+      count: data.cohorts[dateStr].cardIds.length,
+      batchCount: prevBatchCount + 1
+    };
     this.save(level);
   },
   completeMorning(level, dateStr, stats) {
