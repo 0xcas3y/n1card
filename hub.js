@@ -149,14 +149,19 @@ async function _sessionStatus(level, dateStr) {
   const cards = await CardCache.load(level);
   const prog = ProgressRO.get(level);
   const streakState = Streak.load();
-  const quota = computeQuota(streakState.total || 0);
-  const learnDone = plan.sessions[dateStr]?.learn?.status === 'done';
+  const batchesAllowed = computeBatchesAllowed(streakState.total || 0);
+  const batchesDone = plan.sessions[dateStr]?.learn?.batchCount || 0;
+  const learnWindowOpen = isLearnWindowOpen();
   const morningDone = plan.sessions[dateStr]?.morning?.status === 'done';
   const weeklyDone = plan.sessions[dateStr]?.weekly?.status === 'done';
-  const learnQueue = learnDone ? [] : computeLearnQueue(cards, prog, quota);
+  const learnQueue = batchesDone >= batchesAllowed ? [] : computeLearnQueue(cards, prog, BATCH_SIZE);
+  const learnDone = batchesDone >= batchesAllowed || learnQueue.length === 0;
   const morningPool = computeMorningPool(plan.cohorts, prog, dateStr);
   const weeklyDueIds = computeWeeklyDue(prog, Date.now());
-  return { plan, cards, prog, quota, learnDone, morningDone, weeklyDone, learnQueue, morningPool, weeklyDueIds };
+  return {
+    plan, cards, prog, batchesAllowed, batchesDone, learnWindowOpen,
+    learnDone, morningDone, weeklyDone, learnQueue, morningPool, weeklyDueIds
+  };
 }
 
 const DayView = {
