@@ -1195,6 +1195,18 @@ function _attachKeyboard() {
   });
 }
 
+function _renderTimeLock() {
+  document.body.classList.add('timelock-on');
+  document.querySelector('#cardstage').innerHTML = `
+    <div class="quiz-summary">
+      <div class="qs-title">⏰ 现在不是学习时间</div>
+      <div class="qs-line">学习窗口：晚 8 点 - 凌晨 1 点</div>
+      <div class="qs-line">请晚一点再来~</div>
+      <button class="qs-done" onclick="location.href='/'">返回</button>
+    </div>
+  `;
+}
+
 // 禁止 iOS Safari 双击缩放（user-scalable=no 在部分 iOS 版本仍允许双击缩放）
 document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
 // 禁止双指捏合缩放
@@ -1279,16 +1291,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
     }
+    if (params.get('session') === 'general-review') {
+      const mode = params.get('mode') || 'swipe';
+      const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
+      const queue = queueIds.map(id => DataStore.getCard(id)).filter(Boolean);
+      if (queue.length === 0) { window.location.href = '/'; return; }
+      TTSEngine.init();
+      if (mode === 'quiz') {
+        QuizMode.start({
+          queue,
+          pool: DataStore.allCards(),
+          title: '一般复习',
+          onComplete: () => { window.location.href = '/'; }
+        });
+      } else {
+        Router.enterGeneralReviewSession(queue);
+        _attachKeyboard();
+      }
+      return;
+    }
     if (params.get('session') === 'learn') {
       const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
       const queue = queueIds
         .map(id => DataStore.getCard(id))
         .filter(Boolean);
+      const retakeDate = params.get('retake');
+      if (!retakeDate && !isLearnWindowOpen()) {
+        _renderTimeLock();
+        return;
+      }
       if (queue.length > 0) {
         TTSEngine.init();
         if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
         if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
-        const retakeDate = params.get('retake');
         Router.enterLearnSession(queue, '/', retakeDate);
         _attachKeyboard();
         return;
