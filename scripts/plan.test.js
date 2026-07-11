@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { computeQuota, computeLearnQueue } from '../plan.js';
+import { computeQuota, computeLearnQueue, computeBatchesAllowed } from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
@@ -193,4 +193,20 @@ test('aggregateCheckIns: only evening → half', () => {
 test('aggregateCheckIns: none → none', () => {
   assert.strictEqual(aggregateCheckIns({}, '2026-04-23'), 'none');
   assert.strictEqual(aggregateCheckIns({ '2026-04-23': {} }, '2026-04-23'), 'none');
+});
+
+test('computeBatchesAllowed: 0-9 days → 1', () => {
+  for (const t of [0, 1, 5, 9]) assert.strictEqual(computeBatchesAllowed(t), 1);
+});
+
+test('computeBatchesAllowed: 10-19 days → 2', () => {
+  for (const t of [10, 15, 19]) assert.strictEqual(computeBatchesAllowed(t), 2);
+});
+
+test('computeBatchesAllowed: 20+ days → 3 (cap)', () => {
+  for (const t of [20, 50, 1000]) assert.strictEqual(computeBatchesAllowed(t), 3);
+});
+
+test('computeBatchesAllowed: negative → 1 (graceful)', () => {
+  assert.strictEqual(computeBatchesAllowed(-5), 1);
 });

@@ -1,13 +1,17 @@
 // plan.js — 纯函数模块，可在 Node 和浏览器中使用
 // 不读写 storage、不碰 DOM
 
-// 配额：累计打卡每满 10 天 +1 组；上限 3 组
+// 批数：累计打卡每满 10 天 +1 批；上限 3 批
+export function computeBatchesAllowed(totalDays) {
+  const t = Math.max(0, totalDays | 0);
+  return Math.min(1 + Math.floor(t / 10), 3);
+}
+
+// 配额：批数 × 每批词数
 // 学新：baseGroup=30 → 30 / 60 / 90
 // 洗脑：baseGroup=60 → 60 / 120 / 180
 export function computeQuota(totalDays, baseGroup = 30) {
-  const t = Math.max(0, totalDays | 0);
-  const groups = Math.min(1 + Math.floor(t / 10), 3);
-  return baseGroup * groups;
+  return baseGroup * computeBatchesAllowed(totalDays);
 }
 
 export function computeLearnQueue(cards, progress, quota) {
