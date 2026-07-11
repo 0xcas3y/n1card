@@ -331,7 +331,8 @@ const DayView = {
 const SessionLauncher = {
   launchLearn(level, dateStr, stat) {
     const ids = stat.learnQueue.map(c => c.id).join(',');
-    window.location.href = `/${level}.html?session=learn&ids=${ids}`;
+    const batchesLeft = stat.batchesAllowed - stat.batchesDone;
+    window.location.href = `/${level}.html?session=learn&ids=${ids}&batchesLeft=${batchesLeft}`;
   },
   launchMorning(level, dateStr, stat) {
     const ids = stat.morningPool.join(',');
@@ -494,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           DayView.render(dateStr);
         }
-      });
+      }).catch(() => DayView.render(dateStr));
     } else {
       DayView.render(dateStr);
     }

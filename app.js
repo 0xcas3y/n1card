@@ -803,7 +803,7 @@ const ChoiceScreen = {
     document.body.classList.add('choice-on');
     const hardIds = batchIds.filter(id => Progress.getStatus(id) === 'unknown');
     const hasMoreWords = DataStore.allCards().some(c => !Progress.getStatus(c.id));
-    const canContinue = hasMoreWords && isLearnWindowOpen();
+    const canContinue = hasMoreWords && isLearnWindowOpen() && Router.batchesLeft > 1;
     const stage = document.querySelector('#cardstage');
     stage.innerHTML = `
       <div class="quiz-summary">
@@ -995,6 +995,7 @@ const Router = {
   learnReturnUrl: null,
   learnRetakeDate: null,
   generalReviewMode: false,
+  batchesLeft: 1,
 
   computeVisible() {
     const all = DataStore.allCards();
@@ -1324,6 +1325,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         TTSEngine.init();
         if (!Progress.isAvailable()) TopBar.addWarning('进度不保存');
         if (!TTSEngine.isSupported()) TopBar.addWarning('不支持发音');
+        const batchesLeft = parseInt(params.get('batchesLeft') || '1', 10);
+        Router.batchesLeft = Number.isFinite(batchesLeft) ? batchesLeft : 1;
         Router.enterLearnSession(queue, '/', retakeDate);
         _attachKeyboard();
         return;
