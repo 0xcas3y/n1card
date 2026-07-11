@@ -386,6 +386,10 @@ const TopBar = {
       const done = Router.learnCompletedIds.length;
       const total = Router.learnQueue.length;
       leftHtml = `<a class="topbar-left" href="/" style="color: inherit; text-decoration: none;">← 返回 · 学新 ${done}/${total}${streakHtml}${warn}</a>`;
+    } else if (Router.generalReviewMode) {
+      const total = Router.visibleCards.length;
+      const idx = Router.currentIndex + 1;
+      leftHtml = `<a class="topbar-left" href="/" style="color: inherit; text-decoration: none;">← 返回 · 一般复习 ${idx}/${total}${streakHtml}${warn}</a>`;
     } else {
       const total = DataStore.allCards().length;
       const idx = Router.currentIndex + 1;
@@ -393,7 +397,7 @@ const TopBar = {
     }
 
     // 学新和洗脑模式下不显示筛选下拉（pool 已固定）
-    const showFilter = !Router.learnMode && !BrainwashMode.active;
+    const showFilter = !Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active;
     const filterHtml = showFilter ? `
         <select id="filter-select">
           <option value="all">全部</option>
