@@ -482,11 +482,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const level = params.get('level') || 'n1';
     const ids = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
     const dateStr = todayStr();
+    const wantsContinue = params.get('continue') === '1';
     PlanStore.completeLearn(level, dateStr, ids);
     Streak.markCheckIn(dateStr, 'evening');
-    // 清 URL 参数后开 DayView
+    // 清 URL 参数
     history.replaceState({}, '', '/');
-    DayView.render(dateStr);
+    if (wantsContinue) {
+      _sessionStatus(level, dateStr).then(stat => {
+        if (stat.learnQueue.length > 0 && !stat.learnDone && stat.learnWindowOpen) {
+          SessionLauncher.launchLearn(level, dateStr, stat);
+        } else {
+          DayView.render(dateStr);
+        }
+      });
+    } else {
+      DayView.render(dateStr);
+    }
   }
   if (params.get('review_completed') === '1') {
     const level = params.get('level') || 'n1';
