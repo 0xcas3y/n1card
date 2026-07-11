@@ -120,7 +120,8 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
 }
 
 /* QuizMode + LearnListMode */
-body.quiz-on #topbar, body.learnlist-on #topbar { display: none; }
+body.quiz-on #topbar, body.learnlist-on #topbar,
+body.choice-on #topbar, body.hardreview-on #topbar, body.timelock-on #topbar { display: none; }
 body.brainwash-on .topbar-right select { display: none; }
 body.learnlist-on, body.learnlist-on html { height: auto; min-height: 100%; }
 body.learnlist-on #app { height: auto; min-height: 100vh; }
@@ -229,6 +230,9 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
   padding: 8px 18px; border-radius: 8px; font-size: 14px;
   cursor: pointer; font-family: inherit;
 }
+.dsc-actions { display: flex; gap: 6px; }
+.ds-btn-small { padding: 8px 12px; font-size: 13px; }
+.choice-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .day-level-switch { margin-top: 20px; text-align: center; font-size: 13px; opacity: 0.7; }
 .day-level-switch select {
   background: #1a1a1a; color: #fff; border: 1px solid #333;
