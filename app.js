@@ -405,6 +405,7 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>` : '';
+    const quizEntryHtml = window.SIMPLE_MODE ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -413,6 +414,7 @@ const TopBar = {
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="settings-btn">⚙</button>
         <button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>
+        ${quizEntryHtml}
       </div>
     `;
     if (showFilter) {
@@ -425,6 +427,16 @@ const TopBar = {
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
+    if (window.SIMPLE_MODE) {
+      topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
+        QuizMode.start({
+          queue: Router.visibleCards,
+          pool: DataStore.allCards(),
+          title: '测验',
+          onComplete: () => TopBar.render()
+        });
+      });
+    }
   }
 };
 
