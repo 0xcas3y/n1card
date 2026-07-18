@@ -250,6 +250,7 @@ const TTSEngine = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
   _errorCount: 0,
+  muted: false,
 
   init() {
     if (!this._supported) return;
@@ -262,8 +263,14 @@ const TTSEngine = {
   },
   isSupported() { return this._supported; },
   hasJapanese() { return this._jaVoice !== null; },
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.muted) this.cancel();
+    return this.muted;
+  },
 
   speak(text, { rate = 0.9, onEnd = null, onStart = null } = {}) {
+    if (this.muted) { onEnd?.(); return Promise.resolve(); }
     if (!this._supported) { onEnd?.(); return Promise.resolve(); }
     return new Promise((resolve) => {
       const u = new SpeechSynthesisUtterance(text);
@@ -407,6 +414,7 @@ const TopBar = {
       <div class="topbar-right">
         ${filterHtml}
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
+        <button class="settings-btn" id="mute-btn" title="静音">${TTSEngine.muted ? '🔇' : '🔊'}</button>
         <button class="settings-btn" id="settings-btn">⚙</button>
         <button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>
       </div>
@@ -417,6 +425,10 @@ const TopBar = {
         Router.applyFilter(e.target.value);
       });
     }
+    topbar.querySelector('#mute-btn').addEventListener('click', () => {
+      TTSEngine.toggleMute();
+      TopBar.render();
+    });
     topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
