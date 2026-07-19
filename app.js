@@ -412,7 +412,7 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>` : '';
-    const quizEntryHtml = window.SIMPLE_MODE ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
+    const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -439,13 +439,13 @@ const TopBar = {
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
-    if (window.SIMPLE_MODE) {
+    if (window.SIMPLE_MODE && !BrainwashMode.active) {
       topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
         QuizMode.start({
           queue: Router.visibleCards,
           pool: DataStore.allCards(),
           title: '测验',
-          onComplete: () => TopBar.render()
+          onComplete: () => Router.showCurrent()
         });
       });
     }
@@ -721,7 +721,7 @@ const QuizMode = {
     document.body.classList.remove('quiz-on');
     const stage = document.querySelector('#cardstage');
     if (stage) stage.innerHTML = '';
-    TopBar.render();
+    Router.showCurrent();
   },
 
   _renderCurrent() {

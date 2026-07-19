@@ -37,7 +37,8 @@
   </div>
   <script>
     const params = new URLSearchParams(location.search);
-    const level = (params.get('level') || 'n1').toLowerCase();
+    const rawLevel = (params.get('level') || 'n1').toLowerCase();
+    const level = ['n1', 'n2'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
     document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
     const OPTIONS = [
