@@ -60,7 +60,7 @@
 改成：
 
 ```js
-    const quizEntryHtml = window.SIMPLE_MODE ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
+    const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -82,19 +82,21 @@
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
-    if (window.SIMPLE_MODE) {
+    if (window.SIMPLE_MODE && !BrainwashMode.active) {
       topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
         QuizMode.start({
           queue: Router.visibleCards,
           pool: DataStore.allCards(),
           title: '测验',
-          onComplete: () => TopBar.render()
+          onComplete: () => Router.showCurrent()
         });
       });
     }
   }
 };
 ```
+
+⚠️ **实现踩坑记录**：第一版这里写的是 `onComplete: () => TopBar.render()`，整体 review 阶段发现 `QuizMode.exit()`（测验中途点"退出"时调用）和这里的 `onComplete`（测验做完时调用）都只重绘了 TopBar，从没调用 `Router.showCurrent()` 真正吧卡片渲染出来——测验结束后 `#cardstage` 会一直是空白。之前所有 `QuizMode` 的调用方做完测验都会 `location.href` 跳转离开当前页面，从没暴露这个问题，这次新增的"🎯 测验"按钮是第一个测验完要求"留在原页面"的调用方，直接踩中。同时发现洗脑模式播放中这个按钮还留着可以点，会和洗脑模式的自动播放循环抢 DOM/抢语音，补了 `!BrainwashMode.active` 的判断（这里的判断已经是修正后的最终版本）。教训：新增一个"完成后留在原页面"的调用方时，不能想当然认为现有的 `exit()`/`onComplete` 行为已经处理好了这种情况——现有代码路径可能从来没有被这样用过。
 
 - [ ] **Step 2: 语法检查**
 
@@ -449,7 +451,8 @@ EOF
   </div>
   <script>
     const params = new URLSearchParams(location.search);
-    const level = (params.get('level') || 'n1').toLowerCase();
+    const rawLevel = (params.get('level') || 'n1').toLowerCase();
+    const level = ['n1', 'n2'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
     document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
     const OPTIONS = [
@@ -468,6 +471,8 @@ EOF
 </body>
 </html>
 ```
+
+⚠️ **实现踩坑记录**：第一版直接把 URL 的 `level` 参数（只做了 `toLowerCase()`，没做白名单校验）拼进 `innerHTML` 里的 `href="${o.href}"`，整体 review 阶段发现这是一个反射型 XSS——访问 `word-type-picker.html?level=x"><img src=x onerror=alert(1)><a x="` 这样的 URL 会执行任意脚本。改成白名单校验（只接受 `n1`/`n2`，其余一律回退成 `n1`），上面的代码已经是修正后的版本。教训：任何从 URL 读来的值只要会被拼进 `innerHTML`，哪怕看起来只是用来生成几个链接地址，也要过一遍白名单/转义，不能只做大小写归一化就直接信任。
 
 - [ ] **Step 2: 创建 `n1-adj.html`**
 

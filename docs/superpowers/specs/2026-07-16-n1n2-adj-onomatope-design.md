@@ -113,18 +113,20 @@ data/cards-n2-onomatope.json   N2 拟声词，60~80 词
 
 ## 5. 测验入口
 
-**改动**：`app.js` 的 `TopBar.render()` 里，当 `window.SIMPLE_MODE === true` 时，多渲染一个"🎯 测验"按钮（放在现有 `⚙`/`🧠洗脑` 按钮旁边），点击调用现有的 `QuizMode.start()`：
+**改动**：`app.js` 的 `TopBar.render()` 里，当 `window.SIMPLE_MODE === true` 且不在洗脑模式播放中时，多渲染一个"🎯 测验"按钮（放在现有 `⚙`/`🧠洗脑` 按钮旁边），点击调用现有的 `QuizMode.start()`：
 
 ```js
 QuizMode.start({
   queue: Router.visibleCards,   // 尊重当前筛选（全部/只看待巩固/只看未学过/随机）
   pool: DataStore.allCards(),   // 干扰项从全量词库抽
   title: '测验',
-  onComplete: () => TopBar.render()
+  onComplete: () => Router.showCurrent()   // 测验做完/中途退出都要回到自由刷卡视图，不能只重绘 TopBar
 });
 ```
 
 `QuizMode`/`CardView`/`Router` 内部逻辑完全不用改——测验的对错判定、连对升级、干扰项抽取都是现成的，形容词走"猜读音"模式（`word !== kana`），拟声词走"猜语义"模式（`word === kana`），两种模式在 `_renderCurrent()` 里已经自动分支，不用新代码。
+
+⚠️ **实现踩坑记录**：第一版这里的 `onComplete` 只调了 `TopBar.render()`，没有调用 `Router.showCurrent()` 真正渲染出卡片——测验完/中途退出后 `#cardstage` 会一直空白。之前所有 `QuizMode` 调用方（学新批次强制测验、早复习、一般复习等）做完测验都是 `location.href` 跳转离开页面，从没暴露过这个问题；这次的"🎯 测验"是第一个测验完要求"留在原页面"的调用方，直接踩中。同时补了 `!BrainwashMode.active` 的判断——洗脑模式播放中这个按钮之前还留着可以点，会和洗脑模式的自动播放循环抢 DOM/抢语音。
 
 **其他 TopBar 按钮**（📖 文法快捷、⚙ 设置、🧠 洗脑）在新页面上照常显示，不做精简——不是本次需要解决的问题，YAGNI。
 
