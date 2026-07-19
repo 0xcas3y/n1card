@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>选择词性 · 日语速记</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #111; color: #fff; font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif; }
+    .wrap { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
+    .back { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; }
+    .level-list { display: flex; flex-direction: column; gap: 12px; }
+    .level-btn {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px; border-radius: 14px;
+      text-decoration: none; color: #fff;
+      background: #2a2a2a; border: 1px solid #444;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    .level-btn:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .level-btn .lv { font-size: 20px; font-weight: 700; }
+    .level-btn .meta { font-size: 13px; opacity: 0.75; text-align: right; flex: 1; margin: 0 12px; }
+    .level-btn .arrow { font-size: 22px; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">‹ 返回</a>
+    <h1 id="picker-title">选择词性</h1>
+    <div class="level-list" id="picker-list"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const level = (params.get('level') || 'n1').toLowerCase();
+    const LEVEL_LABEL = level.toUpperCase();
+    document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
+    const OPTIONS = [
+      { label: '🈁 动词', href: `${level}.html`, desc: '完整学习体系：分批学新+早复习+一般复习' },
+      { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
+      { label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' },
+    ];
+    document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `
+      <a class="level-btn" href="${o.href}">
+        <span class="lv">${o.label}</span>
+        <span class="meta">${o.desc}</span>
+        <span class="arrow">›</span>
+      </a>
+    `).join('');
+  </script>
+</body>
+</html>
