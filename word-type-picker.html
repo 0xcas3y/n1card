@@ -46,6 +46,10 @@
       { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
       { label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' },
     ];
+    // 副词目前只有 N1 数据，等 N2 补上再放开
+    if (level === 'n1') {
+      OPTIONS.push({ label: '💬 副词', href: `${level}-adverb.html`, desc: '自由刷卡 + 测验' });
+    }
     document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `
       <a class="level-btn" href="${o.href}">
         <span class="lv">${o.label}</span>
