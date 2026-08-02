@@ -44,11 +44,14 @@
     const OPTIONS = [
       { label: '🈁 动词', href: `${level}.html`, desc: '完整学习体系：分批学新+早复习+一般复习' },
       { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
-      { label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' },
     ];
-    // 副词目前只有 N1 数据，等 N2 补上再放开
+    // 副词/拟声词/名词目前只有 N1 数据，等 N2 补上再放开
     if (level === 'n1') {
       OPTIONS.push({ label: '💬 副词', href: `${level}-adverb.html`, desc: '自由刷卡 + 测验' });
+    }
+    OPTIONS.push({ label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' });
+    if (level === 'n1') {
+      OPTIONS.push({ label: '📦 名词', href: `${level}-noun.html`, desc: '自由刷卡 + 测验' });
     }
     document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `
       <a class="level-btn" href="${o.href}">
