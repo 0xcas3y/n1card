@@ -5,7 +5,7 @@ import {
   computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool
 } from './plan.js';
 
-const BATCH_SIZE = 30;
+const BATCH_SIZE = 60;
 
 const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
@@ -196,10 +196,10 @@ const DayView = {
       <details class="day-rules" ${rulesSeen ? '' : 'open'}>
         <summary>规则</summary>
         <ul>
-          <li>🌙 晚打卡 = 完成 1 批「学新」（30 词滑卡 + 强制通关测验）</li>
+          <li>🌙 晚打卡 = 完成 1 批「学新」（60 词滑卡 + 强制通关测验）</li>
           <li>🌅 早打卡 = 完成「早复习」（四选一）</li>
           <li>学新只能在 <strong>晚 8 点-凌晨 1 点</strong> 进行；早复习/一般复习随时可用</li>
-          <li>每日批数上限：累计打卡每满 10 天 +1 批，上限 3 批（90 词/天）</li>
+          <li>每日批数上限：累计打卡每满 10 天 +1 批，上限 3 批（180 词/天）</li>
           <li>洗脑模式 60 词起，同步每 10 天 +1 组（上限 180 词）</li>
           <li>答对 2 次升「掌握」，答错立刻回「不熟」</li>
           <li>「掌握」每 7 天来一次周复习；🔁 一般复习按遗忘曲线随时补练老词</li>
