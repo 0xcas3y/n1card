@@ -1,4 +1,4 @@
-import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen } from './plan.js';
+import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen, computeRecallSession } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -443,8 +443,8 @@ const TopBar = {
       leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
     }
 
-    // 学新和洗脑模式下不显示筛选下拉（pool 已固定）
-    const showFilter = !Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active;
+    // 学新、洗脑、回忆模式下不显示筛选下拉（pool 已固定）
+    const showFilter = !Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active && !RecallMode.active;
     const filterHtml = showFilter ? `
         <select id="filter-select">
           <option value="all">全部</option>
@@ -453,6 +453,8 @@ const TopBar = {
           <option value="random">随机乱序</option>
         </select>` : '';
     const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
+    // 回忆模式下不显示洗脑入口，避免两套全屏系统同时抢占 #cardstage/TTS
+    const brainwashBtnHtml = !RecallMode.active ? `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>` : '';
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -461,7 +463,7 @@ const TopBar = {
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="mute-btn" title="静音">${TTSEngine.muted ? '🔇' : '🔊'}</button>
         <button class="settings-btn" id="settings-btn">⚙</button>
-        <button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>
+        ${brainwashBtnHtml}
         ${quizEntryHtml}
       </div>
     `;
@@ -476,9 +478,11 @@ const TopBar = {
       TopBar.render();
     });
     topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
-    topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
-      if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
-    });
+    if (!RecallMode.active) {
+      topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
+        if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
+      });
+    }
     if (window.SIMPLE_MODE && !BrainwashMode.active) {
       topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
         QuizMode.start({
@@ -650,6 +654,139 @@ const BrainwashMode = {
   _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
   async _waitIfPaused() {
     while (this._paused && !this._aborted) await this._sleep(100);
+  }
+};
+
+const RecallMode = {
+  active: false,
+  _queue: [],
+  _idx: 0,
+  _revealed: false,
+  _hideTimer: null,
+  _savedVisibleCards: null,
+  _savedIndex: 0,
+
+  start() {
+    const learned = DataStore.allCards()
+      .filter(c => Progress.getStatus(c.id) !== null)
+      .sort((a, b) => a.id - b.id);
+    if (learned.length === 0) {
+      TopBar.addWarning('还没有学过的词可以复习');
+      TopBar.render();
+      return;
+    }
+    const learnedIds = learned.map(c => c.id);
+    const learnedSet = new Set(learnedIds);
+    const stubbornIds = Progress.getStubbornSet().filter(id => learnedSet.has(id));
+    const position = Progress.getRecallCyclePosition();
+    const session = computeRecallSession(learnedIds, stubbornIds, position, 60);
+
+    if (session.cyclesCompleted > 0) Progress.incrementRecallCycleCount(session.cyclesCompleted);
+    Progress.setRecallCyclePosition(session.nextPosition);
+
+    this._queue = session.cardIds.map(id => DataStore.getCard(id)).filter(Boolean);
+    this._idx = 0;
+    this._savedVisibleCards = Router.visibleCards;
+    this._savedIndex = Router.currentIndex;
+
+    this.active = true;
+    document.body.classList.add('recall-on');
+    this._showCard();
+  },
+
+  exit() {
+    this.active = false;
+    if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
+    TTSEngine.cancel();
+    document.body.classList.remove('recall-on');
+    if (this._savedVisibleCards) {
+      Router.visibleCards = this._savedVisibleCards;
+      Router.currentIndex = Math.min(this._savedIndex || 0, Math.max(0, this._savedVisibleCards.length - 1));
+      this._savedVisibleCards = null;
+      Router.currentColor = CardView.randomColor();
+      Router.flipped = false;
+      Router.showCurrent();
+    } else {
+      TopBar.render();
+    }
+  },
+
+  _showCard() {
+    if (!this.active) return;
+    if (this._idx >= this._queue.length) { this.exit(); return; }
+    const card = this._queue[this._idx];
+    this._revealed = false;
+    const isKanji = card.word !== card.kana;
+
+    const stage = document.querySelector('#cardstage');
+    stage.innerHTML = '';
+    const el = document.createElement('div');
+    el.className = `flash-card recall-card color-${CardView.randomColor()}`;
+    el.innerHTML = `
+      <div class="card-id">${this._idx + 1}/${this._queue.length}</div>
+      <div class="recall-word" data-len="${[...card.word].length}">${card.word}</div>
+      <div class="recall-reveal ${isKanji ? 'recall-kana' : 'recall-meaning'}" hidden></div>
+      <div class="hint-bottom">${isKanji ? '回忆读音…' : '回忆词义…'} · 揭示后 ←不熟 →掌握</div>
+    `;
+    stage.appendChild(el);
+
+    Gestures.attach(el, {
+      onSwipe: (dir) => {
+        if (!this._revealed) return;
+        this._handleSwipe(dir === 'left' ? 'unknown' : 'known', card);
+      }
+    });
+
+    const hideMs = Progress.getHideDuration() * 1000;
+    this._hideTimer = setTimeout(() => this._reveal(el, card, isKanji), hideMs);
+
+    TopBar.render();
+  },
+
+  async _reveal(el, card, isKanji) {
+    if (!this.active) return;
+    this._hideTimer = null;
+    this._revealed = true;
+    const revealEl = el.querySelector('.recall-reveal');
+    if (!revealEl) return;
+    if (isKanji) {
+      revealEl.textContent = card.kana;
+      revealEl.hidden = false;
+      const repeat = Progress.getTtsRepeatCount();
+      const rate = Progress.getTTSRate();
+      for (let i = 0; i < repeat; i++) {
+        if (!this.active || this._queue[this._idx] !== card) return;
+        await TTSEngine.speak(card.kana, { rate });
+      }
+    } else {
+      revealEl.innerHTML = card.meanings.map((m, i) => `${['①','②','③','④'][i] || '·'} ${m}`).join('<br>');
+      revealEl.hidden = false;
+    }
+  },
+
+  _handleSwipe(status, card) {
+    Progress.mark(card.id, status);
+    const inStubborn = Progress.getStubbornSet().includes(card.id);
+    if (status === 'known') {
+      if (inStubborn) {
+        const streak = Progress.getStubbornStreak(card.id) + 1;
+        if (streak >= 3) {
+          Progress.removeFromStubborn(card.id);
+          Progress.setStubbornStreak(card.id, 0);
+        } else {
+          Progress.setStubbornStreak(card.id, streak);
+        }
+      }
+    } else {
+      if (!inStubborn) {
+        Progress.addToStubborn(card.id);
+      } else {
+        Progress.setStubbornStreak(card.id, 0);
+      }
+    }
+    TTSEngine.cancel();
+    this._idx++;
+    this._showCard();
   }
 };
 
@@ -1246,6 +1383,22 @@ const Router = {
 function _attachKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches('input, textarea, select')) return;
+    if (RecallMode.active) {
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (RecallMode._revealed) RecallMode._handleSwipe('unknown', RecallMode._queue[RecallMode._idx]);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (RecallMode._revealed) RecallMode._handleSwipe('known', RecallMode._queue[RecallMode._idx]);
+          break;
+        case 'Escape':
+          RecallMode.exit();
+          break;
+      }
+      return;
+    }
     switch (e.key) {
       case ' ':         e.preventDefault(); Router.toggleFlip(); break;
       case 'ArrowLeft': e.preventDefault(); Router.markAndNext('unknown'); break;

@@ -123,6 +123,7 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
 body.quiz-on #topbar, body.learnlist-on #topbar,
 body.choice-on #topbar, body.hardreview-on #topbar, body.timelock-on #topbar { display: none; }
 body.brainwash-on .topbar-right select { display: none; }
+body.recall-on .topbar-right select { display: none; }
 body.learnlist-on, body.learnlist-on html { height: auto; min-height: 100%; }
 body.learnlist-on #app { height: auto; min-height: 100vh; }
 body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: visible; }
@@ -260,3 +261,8 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
   .retro-row { grid-template-columns: auto 1fr; gap: 8px; }
   .retro-row .retro-kana { display: none; }
 }
+
+.recall-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; text-align: center; padding: 0 24px; }
+.recall-word { font-size: clamp(48px, 14vw, 88px); font-weight: 600; letter-spacing: 2px; }
+.recall-reveal { font-size: 30px; opacity: 0.92; }
+.recall-reveal.recall-meaning { font-size: 20px; line-height: 1.7; max-width: 480px; }
