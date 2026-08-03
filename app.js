@@ -1093,6 +1093,12 @@ const SettingsPanel = {
         <h3>设置</h3>
         <label>TTS 语速：<span id="rate-val">${Progress.getTTSRate().toFixed(2)}</span></label>
         <input type="range" id="rate-input" min="0.5" max="1.5" step="0.05" value="${Progress.getTTSRate()}">
+        <label>回忆模式 · 隐藏时长</label>
+        <div class="row" id="hide-duration-group">
+          ${[1, 2, 3].map(s => `<button data-sec="${s}" class="${s === Progress.getHideDuration() ? 'primary' : ''}">${s}s</button>`).join('')}
+        </div>
+        <label>回忆模式 · 朗读次数：<span id="repeat-val">${Progress.getTtsRepeatCount()}</span></label>
+        <input type="range" id="repeat-input" min="1" max="4" step="1" value="${Progress.getTtsRepeatCount()}">
         <div class="row">
           <button id="edit-btn">编辑当前卡</button>
           <button id="export-btn">导出修改</button>
@@ -1113,6 +1119,19 @@ const SettingsPanel = {
       const v = parseFloat(rateInput.value);
       backdrop.querySelector('#rate-val').textContent = v.toFixed(2);
       Progress.setTTSRate(v);
+    });
+    backdrop.querySelectorAll('#hide-duration-group button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sec = parseInt(btn.dataset.sec, 10);
+        Progress.setHideDuration(sec);
+        backdrop.querySelectorAll('#hide-duration-group button').forEach(b => b.classList.toggle('primary', b === btn));
+      });
+    });
+    const repeatInput = backdrop.querySelector('#repeat-input');
+    repeatInput.addEventListener('input', () => {
+      const v = parseInt(repeatInput.value, 10);
+      backdrop.querySelector('#repeat-val').textContent = String(v);
+      Progress.setTtsRepeatCount(v);
     });
     backdrop.querySelector('#edit-btn').addEventListener('click', () => {
       this.close();
