@@ -4,6 +4,7 @@
 **状态**：草案（待用户确认）
 **前置**：`2026-07-11-batch-learn-timegate-design.md`（现有 30 词/批 + 时间窗 + 强制测验 + 一般复习）、`2026-07-16-n1n2-adj-onomatope-design.md`（词性扩展）
 **范围**：动词 + 形容词 + 副词 + 名词 + 拟声词，五个词性板块通用
+**关键约束（2026-08-03 澄清后新增）**：现有"批次学习+时间窗+早复习+一般复习"体系（`hub.js`/`index.html`/`plan.js` 的 `computeGeneralReviewPool`/`computeMorningPool` 等）**只服务于动词**（`n1-n5.html`，由 `hub.js` 驱动）。形容词/副词/拟声词/名词页面（`n1-adj.html` 等）是不依赖 `hub.js` 的独立 `SIMPLE_MODE` 页面（自由刷卡+可选测验），没有批次/时间窗/早复习/一般复习。**回忆模式必须自包含，不依赖 `hub.js` 基础设施**：直接在 `app.js` 内实现，池子直接从 `Progress`（当前页面的 `status != null` 的词）读取，入口是 `TopBar` 里的一个按钮，在所有页面（含 `n1.html`）都出现——这样同一套代码天然适配五个词性。
 
 ---
 
@@ -27,13 +28,14 @@
 
 ---
 
-## 2. 学新批次 30 → 60
+## 2. 学新批次 30 → 60（仅动词）
 
-- `plan.js` 的 `computeQuota(totalDays, baseGroup = 30)` 学新场景调用点，`baseGroup` 从 30 改为 60（洗脑模式已经在用 60，逻辑本身不用改，只改调用参数）
-- `BATCH_SIZE` 常量（`plan.js` 里 §6.1 定义的、供 `hub.js`/`app.js` 引用的那个）30 → 60
+此项**只影响动词**（`hub.js` 里 `LEVELS = ['n1','n2','n3','n4','n5','ono']` 对应的板块，`BATCH_SIZE` 常量定义在 `hub.js` 里，不是 `plan.js`）。形容词/副词/拟声词/名词没有"学新批次"这个概念（自由刷卡，不受此项影响）。
+
+- `hub.js` 顶部 `const BATCH_SIZE = 30;` → `60`
 - 连续打卡天数解锁的"批数"逻辑不变（1/6/13/14 天等边界不变），只是每批的词数从 30 变 60，所以每日总词数上限从 30/60/90 变成 60/120/180
 - 强制测验题池同步变成 60 词（一批学完仍然强制测验，逻辑不变，只是池子变大）
-- 影响范围：仅"学新"批次。早复习/一般复习/新增的回忆模式都不受这个常量影响（各自独立配额，见 §4）
+- `computeQuota(totalDays, baseGroup=60)`（app.js:470，洗脑模式用）不受影响，本来就是 60，不用改
 
 ---
 
@@ -41,8 +43,8 @@
 
 ### 3.1 入口 & 池
 
-- 等级页新增 🧩 回忆模式 卡片，常驻显示，随时可点开（不受学习时间窗限制，同一般复习）
-- 池 = 该词性板块**全部已学过的词**（`status` 为 `known` 或 `unknown`，排除从没学过的），与一般复习共享同一个"已学过"判定
+- `TopBar` 新增 🧩 回忆模式 按钮（同 `brainwash-btn`/`quiz-entry-btn` 的位置量级），**所有页面共享**（`n1.html` 及全部 `SIMPLE_MODE` 页面），因为 `app.js` 是共享代码，不需要 `hub.js` 参与
+- 池 = 当前页面对应词性板块**全部已学过的词**（`Progress` 里 `status` 为 `known` 或 `unknown` 的卡片，直接从当前页面已加载的 `DataStore.allCards()` + `Progress` 现算，不经过 URL 参数传递）
 - 每次进入回忆模式，从"本轮复习进度指针"继续抽取本次会话的词（默认一次会话 60 词，不足 60 就把剩余的全部抽出）——不是随机抽样，是**顺序游标**，保证"轮完一遍"这件事可判定（见 §5）
 
 ### 3.2 单词处理分支
@@ -79,8 +81,8 @@
 
 ## 4. 顽固单词库
 
-- 数据结构：每个词性板块一份 `stubbornSet`（保存 id 列表）+ `stubbornStreak`（id → 连续右划计数，仅回忆模式内更新）
-- **日常复习中的加强**：一般复习 (`computeGeneralReviewPool`) 的权重公式追加一条——若 `id` 在 `stubbornSet` 内，权重固定为 8（高于现有 `unknown` 权重 5，低于封顶 4 的 `known` 情况不适用，8 是全局最高档），确保顽固词被抽中的概率明显更高
+- 数据结构：每个词性板块一份 `stubbornSet`（保存 id 列表）+ `stubbornStreak`（id → 连续右划计数，仅回忆模式内更新），存在当前页面的 `Progress` localStorage 结构里
+- **日常复习中的加强**（自包含版，不依赖 `hub.js` 的一般复习）：`RecallMode` 组装每次会话时，**优先把 `stubbornSet` 里的词排进本次会话**（放在游标序列最前面，直到会话词量用完或顽固词耗尽），剩余名额再按 §3.1 的游标顺序补满。这样顽固词天然会比普通词更频繁地出现在回忆模式里，不需要碰 `computeGeneralReviewPool`（那是动词专属、`hub.js` 驱动的）
 - 移出：仅在回忆模式内连续 3 次右划触发（见 §3.3）
 - 首页/回忆模式入口可以显示"顽固词 N 个待攻克"这种小角标（UI 细节，非本 spec 强制要求，实现时顺手加）
 
@@ -109,21 +111,20 @@
 
 ## 7. 技术改动范围
 
-### 7.1 `plan.js`
-- 学新批次 `baseGroup` 调用点改 60
-- 新增 `computeRecallSession(learnedIds, position, size=60)`：按游标顺序切一批，返回 `{ cardIds, nextPosition, cycleCompleted }`
+### 7.1 `hub.js`（仅动词受影响）
+- `BATCH_SIZE` 常量 30 → 60（见 §2）
 
-### 7.2 `app.js`
-- `Progress`：新增 `stubbornSet`/`stubbornStreak`/`recallCyclePosition`/`recallCycleCount` 的读写方法，持久化进现有 progress localStorage 结构（每个词性板块独立文件已经是独立 localStorage key，天然隔离）
-- 新增 `RecallMode`（参考现有 `BrainwashMode`/`QuizMode` 的结构）：渲染卡片外壳、倒计时、揭示、TTS 调用（复用现有 `TTSEngine`）、滑动记账
-- `computeGeneralReviewPool` 权重公式追加顽固词加权
-- `SettingsPanel` 新增两个设置项 UI
+### 7.2 `plan.js`（纯函数，新增，五个词性通用，不碰 `hub.js`）
+- `computeRecallSession(learnedIds, stubbornIds, position, size=60)`：先把 `stubbornIds`（且在 `learnedIds` 内）排进本次会话，剩余名额从 `position` 开始按 `learnedIds` 顺序游标补满；返回 `{ cardIds, nextPosition, cycleCompleted }`。`cycleCompleted` 在游标到达 `learnedIds` 尾部时为 `true`（此时 `nextPosition` 回绕为 0）
 
-### 7.3 `hub.js` / 等级页
-- 新增 🧩 回忆模式 常驻卡片，展示"顽固词 N 个"+"已复习 N 轮"
+### 7.3 `app.js`
+- `Progress`：新增 `stubbornSet`/`stubbornStreak`/`recallCyclePosition`/`recallCycleCount` 的读写方法，持久化进现有 progress localStorage 结构（每个词性页面已经是独立 localStorage key，天然按词性隔离）
+- 新增 `RecallMode`（参考现有 `BrainwashMode`/`QuizMode` 的结构）：渲染卡片外壳、倒计时、揭示、TTS 调用（复用现有 `TTSEngine`）、滑动记账、调用 `computeRecallSession` 组装会话
+- `TopBar` 新增 🧩 按钮，点击调用 `RecallMode.start()`；按钮同时展示"顽固词 N 个"角标（`Progress.getStubbornSet().length`）
+- `SettingsPanel` 新增两个设置项 UI（隐藏时长、朗读次数）
 
-### 7.4 各 `n1-*.html`
-- 不需要新文件，`RecallMode` 作为 `app.js` 内的新状态复用现有卡片视觉
+### 7.4 各 `n1-*.html` / `n1.html`
+- 不需要新文件，`RecallMode` 作为 `app.js` 内的新状态，`TopBar` 按钮在所有页面自动出现（因为都加载同一个 `app.js`）
 
 ---
 
@@ -141,15 +142,16 @@
 
 ## 9. 测试
 
-### 9.1 单元测试
-- `computeRecallSession`：游标越过池尾时正确 wrap 并标记 `cycleCompleted`；池子扩大后不影响已产生的 cycle 计数
-- 顽固库进出：滑左入库、连续 3 次右划出库、中途滑左打断计数归零
+### 9.1 单元测试（`scripts/plan.test.js`）
+- `computeRecallSession`：顽固词优先排入；游标越过池尾时正确 wrap 并标记 `cycleCompleted`；池子扩大后不影响已产生的 cycle 计数
+- 顽固库进出：滑左入库、连续 3 次右划出库、中途滑左打断计数归零（这部分状态机在 `app.js` 里，用手动清单验证，不强求单元测试覆盖 DOM 逻辑）
 
 ### 9.2 手动清单
 - [ ] 回忆模式：有汉字词 → 隐藏读音 N 秒 → 揭示+朗读 M 次 → 滑动
 - [ ] 回忆模式：纯假名词 → 隐藏释义 N 秒 → 揭示释义 → 滑动（无朗读环节）
 - [ ] 顽固词连续右划 3 次后移出，角标数字减少
-- [ ] 一般复习中顽固词出现频率明显高于普通已掌握词
+- [ ] 回忆模式会话中顽固词优先出现（顽固词库非空时，本次会话前几张必是顽固词）
 - [ ] 回忆模式游标轮完一遍后 `recallCycleCount+1`，角标"已复习 N 轮"更新
 - [ ] 设置面板隐藏时长/朗读次数调整后，下次回忆模式会话生效
-- [ ] 学新批次改 60 后，时间窗+强制测验流程正常，连续打卡天数解锁批数不变
+- [ ] 学新批次改 60 后，时间窗+强制测验流程正常，连续打卡天数解锁批数不变（仅动词页面）
+- [ ] 回忆模式按钮在 `n1-adj.html`/`n1-adverb.html`/`n1-onomatope.html`/`n1-noun.html`/`n1.html` 五个页面都能正常工作
