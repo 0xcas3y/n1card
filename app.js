@@ -58,7 +58,12 @@ const Progress = {
   key: `n1card:progress:${LEVEL_KEY}`,
   settingsKey: `n1card:settings:${LEVEL_KEY}`,
   _progress: {},
-  _settings: { filter: 'all', ttsRate: 0.9, lastCardId: null },
+  _settings: {
+    filter: 'all', ttsRate: 0.9, lastCardId: null,
+    stubbornSet: [], stubbornStreak: {},
+    recallCyclePosition: 0, recallCycleCount: 0,
+    recallHideDuration: 2, recallTtsRepeatCount: 2
+  },
   _available: true,
 
   load() {
@@ -154,6 +159,41 @@ const Progress = {
   setFilter(f) { this._settings.filter = f; this._save(); },
   getTTSRate() { return this._settings.ttsRate; },
   setTTSRate(r) { this._settings.ttsRate = r; this._save(); },
+  getStubbornSet() { return this._settings.stubbornSet || []; },
+  addToStubborn(id) {
+    const set = new Set(this.getStubbornSet());
+    if (!set.has(id)) {
+      set.add(id);
+      this._settings.stubbornSet = [...set];
+      this._save();
+    }
+  },
+  removeFromStubborn(id) {
+    const set = new Set(this.getStubbornSet());
+    if (set.has(id)) {
+      set.delete(id);
+      this._settings.stubbornSet = [...set];
+      this._save();
+    }
+  },
+  getStubbornStreak(id) { return (this._settings.stubbornStreak || {})[id] || 0; },
+  setStubbornStreak(id, n) {
+    const map = { ...(this._settings.stubbornStreak || {}) };
+    if (n <= 0) delete map[id]; else map[id] = n;
+    this._settings.stubbornStreak = map;
+    this._save();
+  },
+  getRecallCyclePosition() { return this._settings.recallCyclePosition || 0; },
+  setRecallCyclePosition(n) { this._settings.recallCyclePosition = n; this._save(); },
+  getRecallCycleCount() { return this._settings.recallCycleCount || 0; },
+  incrementRecallCycleCount(n = 1) {
+    this._settings.recallCycleCount = (this._settings.recallCycleCount || 0) + n;
+    this._save();
+  },
+  getHideDuration() { return this._settings.recallHideDuration || 2; },
+  setHideDuration(sec) { this._settings.recallHideDuration = sec; this._save(); },
+  getTtsRepeatCount() { return this._settings.recallTtsRepeatCount || 2; },
+  setTtsRepeatCount(n) { this._settings.recallTtsRepeatCount = n; this._save(); },
   reset() { this._progress = {}; this._settings.lastCardId = null; this._save(); },
   isAvailable() { return this._available; }
 };
