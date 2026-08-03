@@ -265,5 +265,10 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
 
 .recall-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; text-align: center; padding: 0 24px; }
 .recall-word { font-size: clamp(48px, 14vw, 88px); font-weight: 600; letter-spacing: 2px; }
+.recall-word[data-len="4"] { font-size: clamp(50px, 14vw, 88px); letter-spacing: 2px; }
+.recall-word[data-len="5"] { font-size: clamp(42px, 11.5vw, 72px); letter-spacing: 1px; }
+.recall-word[data-len="6"] { font-size: clamp(34px, 9.5vw, 58px); letter-spacing: 1px; }
+.recall-word[data-len="7"] { font-size: clamp(28px, 8vw, 48px); letter-spacing: 0; }
+.recall-word[data-len="8"] { font-size: clamp(24px, 7vw, 42px); letter-spacing: 0; }
 .recall-reveal { font-size: 30px; opacity: 0.92; }
 .recall-reveal.recall-meaning { font-size: 20px; line-height: 1.7; max-width: 480px; }
