@@ -5,7 +5,7 @@ import {
   computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool
 } from './plan.js';
 
-const BATCH_SIZE = 30;
+const BATCH_SIZE = 60;
 
 const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
