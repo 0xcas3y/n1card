@@ -455,6 +455,9 @@ const TopBar = {
     const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
     // 回忆模式下不显示洗脑入口，避免两套全屏系统同时抢占 #cardstage/TTS
     const brainwashBtnHtml = !RecallMode.active ? `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>` : '';
+    // 回忆/洗脑模式下不显示回忆入口，避免两套全屏系统同时抢占 #cardstage/TTS
+    const stubbornCount = Progress.getStubbornSet().length;
+    const recallBtnHtml = (!RecallMode.active && !BrainwashMode.active) ? `<button class="settings-btn" id="recall-btn" title="回忆模式 · 已复习 ${Progress.getRecallCycleCount()} 轮">🧩${stubbornCount > 0 ? `<span class="recall-badge">${stubbornCount}</span>` : ''}</button>` : '';
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -462,6 +465,7 @@ const TopBar = {
         ${filterHtml}
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="mute-btn" title="静音">${TTSEngine.muted ? '🔇' : '🔊'}</button>
+        ${recallBtnHtml}
         <button class="settings-btn" id="settings-btn">⚙</button>
         ${brainwashBtnHtml}
         ${quizEntryHtml}
@@ -478,6 +482,9 @@ const TopBar = {
       TopBar.render();
     });
     topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
+    topbar.querySelector('#recall-btn')?.addEventListener('click', () => {
+      RecallMode.start();
+    });
     if (!RecallMode.active) {
       topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
         if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
