@@ -1,3 +1,5 @@
+import { validate } from './validate-cards.js';
+
 export function buildBatchPrompt(promptTemplate, words, startId) {
   return [
     promptTemplate,
@@ -51,4 +53,50 @@ export async function generateBatch(apiKey, promptTemplate, words, startId, fetc
   const data = await response.json();
   const text = data.content?.[0]?.text ?? '';
   return parseCardBatchResponse(text);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const fs = await import('node:fs/promises');
+  const [, , wordListPath, promptPath, outputPath, batchSizeArg] = process.argv;
+  if (!wordListPath || !promptPath || !outputPath) {
+    console.error('用法: node scripts/generate-cards.js <word-list.txt> <prompt.md> <output.json> [batchSize=20]');
+    process.exit(1);
+  }
+  const batchSize = parseInt(batchSizeArg, 10) || 20;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error('error: 环境变量 ANTHROPIC_API_KEY 未设置');
+    process.exit(1);
+  }
+
+  const promptTemplate = await fs.readFile(promptPath, 'utf8');
+  const words = (await fs.readFile(wordListPath, 'utf8'))
+    .split('\n').map((s) => s.trim()).filter(Boolean);
+
+  let existing = { version: 1, cards: [] };
+  try {
+    existing = JSON.parse(await fs.readFile(outputPath, 'utf8'));
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+  let nextId = existing.cards.reduce((max, c) => Math.max(max, c.id), 0) + 1;
+
+  const chunks = chunkWords(words, batchSize);
+  console.log(`${words.length} 个词，分 ${chunks.length} 批，每批最多 ${batchSize} 个`);
+
+  let result = existing;
+  for (let i = 0; i < chunks.length; i++) {
+    console.log(`批次 ${i + 1}/${chunks.length}（${chunks[i].length} 词，起始 id=${nextId}）...`);
+    const batch = await generateBatch(apiKey, promptTemplate, chunks[i], nextId);
+    const check = validate(batch);
+    if (!check.ok) {
+      console.error(`批次 ${i + 1} 校验失败，跳过写入：`);
+      check.errors.forEach((e) => console.error('  - ' + e));
+      continue;
+    }
+    result = mergeCardBatches(result, batch);
+    nextId += chunks[i].length;
+    await fs.writeFile(outputPath, JSON.stringify(result, null, 2) + '\n', 'utf8');
+    console.log(`已写入 ${outputPath}（累计 ${result.cards.length} 词）`);
+  }
 }
