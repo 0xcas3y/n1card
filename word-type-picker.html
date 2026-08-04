@@ -41,10 +41,10 @@
     const level = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
     document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
-    // 各词性子库目前的数据覆盖情况：N1 全部 4 种都有；N5 本次新增全部 4 种；
-    // N2 只有形容词/拟声词；N3/N4 还没有任何子库（下一轮扩容内容）
-    const HAS_ADVERB = ['n1', 'n5'].includes(level);
-    const HAS_NOUN = ['n1', 'n5'].includes(level);
+    // 各词性子库目前的数据覆盖情况：N1/N4/N5 全部 4 种都有；
+    // N2 只有形容词/拟声词；N3 还没有任何子库（下一轮扩容内容）
+    const HAS_ADVERB = ['n1', 'n4', 'n5'].includes(level);
+    const HAS_NOUN = ['n1', 'n4', 'n5'].includes(level);
     const OPTIONS = [
       { label: '🈁 动词', href: `${level}.html`, desc: '完整学习体系：分批学新+早复习+一般复习' },
       { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
