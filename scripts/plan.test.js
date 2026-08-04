@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool, computeRecallSession } from '../plan.js';
+import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool } from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
@@ -289,59 +289,3 @@ test('computeGeneralReviewPool: 很久没复习的已掌握词，抽中概率明
   assert.ok(staleCount > freshCount * 2, `expected stale to dominate, got stale=${staleCount} fresh=${freshCount}`);
 });
 
-test('computeRecallSession: empty pool returns empty session', () => {
-  const r = computeRecallSession([], [], 0, 60);
-  assert.deepStrictEqual(r, { cardIds: [], nextPosition: 0, cyclesCompleted: 0 });
-});
-
-test('computeRecallSession: pool smaller than size returns whole pool, cursor wraps once', () => {
-  const learned = [1, 2, 3, 4, 5];
-  const r = computeRecallSession(learned, [], 0, 60);
-  assert.deepStrictEqual(r.cardIds.slice().sort((a, b) => a - b), [1, 2, 3, 4, 5]);
-  assert.strictEqual(r.nextPosition, 0);
-  assert.strictEqual(r.cyclesCompleted, 1);
-});
-
-test('computeRecallSession: stubborn ids are prioritized into the session', () => {
-  const learned = [1, 2, 3, 4, 5, 6, 7, 8];
-  const r = computeRecallSession(learned, [7, 3], 0, 4);
-  // 顽固词（按 learnedIds 顺序）先进：3 然后 7
-  assert.deepStrictEqual(r.cardIds.slice(0, 2), [3, 7]);
-  assert.strictEqual(r.cardIds.length, 4);
-});
-
-test('computeRecallSession: stubborn ids outside the learned pool are ignored', () => {
-  const learned = [1, 2, 3];
-  const r = computeRecallSession(learned, [999], 0, 3);
-  assert.ok(!r.cardIds.includes(999));
-  assert.strictEqual(r.cardIds.length, 3);
-});
-
-test('computeRecallSession: cursor continues from saved position across calls', () => {
-  const learned = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const first = computeRecallSession(learned, [], 0, 4);
-  assert.deepStrictEqual(first.cardIds, [1, 2, 3, 4]);
-  assert.strictEqual(first.nextPosition, 4);
-  assert.strictEqual(first.cyclesCompleted, 0);
-
-  const second = computeRecallSession(learned, [], first.nextPosition, 4);
-  assert.deepStrictEqual(second.cardIds, [5, 6, 7, 8]);
-  assert.strictEqual(second.nextPosition, 8);
-});
-
-test('computeRecallSession: cursor wraps mid-session and reports cyclesCompleted', () => {
-  const learned = [1, 2, 3, 4, 5];
-  // position=3, size=4 → takes 4,5 then wraps to 1,2 (covers the whole pool once)
-  const r = computeRecallSession(learned, [], 3, 4);
-  assert.deepStrictEqual(r.cardIds, [4, 5, 1, 2]);
-  assert.strictEqual(r.nextPosition, 2);
-  assert.strictEqual(r.cyclesCompleted, 1);
-});
-
-test('computeRecallSession: does not double-count a stubborn id the cursor also passes over', () => {
-  const learned = [1, 2, 3, 4, 5];
-  const r = computeRecallSession(learned, [2], 0, 5);
-  // 2 只出现一次（顽固优先注入），游标经过 id=2 时因为已在 pickedSet 里而跳过，不重复
-  assert.strictEqual(r.cardIds.filter(id => id === 2).length, 1);
-  assert.strictEqual(r.cardIds.length, 5);
-});

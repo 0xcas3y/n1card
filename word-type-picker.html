@@ -38,19 +38,22 @@
   <script>
     const params = new URLSearchParams(location.search);
     const rawLevel = (params.get('level') || 'n1').toLowerCase();
-    const level = ['n1', 'n2'].includes(rawLevel) ? rawLevel : 'n1';
+    const level = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
     document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
+    // 各词性子库目前的数据覆盖情况：N1 全部 4 种都有；N5 本次新增全部 4 种；
+    // N2 只有形容词/拟声词；N3/N4 还没有任何子库（下一轮扩容内容）
+    const HAS_ADVERB = ['n1', 'n5'].includes(level);
+    const HAS_NOUN = ['n1', 'n5'].includes(level);
     const OPTIONS = [
       { label: '🈁 动词', href: `${level}.html`, desc: '完整学习体系：分批学新+早复习+一般复习' },
       { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
     ];
-    // 副词/拟声词/名词目前只有 N1 数据，等 N2 补上再放开
-    if (level === 'n1') {
+    if (HAS_ADVERB) {
       OPTIONS.push({ label: '💬 副词', href: `${level}-adverb.html`, desc: '自由刷卡 + 测验' });
     }
     OPTIONS.push({ label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' });
-    if (level === 'n1') {
+    if (HAS_NOUN) {
       OPTIONS.push({ label: '📦 名词', href: `${level}-noun.html`, desc: '自由刷卡 + 测验' });
     }
     document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `

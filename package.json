@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test 'scripts/**/*.test.js'",
-    "validate": "node scripts/validate-cards.js data/cards.json"
+    "validate": "for f in data/cards*.json; do node scripts/validate-cards.js \"$f\" || exit 1; done"
   }
 }
