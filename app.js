@@ -1,4 +1,4 @@
-import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen, computeRecallSession } from './plan.js';
+import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -59,10 +59,7 @@ const Progress = {
   settingsKey: `n1card:settings:${LEVEL_KEY}`,
   _progress: {},
   _settings: {
-    filter: 'all', ttsRate: 0.9, lastCardId: null,
-    stubbornSet: [], stubbornStreak: {},
-    recallCyclePosition: 0, recallCycleCount: 0,
-    recallHideDuration: 2, recallTtsRepeatCount: 2
+    filter: 'all', ttsRate: 0.9, lastCardId: null
   },
   _available: true,
 
@@ -159,41 +156,6 @@ const Progress = {
   setFilter(f) { this._settings.filter = f; this._save(); },
   getTTSRate() { return this._settings.ttsRate; },
   setTTSRate(r) { this._settings.ttsRate = r; this._save(); },
-  getStubbornSet() { return this._settings.stubbornSet || []; },
-  addToStubborn(id) {
-    const set = new Set(this.getStubbornSet());
-    if (!set.has(id)) {
-      set.add(id);
-      this._settings.stubbornSet = [...set];
-      this._save();
-    }
-  },
-  removeFromStubborn(id) {
-    const set = new Set(this.getStubbornSet());
-    if (set.has(id)) {
-      set.delete(id);
-      this._settings.stubbornSet = [...set];
-      this._save();
-    }
-  },
-  getStubbornStreak(id) { return (this._settings.stubbornStreak || {})[id] || 0; },
-  setStubbornStreak(id, n) {
-    const map = { ...(this._settings.stubbornStreak || {}) };
-    if (n <= 0) delete map[id]; else map[id] = n;
-    this._settings.stubbornStreak = map;
-    this._save();
-  },
-  getRecallCyclePosition() { return this._settings.recallCyclePosition || 0; },
-  setRecallCyclePosition(n) { this._settings.recallCyclePosition = n; this._save(); },
-  getRecallCycleCount() { return this._settings.recallCycleCount || 0; },
-  incrementRecallCycleCount(n = 1) {
-    this._settings.recallCycleCount = (this._settings.recallCycleCount || 0) + n;
-    this._save();
-  },
-  getHideDuration() { return this._settings.recallHideDuration || 2; },
-  setHideDuration(sec) { this._settings.recallHideDuration = sec; this._save(); },
-  getTtsRepeatCount() { return this._settings.recallTtsRepeatCount || 2; },
-  setTtsRepeatCount(n) { this._settings.recallTtsRepeatCount = n; this._save(); },
   reset() { this._progress = {}; this._settings.lastCardId = null; this._save(); },
   isAvailable() { return this._available; }
 };
@@ -443,8 +405,8 @@ const TopBar = {
       leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
     }
 
-    // 学新、洗脑、回忆模式下不显示筛选下拉（pool 已固定）
-    const showFilter = !Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active && !RecallMode.active;
+    // 学新、洗脑模式下不显示筛选下拉（pool 已固定）
+    const showFilter = !Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active;
     const filterHtml = showFilter ? `
         <select id="filter-select">
           <option value="all">全部</option>
@@ -452,13 +414,8 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>` : '';
-    // 回忆模式下不显示测验入口，避免两套全屏系统同时抢占 #cardstage/TTS
-    const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active && !RecallMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
-    // 回忆模式下不显示洗脑入口，避免两套全屏系统同时抢占 #cardstage/TTS
-    const brainwashBtnHtml = !RecallMode.active ? `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>` : '';
-    // 学新/一般复习/回忆/洗脑模式下不显示回忆入口，避免会话嵌套和两套全屏系统同时抢占 #cardstage/TTS
-    const stubbornCount = Progress.getStubbornSet().length;
-    const recallBtnHtml = (!Router.learnMode && !Router.generalReviewMode && !BrainwashMode.active && !RecallMode.active) ? `<button class="settings-btn" id="recall-btn" title="回忆模式 · 已复习 ${Progress.getRecallCycleCount()} 轮">🧩${stubbornCount > 0 ? `<span class="recall-badge">${stubbornCount}</span>` : ''}</button>` : '';
+    const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
+    const brainwashBtnHtml = `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>`;
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
@@ -466,7 +423,6 @@ const TopBar = {
         ${filterHtml}
         <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="mute-btn" title="静音">${TTSEngine.muted ? '🔇' : '🔊'}</button>
-        ${recallBtnHtml}
         <button class="settings-btn" id="settings-btn">⚙</button>
         ${brainwashBtnHtml}
         ${quizEntryHtml}
@@ -483,15 +439,10 @@ const TopBar = {
       TopBar.render();
     });
     topbar.querySelector('#settings-btn').addEventListener('click', () => SettingsPanel.open());
-    topbar.querySelector('#recall-btn')?.addEventListener('click', () => {
-      RecallMode.start();
+    topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
+      if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
-    if (!RecallMode.active) {
-      topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
-        if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
-      });
-    }
-    if (window.SIMPLE_MODE && !BrainwashMode.active && !RecallMode.active) {
+    if (window.SIMPLE_MODE && !BrainwashMode.active) {
       topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
         QuizMode.start({
           queue: Router.visibleCards,
@@ -662,139 +613,6 @@ const BrainwashMode = {
   _sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
   async _waitIfPaused() {
     while (this._paused && !this._aborted) await this._sleep(100);
-  }
-};
-
-const RecallMode = {
-  active: false,
-  _queue: [],
-  _idx: 0,
-  _revealed: false,
-  _hideTimer: null,
-  _savedVisibleCards: null,
-  _savedIndex: 0,
-
-  start() {
-    const learned = DataStore.allCards()
-      .filter(c => Progress.getStatus(c.id) !== null)
-      .sort((a, b) => a.id - b.id);
-    if (learned.length === 0) {
-      TopBar.addWarning('还没有学过的词可以复习');
-      TopBar.render();
-      return;
-    }
-    const learnedIds = learned.map(c => c.id);
-    const learnedSet = new Set(learnedIds);
-    const stubbornIds = Progress.getStubbornSet().filter(id => learnedSet.has(id));
-    const position = Progress.getRecallCyclePosition();
-    const session = computeRecallSession(learnedIds, stubbornIds, position, 60);
-
-    if (session.cyclesCompleted > 0) Progress.incrementRecallCycleCount(session.cyclesCompleted);
-    Progress.setRecallCyclePosition(session.nextPosition);
-
-    this._queue = session.cardIds.map(id => DataStore.getCard(id)).filter(Boolean);
-    this._idx = 0;
-    this._savedVisibleCards = Router.visibleCards;
-    this._savedIndex = Router.currentIndex;
-
-    this.active = true;
-    document.body.classList.add('recall-on');
-    this._showCard();
-  },
-
-  exit() {
-    this.active = false;
-    if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
-    TTSEngine.cancel();
-    document.body.classList.remove('recall-on');
-    if (this._savedVisibleCards) {
-      Router.visibleCards = this._savedVisibleCards;
-      Router.currentIndex = Math.min(this._savedIndex || 0, Math.max(0, this._savedVisibleCards.length - 1));
-      this._savedVisibleCards = null;
-      Router.currentColor = CardView.randomColor();
-      Router.flipped = false;
-      Router.showCurrent();
-    } else {
-      TopBar.render();
-    }
-  },
-
-  _showCard() {
-    if (!this.active) return;
-    if (this._idx >= this._queue.length) { this.exit(); return; }
-    const card = this._queue[this._idx];
-    this._revealed = false;
-    const isKanji = card.word !== card.kana;
-
-    const stage = document.querySelector('#cardstage');
-    stage.innerHTML = '';
-    const el = document.createElement('div');
-    el.className = `flash-card recall-card color-${CardView.randomColor()}`;
-    el.innerHTML = `
-      <div class="card-id">${this._idx + 1}/${this._queue.length}</div>
-      <div class="recall-word" data-len="${[...card.word].length}">${card.word}</div>
-      <div class="recall-reveal ${isKanji ? 'recall-kana' : 'recall-meaning'}" hidden></div>
-      <div class="hint-bottom">${isKanji ? '回忆读音…' : '回忆词义…'} · 揭示后 ←不熟 →掌握</div>
-    `;
-    stage.appendChild(el);
-
-    Gestures.attach(el, {
-      onSwipe: (dir) => {
-        if (!this._revealed) return;
-        this._handleSwipe(dir === 'left' ? 'unknown' : 'known', card);
-      }
-    });
-
-    const hideMs = Progress.getHideDuration() * 1000;
-    this._hideTimer = setTimeout(() => this._reveal(el, card, isKanji), hideMs);
-
-    TopBar.render();
-  },
-
-  async _reveal(el, card, isKanji) {
-    if (!this.active) return;
-    this._hideTimer = null;
-    this._revealed = true;
-    const revealEl = el.querySelector('.recall-reveal');
-    if (!revealEl) return;
-    if (isKanji) {
-      revealEl.textContent = card.kana;
-      revealEl.hidden = false;
-      const repeat = Progress.getTtsRepeatCount();
-      const rate = Progress.getTTSRate();
-      for (let i = 0; i < repeat; i++) {
-        if (!this.active || this._queue[this._idx] !== card) return;
-        await TTSEngine.speak(card.kana, { rate });
-      }
-    } else {
-      revealEl.innerHTML = card.meanings.map((m, i) => `${['①','②','③','④'][i] || '·'} ${m}`).join('<br>');
-      revealEl.hidden = false;
-    }
-  },
-
-  _handleSwipe(status, card) {
-    Progress.mark(card.id, status);
-    const inStubborn = Progress.getStubbornSet().includes(card.id);
-    if (status === 'known') {
-      if (inStubborn) {
-        const streak = Progress.getStubbornStreak(card.id) + 1;
-        if (streak >= 3) {
-          Progress.removeFromStubborn(card.id);
-          Progress.setStubbornStreak(card.id, 0);
-        } else {
-          Progress.setStubbornStreak(card.id, streak);
-        }
-      }
-    } else {
-      if (!inStubborn) {
-        Progress.addToStubborn(card.id);
-      } else {
-        Progress.setStubbornStreak(card.id, 0);
-      }
-    }
-    TTSEngine.cancel();
-    this._idx++;
-    this._showCard();
   }
 };
 
@@ -1094,12 +912,6 @@ const SettingsPanel = {
         <h3>设置</h3>
         <label>TTS 语速：<span id="rate-val">${Progress.getTTSRate().toFixed(2)}</span></label>
         <input type="range" id="rate-input" min="0.5" max="1.5" step="0.05" value="${Progress.getTTSRate()}">
-        <label>回忆模式 · 隐藏时长</label>
-        <div class="row" id="hide-duration-group">
-          ${[1, 2, 3].map(s => `<button data-sec="${s}" class="${s === Progress.getHideDuration() ? 'primary' : ''}">${s}s</button>`).join('')}
-        </div>
-        <label>回忆模式 · 朗读次数：<span id="repeat-val">${Progress.getTtsRepeatCount()}</span></label>
-        <input type="range" id="repeat-input" min="1" max="4" step="1" value="${Progress.getTtsRepeatCount()}">
         <div class="row">
           <button id="edit-btn">编辑当前卡</button>
           <button id="export-btn">导出修改</button>
@@ -1120,19 +932,6 @@ const SettingsPanel = {
       const v = parseFloat(rateInput.value);
       backdrop.querySelector('#rate-val').textContent = v.toFixed(2);
       Progress.setTTSRate(v);
-    });
-    backdrop.querySelectorAll('#hide-duration-group button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const sec = parseInt(btn.dataset.sec, 10);
-        Progress.setHideDuration(sec);
-        backdrop.querySelectorAll('#hide-duration-group button').forEach(b => b.classList.toggle('primary', b === btn));
-      });
-    });
-    const repeatInput = backdrop.querySelector('#repeat-input');
-    repeatInput.addEventListener('input', () => {
-      const v = parseInt(repeatInput.value, 10);
-      backdrop.querySelector('#repeat-val').textContent = String(v);
-      Progress.setTtsRepeatCount(v);
     });
     backdrop.querySelector('#edit-btn').addEventListener('click', () => {
       this.close();
@@ -1410,22 +1209,6 @@ const Router = {
 function _attachKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches('input, textarea, select')) return;
-    if (RecallMode.active) {
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (RecallMode._revealed) RecallMode._handleSwipe('unknown', RecallMode._queue[RecallMode._idx]);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (RecallMode._revealed) RecallMode._handleSwipe('known', RecallMode._queue[RecallMode._idx]);
-          break;
-        case 'Escape':
-          RecallMode.exit();
-          break;
-      }
-      return;
-    }
     switch (e.key) {
       case ' ':         e.preventDefault(); Router.toggleFlip(); break;
       case 'ArrowLeft': e.preventDefault(); Router.markAndNext('unknown'); break;

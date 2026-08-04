@@ -142,39 +142,3 @@ export function computeGeneralReviewPool(cards, progress, now, size = 20) {
   return picked;
 }
 
-// 回忆模式会话组装：顽固词优先注入，剩余名额按 learnedIds 的顺序从 position 开始的游标补满。
-// 游标每绕回 0 一次，cyclesCompleted 计一次（一次会话内池子很小时可能绕多圈）。
-export function computeRecallSession(learnedIds, stubbornIds, position, size = 60) {
-  const total = learnedIds.length;
-  if (total === 0) return { cardIds: [], nextPosition: 0, cyclesCompleted: 0 };
-
-  const stubbornSet = new Set(stubbornIds);
-  const picked = [];
-  const pickedSet = new Set();
-
-  // 1. 顽固词优先，按 learnedIds 顺序保证确定性
-  for (const id of learnedIds) {
-    if (picked.length >= size) break;
-    if (stubbornSet.has(id)) {
-      picked.push(id);
-      pickedSet.add(id);
-    }
-  }
-
-  // 2. 从 position 开始按游标顺序补满剩余名额
-  let pos = ((position % total) + total) % total;
-  let cyclesCompleted = 0;
-  let steps = 0;
-  while (picked.length < size && steps < total) {
-    const id = learnedIds[pos];
-    if (!pickedSet.has(id)) {
-      picked.push(id);
-      pickedSet.add(id);
-    }
-    pos = (pos + 1) % total;
-    if (pos === 0) cyclesCompleted++;
-    steps++;
-  }
-
-  return { cardIds: picked, nextPosition: pos, cyclesCompleted };
-}
