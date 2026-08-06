@@ -41,10 +41,11 @@
     const level = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
     document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
-    // 各词性子库目前的数据覆盖情况：N1/N3/N4/N5 全部 4 种都有；
-    // N2 只有形容词/拟声词
-    const HAS_ADVERB = ['n1', 'n3', 'n4', 'n5'].includes(level);
+    // 各词性子库目前的数据覆盖情况：N1/N3/N4/N5 有形容词/副词/拟声词/名词；
+    // N2 有形容词/副词/拟声词/复合动词（无名词）
+    const HAS_ADVERB = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(level);
     const HAS_NOUN = ['n1', 'n3', 'n4', 'n5'].includes(level);
+    const HAS_COMPOUND = ['n2'].includes(level);
     const OPTIONS = [
       { label: '🈁 动词', href: `${level}.html`, desc: '完整学习体系：分批学新+早复习+一般复习' },
       { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
@@ -55,6 +56,9 @@
     OPTIONS.push({ label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' });
     if (HAS_NOUN) {
       OPTIONS.push({ label: '📦 名词', href: `${level}-noun.html`, desc: '自由刷卡 + 测验' });
+    }
+    if (HAS_COMPOUND) {
+      OPTIONS.push({ label: '🔀 复合动词', href: `${level}-compound.html`, desc: '自由刷卡 + 测验' });
     }
     document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `
       <a class="level-btn" href="${o.href}">
