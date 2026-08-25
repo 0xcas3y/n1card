@@ -1,6 +1,7 @@
 import {
   aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen,
-  LEVEL_CATEGORY_FILES, mergeLevelPool, applySwipeResult, migrateOldStatus
+  LEVEL_CATEGORY_FILES, mergeLevelPool, applySwipeResult, migrateOldStatus,
+  pickRecommendedCategory, computeNewWordQueue, computeDueIds
 } from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
@@ -1358,12 +1359,36 @@ document.addEventListener('gestureend', (e) => e.preventDefault());
 document.addEventListener('DOMContentLoaded', async () => {
   const topbar = document.querySelector('#topbar');
   try {
-    await DataStore.load();
+    // 统一会话模式(today.html)不走单文件 DataStore，词池由 CardPool 按需多文件合并加载
+    if (!window.UNIFIED_MODE) {
+      await DataStore.load();
+      Router.computeVisible();
+    }
     Progress.load();
-    Router.computeVisible();
 
     // 若 URL 带 ?session=learn，进入学新模式
     const params = new URLSearchParams(location.search);
+    if (params.get('session') === 'today') {
+      const level = LEVEL_KEY;
+      TTSEngine.init();
+      const pool = await CardPool.load(level);
+      Progress2.load();
+      const progress2 = Progress2.all();
+      const category = params.get('category') || pickRecommendedCategory(pool, progress2) || 'verb';
+      const quota = parseInt(params.get('quota') || '60', 10);
+      const scope = params.get('scope') || 'current'; // current | overall
+      const newCards = computeNewWordQueue(pool, progress2, quota, category)
+        .map(c => ({ ...c, id: c.compositeId }));
+      let duePool = pool;
+      if (scope === 'current') duePool = pool.filter(c => c.category === category);
+      const dueIds = new Set(computeDueIds(progress2, Date.now()));
+      const dueCards = duePool
+        .filter(c => dueIds.has(c.compositeId))
+        .map(c => ({ ...c, id: c.compositeId }));
+      Router.enterTodaySession(newCards, dueCards);
+      _attachKeyboard();
+      return;
+    }
     if (params.get('session') === 'review') {
       const kind = params.get('kind') || 'morning';   // 'morning' | 'weekly'
       const queueIds = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
