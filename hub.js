@@ -1,11 +1,8 @@
 // hub.js — 首页（index.html）逻辑：PlanStore + DayView + RetrospectView + Calendar
 import {
-  computeLearnQueue, computeMorningPool, computeWeeklyDue,
-  pruneOldCohorts, aggregateCheckIns, pickDistractors,
-  computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool
+  computeBatchesAllowed, pruneOldCohorts,
+  LEVEL_CATEGORY_FILES, pickRecommendedCategory, computeNewWordQueue, computeDueIds
 } from './plan.js';
-
-const BATCH_SIZE = 60;
 
 const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
@@ -37,12 +34,10 @@ const Streak = {
     return this._state;
   },
   _save() { try { localStorage.setItem(this.key, JSON.stringify(this._state)); } catch {} },
-  markCheckIn(dateStr, kind) {
+  markCheckIn(dateStr) {
     this.load();
-    if (kind !== 'morning' && kind !== 'evening') return;
-    if (!this._state.checkIns[dateStr]) this._state.checkIns[dateStr] = {};
-    if (this._state.checkIns[dateStr][kind]) return;
-    this._state.checkIns[dateStr][kind] = true;
+    if (this._state.checkIns[dateStr]?.done) return;
+    this._state.checkIns[dateStr] = { done: true };
     if (!this._state.dates.includes(dateStr)) {
       this._state.dates.push(dateStr);
       if (this._state.lastDate) {
@@ -60,7 +55,7 @@ const Streak = {
     }
     this._save();
   },
-  getStatus(dateStr) { this.load(); return aggregateCheckIns(this._state.checkIns, dateStr); },
+  getStatus(dateStr) { this.load(); return !!this._state.checkIns[dateStr]?.done; },
   getCheckIn(dateStr) { this.load(); return this._state.checkIns[dateStr] || {}; }
 };
 
@@ -144,24 +139,29 @@ const ProgressRO = {
 
 const RULES_SEEN_KEY = 'n1card:rules-seen';
 
-async function _sessionStatus(level, dateStr) {
-  const plan = PlanStore.load(level);
-  const cards = await CardCache.load(level);
-  const prog = ProgressRO.get(level);
+async function _todaySummary(level) {
+  const registry = LEVEL_CATEGORY_FILES[level];
+  if (!registry) return { newCount: 0, dueCount: 0, category: null };
+  let progress2 = {};
+  try { progress2 = JSON.parse(localStorage.getItem(`n1card:progress2:${level}`)) || {}; } catch {}
+  const entries = await Promise.all(
+    Object.entries(registry).map(async ([category, url]) => {
+      const res = await fetch(url);
+      const data = await res.json();
+      return { category, cards: data.cards };
+    })
+  );
+  // 只需要知道"有没有到期/有没有新词"和数量，不需要完整合并对象（跟 app.js 的 CardPool 逻辑重复但各自独立维护，避免 hub.js 依赖 app.js 内部对象）
+  const pool = [];
+  for (const { category, cards } of entries) {
+    for (const c of cards) pool.push({ category, origId: c.id, compositeId: `${level}:${category}:${c.id}` });
+  }
   const streakState = Streak.load();
   const batchesAllowed = computeBatchesAllowed(streakState.total || 0);
-  const batchesDone = plan.sessions[dateStr]?.learn?.batchCount || 0;
-  const learnWindowOpen = isLearnWindowOpen();
-  const morningDone = plan.sessions[dateStr]?.morning?.status === 'done';
-  const weeklyDone = plan.sessions[dateStr]?.weekly?.status === 'done';
-  const learnQueue = batchesDone >= batchesAllowed ? [] : computeLearnQueue(cards, prog, BATCH_SIZE);
-  const learnDone = batchesDone >= batchesAllowed || learnQueue.length === 0;
-  const morningPool = computeMorningPool(plan.cohorts, prog, dateStr);
-  const weeklyDueIds = computeWeeklyDue(prog, Date.now());
-  return {
-    plan, cards, prog, batchesAllowed, batchesDone, learnWindowOpen,
-    learnDone, morningDone, weeklyDone, learnQueue, morningPool, weeklyDueIds
-  };
+  const category = pickRecommendedCategory(pool, progress2) || 'verb';
+  const newCount = computeNewWordQueue(pool, progress2, batchesAllowed * 60, category).length;
+  const dueCount = computeDueIds(progress2, Date.now()).length;
+  return { newCount, dueCount, category, batchesAllowed };
 }
 
 const DayView = {
@@ -173,14 +173,12 @@ const DayView = {
 
     const level = CurrentLevel.get();
     const streakCurrent = Streak.load().current || 0;
-    const stat = await _sessionStatus(level, dateStr);
 
     const rulesSeen = !!localStorage.getItem(RULES_SEEN_KEY);
     const [y, m, d] = dateStr.split('-').map(Number);
     const weekday = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
 
-    const morningStat = Streak.getCheckIn(dateStr).morning ? '✓' : '○';
-    const eveningStat = Streak.getCheckIn(dateStr).evening ? '✓' : '○';
+    const done = Streak.getCheckIn(dateStr).done;
 
     el.innerHTML = `
       <div class="day-head">
@@ -190,31 +188,26 @@ const DayView = {
       </div>
 
       <div class="day-checks">
-        打卡： 🌙 晚 ${eveningStat}  ·  🌅 早 ${morningStat}
+        今日打卡：${done ? '✓ 已完成' : '○ 未完成'}
       </div>
 
       <details class="day-rules" ${rulesSeen ? '' : 'open'}>
         <summary>规则</summary>
         <ul>
-          <li>🌙 晚打卡 = 完成 1 批「学新」（60 词滑卡 + 强制通关测验）</li>
-          <li>🌅 早打卡 = 完成「早复习」（四选一）</li>
-          <li>学新只能在 <strong>晚 8 点-凌晨 1 点</strong> 进行；早复习/一般复习随时可用</li>
-          <li>每日批数上限：累计打卡每满 10 天 +1 批，上限 3 批（180 词/天）</li>
-          <li>洗脑模式 60 词起，同步每 10 天 +1 组（上限 180 词）</li>
-          <li>答对 2 次升「掌握」，答错立刻回「不熟」</li>
-          <li>「掌握」每 7 天来一次周复习；🔁 一般复习按遗忘曲线随时补练老词</li>
+          <li>🗂️ 今日滑卡 = 新词 + 到期复习混在一起滑，滑卡本身即判定</li>
+          <li>右滑 = 记得（新词进入间隔阶梯，到期词推进一档）；左滑 = 不熟（新词稍后重考，到期词打回第1天档）</li>
+          <li>滑完这批即当天打卡，随时可以开始，没有固定时间窗</li>
+          <li>新词按 动词→名词→复合动词→形容词→副词→拟声词 推荐顺序，可手动切换词性</li>
+          <li>🧠 回忆模式随时可用，纯巩固不影响进度</li>
         </ul>
       </details>
 
       <div class="day-level">
-        当前等级： <span class="day-level-val">${LEVEL_LABELS[level] || level.toUpperCase()}</span> · 今日 ${stat.batchesAllowed} 批
+        当前等级： <span class="day-level-val">${LEVEL_LABELS[level] || level.toUpperCase()}</span>
       </div>
 
       <div class="day-sessions">
-        ${this._renderMorningCard(stat, dateStr)}
-        ${this._renderLearnCard(stat, level, dateStr)}
-        ${this._renderWeeklyCard(stat, level, dateStr)}
-        ${this._renderGeneralReviewCard(stat, dateStr)}
+        ${await this._renderTodayCard(dateStr, level)}
       </div>
 
       <div class="day-level-switch">
@@ -232,89 +225,36 @@ const DayView = {
       CurrentLevel.set(e.target.value);
       this.render(dateStr);
     });
-    this._attachSessionHandlers(el, stat, level, dateStr);
+    this._attachSessionHandlers(el, level, dateStr);
   },
 
-  _renderMorningCard(stat, dateStr) {
+  async _renderTodayCard(dateStr, level) {
     if (dateStr !== todayStr()) return '';
-    const n = stat.morningPool.length;
-    const done = stat.morningDone;
-    const label = n === 0 ? '今日无早复习（自动 ✓）' : (done ? `✅ 已完成` : `昨+前日 不熟 · ${n} 题`);
-    const btn = done ? '' : (n === 0 ? `<button class="ds-btn" data-action="auto-morning">标记完成</button>` : `<button class="ds-btn" data-action="morning">开始</button>`);
-    return `<div class="day-session-card"><div class="dsc-icon">🌅</div><div class="dsc-body"><div class="dsc-title">早复习</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
-  },
-  _renderLearnCard(stat, level, dateStr) {
-    if (dateStr !== todayStr()) return '';
-    const { batchesDone, batchesAllowed, learnWindowOpen, learnQueue } = stat;
-    const n = learnQueue.length;
-    const batchLabel = `${batchesDone}/${batchesAllowed} 批`;
-    let label, btn;
-    if (batchesDone >= batchesAllowed) {
-      label = `✅ 今日 ${batchLabel} 已完成`;
-      btn = '';
-    } else if (n === 0 && batchesDone === 0) {
-      label = '无未学过词（自动 ✓）';
-      btn = '<button class="ds-btn" data-action="auto-evening">标记完成</button>';
-    } else if (n === 0) {
-      label = `✅ ${batchLabel} · 无更多新词`;
-      btn = '';
-    } else if (!learnWindowOpen) {
-      label = `⏰ 学习窗口：晚8点-凌晨1点（${batchLabel}）`;
-      btn = '';
-    } else {
-      label = `${batchLabel} · 下一批 ${n} 词`;
-      btn = `<button class="ds-btn" data-action="learn">${batchesDone > 0 ? '继续下一批' : '开始学习'}</button>`;
+    const summary = await _todaySummary(level);
+    const total = summary.newCount + summary.dueCount;
+    const done = Streak.getCheckIn(dateStr).done;
+    if (done) {
+      return `<div class="day-session-card"><div class="dsc-icon">✅</div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">已完成</div></div></div>`;
     }
-    return `<div class="day-session-card"><div class="dsc-icon">🌙</div><div class="dsc-body"><div class="dsc-title">学新</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
-  },
-  _renderWeeklyCard(stat, level, dateStr) {
-    if (dateStr !== todayStr()) return '';
-    const n = stat.weeklyDueIds.length;
-    if (n === 0) return '';
-    const btn = stat.weeklyDone ? '' : `<button class="ds-btn" data-action="weekly">开始</button>`;
-    const label = stat.weeklyDone ? `✅ 已完成` : `${n} 词到期`;
-    return `<div class="day-session-card"><div class="dsc-icon">📆</div><div class="dsc-body"><div class="dsc-title">周复习</div><div class="dsc-sub">${label}</div></div>${btn}</div>`;
-  },
-  _renderGeneralReviewCard(stat, dateStr) {
-    if (dateStr !== todayStr()) return '';
-    const hasPool = Object.keys(stat.prog).some(id => stat.prog[id]?.status);
-    if (!hasPool) return '';
+    if (total === 0) {
+      return `<div class="day-session-card"><div class="dsc-icon">🎉</div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">暂无新词/到期词</div></div><button class="ds-btn" data-action="auto-today">标记完成</button></div>`;
+    }
     return `<div class="day-session-card">
-      <div class="dsc-icon">🔁</div>
-      <div class="dsc-body"><div class="dsc-title">一般复习</div><div class="dsc-sub">随时可刷，不算打卡</div></div>
-      <div class="dsc-actions">
-        <button class="ds-btn ds-btn-small" data-action="general-review-swipe">滑卡</button>
-        <button class="ds-btn ds-btn-small" data-action="general-review-quiz">测验</button>
-      </div>
+      <div class="dsc-icon">🗂️</div>
+      <div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">新词 ${summary.newCount} · 到期复习 ${summary.dueCount}</div></div>
+      <button class="ds-btn" data-action="today">开始</button>
     </div>`;
   },
 
-  _attachSessionHandlers(el, stat, level, dateStr) {
+  _attachSessionHandlers(el, level, dateStr) {
     el.querySelectorAll('.ds-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
-        switch (action) {
-          case 'morning': return SessionLauncher.launchMorning(level, dateStr, stat);
-          case 'learn': return SessionLauncher.launchLearn(level, dateStr, stat);
-          case 'weekly': return SessionLauncher.launchWeekly(level, dateStr, stat);
-          case 'general-review-swipe': {
-            const pool = computeGeneralReviewPool(stat.cards, stat.prog, Date.now());
-            return SessionLauncher.launchGeneralReview(level, 'swipe', pool.map(c => c.id));
-          }
-          case 'general-review-quiz': {
-            const pool = computeGeneralReviewPool(stat.cards, stat.prog, Date.now());
-            return SessionLauncher.launchGeneralReview(level, 'quiz', pool.map(c => c.id));
-          }
-          case 'auto-morning':
-            PlanStore.completeMorning(level, dateStr, { correct: 0, total: 0 });
-            Streak.markCheckIn(dateStr, 'morning');
-            this.render(dateStr);
-            return;
-          case 'auto-evening':
-            PlanStore.completeLearn(level, dateStr, []);
-            Streak.markCheckIn(dateStr, 'evening');
-            this.render(dateStr);
-            return;
+        if (action === 'today') {
+          window.location.href = `/today.html?level=${level}&session=today`;
+        } else if (action === 'auto-today') {
+          Streak.markCheckIn(dateStr);
+          this.render(dateStr);
         }
       });
     });
@@ -325,25 +265,6 @@ const DayView = {
     document.querySelector('#retro-view').style.display = 'none';
     document.querySelector('#hub-main').style.display = 'block';
     renderHubBody();
-  }
-};
-
-const SessionLauncher = {
-  launchLearn(level, dateStr, stat) {
-    const ids = stat.learnQueue.map(c => c.id).join(',');
-    const batchesLeft = stat.batchesAllowed - stat.batchesDone;
-    window.location.href = `/${level}.html?session=learn&ids=${ids}&batchesLeft=${batchesLeft}`;
-  },
-  launchMorning(level, dateStr, stat) {
-    const ids = stat.morningPool.join(',');
-    window.location.href = `/${level}.html?session=review&kind=morning&ids=${ids}`;
-  },
-  launchWeekly(level, dateStr, stat) {
-    const ids = stat.weeklyDueIds.join(',');
-    window.location.href = `/${level}.html?session=review&kind=weekly&ids=${ids}`;
-  },
-  launchGeneralReview(level, mode, ids) {
-    window.location.href = `/${level}.html?session=general-review&mode=${mode}&ids=${ids.join(',')}`;
   }
 };
 
@@ -385,12 +306,11 @@ function renderHubBody() {
     for (let d = 1; d <= daysInMonth; d++) {
       const ds = fmt(viewY, viewM, d);
       const cls = ['cal-day'];
-      const status = Streak.getStatus(ds);
-      if (status === 'gold') cls.push('gold');
-      else if (status === 'half') cls.push('checked');
+      const done = Streak.getStatus(ds);
+      if (done) cls.push('checked');
       if (ds === todayKey) cls.push('today');
       const isPast = ds < todayKey;
-      const clickable = (ds === todayKey) || (isPast && (status === 'gold' || status === 'half'));
+      const clickable = (ds === todayKey) || (isPast && done);
       if (clickable) cls.push('clickable');
       html += `<div class="${cls.join(' ')}" data-date="${ds}">${d}</div>`;
     }
@@ -419,51 +339,15 @@ const RetrospectView = {
 
     const [y, m, d] = dateStr.split('-').map(Number);
     const weekday = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
-    const checkIn = Streak.getCheckIn(dateStr);
-    const status = Streak.getStatus(dateStr);
-    const goldLabel = status === 'gold' ? '🟡 金' : (status === 'half' ? '🟢 半' : '—');
-
-    const sections = [];
-    for (const level of LEVELS) {
-      const plan = PlanStore.load(level);
-      const session = plan.sessions[dateStr];
-      const cohort = plan.cohorts[dateStr];
-      if (!session && !cohort) continue;
-      const cards = await CardCache.load(level).catch(() => []);
-      const byId = Object.fromEntries(cards.map(c => [c.id, c]));
-      const cohortCards = (cohort?.cardIds || [])
-        .map(id => byId[id])
-        .filter(Boolean);
-      const rowsHtml = cohortCards.map(c => {
-        const showKana = c.word !== c.kana;
-        const meaning = (c.meanings && c.meanings[0]) || '';
-        return `<div class="retro-row"><span class="retro-word">${c.word}</span>${showKana ? `<span class="retro-kana">${c.kana}</span>` : ''}<span class="retro-meaning">${meaning}</span></div>`;
-      }).join('');
-      const cohortIdsCsv = (cohort?.cardIds || []).join(',');
-      sections.push(`
-        <div class="retro-level">
-          <div class="retro-level-head">
-            <span class="retro-level-title">${LEVEL_LABELS[level] || level.toUpperCase()}</span>
-            ${cohort && cohortIdsCsv ? `<a class="retro-retake" href="/${level}.html?session=retake&ids=${cohortIdsCsv}&date=${dateStr}">📝 再过一遍</a>` : ''}
-          </div>
-          ${cohort ? `<div class="retro-line retro-line-sub">当日学新 ${cohort.cardIds.length} 词</div>` : ''}
-          ${rowsHtml ? `<div class="retro-rows">${rowsHtml}</div>` : ''}
-          ${session?.morning ? `<div class="retro-line">🌅 早复习：答对 ${session.morning.correct} / ${session.morning.total}</div>` : ''}
-          ${session?.weekly ? `<div class="retro-line">📆 周复习：答对 ${session.weekly.correct} / ${session.weekly.total}</div>` : ''}
-        </div>
-      `);
-    }
+    const done = Streak.getStatus(dateStr);
 
     el.innerHTML = `
       <div class="day-head">
         <button class="day-back" id="retro-back">← 返回</button>
         <div class="day-date">📅 ${m}月${d}日 · 周${weekday}</div>
-        <div class="day-streak">${goldLabel}</div>
+        <div class="day-streak">${done ? '✅' : '—'}</div>
       </div>
-      <div class="day-checks">
-        打卡： 🌙 晚 ${checkIn.evening ? '✓' : '—'}  ·  🌅 早 ${checkIn.morning ? '✓' : '—'}
-      </div>
-      ${sections.length ? sections.join('') : '<div class="retro-empty">这一天没有记录</div>'}
+      <div class="retro-empty">${done ? '这一天完成了今日滑卡' : '这一天没有打卡记录'}</div>
     `;
     el.querySelector('#retro-back').addEventListener('click', () => {
       el.style.display = 'none';
@@ -477,51 +361,14 @@ const RetrospectView = {
 document.addEventListener('DOMContentLoaded', () => {
   renderHubBody();
 
-  // 处理 learn_completed 回流
   const params = new URLSearchParams(location.search);
-  if (params.get('learn_completed') === '1') {
-    const level = params.get('level') || 'n1';
-    const ids = (params.get('ids') || '').split(',').map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
+  if (params.get('today_completed') === '1') {
     const dateStr = todayStr();
-    const wantsContinue = params.get('continue') === '1';
-    PlanStore.completeLearn(level, dateStr, ids);
-    Streak.markCheckIn(dateStr, 'evening');
-    // 清 URL 参数
-    history.replaceState({}, '', '/');
-    if (wantsContinue) {
-      _sessionStatus(level, dateStr).then(stat => {
-        if (stat.learnQueue.length > 0 && !stat.learnDone && stat.learnWindowOpen) {
-          SessionLauncher.launchLearn(level, dateStr, stat);
-        } else {
-          DayView.render(dateStr);
-        }
-      }).catch(() => DayView.render(dateStr));
-    } else {
-      DayView.render(dateStr);
-    }
-  }
-  if (params.get('review_completed') === '1') {
-    const level = params.get('level') || 'n1';
-    const kind = params.get('kind') || 'morning';
-    const total = parseInt(params.get('total') || '0', 10);
-    const correct = parseInt(params.get('correct') || '0', 10);
-    const dateStr = todayStr();
-    if (kind === 'weekly') {
-      PlanStore.completeWeekly(level, dateStr, { correct, total });
-    } else {
-      PlanStore.completeMorning(level, dateStr, { correct, total });
-      Streak.markCheckIn(dateStr, 'morning');
-    }
+    Streak.markCheckIn(dateStr);
     history.replaceState({}, '', '/');
     DayView.render(dateStr);
     return;
   }
-  if (params.get('retake_completed') === '1') {
-    const date = params.get('date') || todayStr();
-    history.replaceState({}, '', '/');
-    RetrospectView.render(date);
-    return;
-  }
 });
 
-export { renderHubBody, RetrospectView, DayView, SessionLauncher, Streak, PlanStore, CurrentLevel, CardCache, ProgressRO, todayStr, LEVELS };
+export { renderHubBody, RetrospectView, DayView, Streak, PlanStore, CurrentLevel, CardCache, ProgressRO, todayStr, LEVELS };
