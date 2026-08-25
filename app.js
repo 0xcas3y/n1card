@@ -1,4 +1,7 @@
-import { aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen } from './plan.js';
+import {
+  aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen,
+  LEVEL_CATEGORY_FILES, mergeLevelPool, applySwipeResult, migrateOldStatus
+} from './plan.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -158,6 +161,86 @@ const Progress = {
   setTTSRate(r) { this._settings.ttsRate = r; this._save(); },
   reset() { this._progress = {}; this._settings.lastCardId = null; this._save(); },
   isAvailable() { return this._available; }
+};
+
+// 统一进度存储（Task 3，统一学习/复习机制重设计）
+// 仅供 window.UNIFIED_MODE 页面使用，键名 progress2 与旧的按页面隔离的 progress 完全独立
+const Progress2 = {
+  key: `n1card:progress2:${LEVEL_KEY}`,
+  _data: {},
+  _loaded: false,
+  load() {
+    if (this._loaded) return;
+    try {
+      const raw = localStorage.getItem(this.key);
+      if (raw) this._data = JSON.parse(raw);
+    } catch {}
+    this._loaded = true;
+  },
+  _save() {
+    try { localStorage.setItem(this.key, JSON.stringify(this._data)); } catch {}
+  },
+  mark(compositeId, correct) {
+    this.load();
+    const now = Date.now();
+    this._data[compositeId] = applySwipeResult(this._data[compositeId], correct, now);
+    this._save();
+  },
+  getEntry(compositeId) { this.load(); return this._data[compositeId]; },
+  all() { this.load(); return this._data; },
+  // oldStatusMap: { compositeId: 'known'|'unknown' }，已有新数据的复合id不覆盖
+  migrate(oldStatusMap) {
+    this.load();
+    const now = Date.now();
+    let changed = false;
+    for (const compositeId in oldStatusMap) {
+      if (this._data[compositeId]) continue;
+      const entry = migrateOldStatus(oldStatusMap[compositeId], now);
+      if (entry) { this._data[compositeId] = entry; changed = true; }
+    }
+    if (changed) this._save();
+  }
+};
+
+// 统一词池加载（多文件合并 + 一次性迁移旧进度）
+const CardPool = {
+  _cache: {},
+  async load(level) {
+    if (this._cache[level]) return this._cache[level];
+    const registry = LEVEL_CATEGORY_FILES[level];
+    if (!registry) throw new Error(`no category registry for level ${level}`);
+    const entries = await Promise.all(
+      Object.entries(registry).map(async ([category, url]) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${url} fetch failed: ${res.status}`);
+        const data = await res.json();
+        return { category, cards: data.cards };
+      })
+    );
+    const merged = mergeLevelPool(level, entries);
+    this._cache[level] = merged;
+    this._maybeMigrate(level, entries);
+    return merged;
+  },
+  _maybeMigrate(level, entries) {
+    const flagKey = `n1card:migrated:${level}`;
+    try { if (localStorage.getItem(flagKey)) return; } catch { return; }
+    const oldStatusMap = {};
+    for (const { category } of entries) {
+      const oldKey = category === 'verb' ? `n1card:progress:${level}` : `n1card:progress:${level}-${category}`;
+      try {
+        const raw = localStorage.getItem(oldKey);
+        if (!raw) continue;
+        const oldProgress = JSON.parse(raw);
+        for (const numId in oldProgress) {
+          const st = oldProgress[numId]?.status;
+          if (st) oldStatusMap[`${level}:${category}:${numId}`] = st;
+        }
+      } catch {}
+    }
+    Progress2.migrate(oldStatusMap);
+    try { localStorage.setItem(flagKey, '1'); } catch {}
+  }
 };
 
 // 打卡：全局（跨 level 共享），记录哪些日期用户真实完成了 session
