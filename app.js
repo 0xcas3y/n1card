@@ -99,6 +99,7 @@ const Progress = {
     }
   },
   mark(id, status) {
+    if (window.UNIFIED_MODE) { Progress2.mark(id, status === 'known'); return; }
     // 滑动：终态覆盖
     const now = Date.now();
     const entry = this._progress[id] || {};
@@ -1171,6 +1172,15 @@ const Router = {
   markAndNext(status) {
     const card = this.visibleCards[this.currentIndex];
     if (card) {
+      // 统一会话模式下，新词左滑不算数：塞回队尾稍后重考，不写进度、不计入完成数
+      if (window.UNIFIED_MODE && card._kind === 'new' && status === 'unknown') {
+        this.visibleCards.splice(this.currentIndex, 1);
+        this.visibleCards.push(card);
+        this.currentColor = CardView.randomColor();
+        this.flipped = false;
+        this.showCurrent();
+        return;
+      }
       Progress.mark(card.id, status);
       if (this.learnMode) this.learnCompletedIds.push(card.id);
     }
@@ -1208,6 +1218,18 @@ const Router = {
     this.showCurrent();
   },
 
+  enterTodaySession(newCards, dueCards) {
+    const tagged = [
+      ...newCards.map(c => ({ ...c, _kind: 'new' })),
+      ...dueCards.map(c => ({ ...c, _kind: 'due' }))
+    ];
+    for (let i = tagged.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tagged[i], tagged[j]] = [tagged[j], tagged[i]];
+    }
+    this.enterLearnSession(tagged, '/', null);
+  },
+
   _finishLearn() {
     const ids = this.learnCompletedIds.slice();
     const url = this.learnReturnUrl || '/';
@@ -1243,6 +1265,14 @@ const Router = {
     this.learnMode = false;
     this.learnQueue = [];
     this.learnCompletedIds = [];
+    if (window.UNIFIED_MODE) {
+      // 统一会话模式：滑卡本身即判定，不需要额外测验关卡，直接算今日完成
+      const p = new URLSearchParams();
+      p.set('today_completed', '1');
+      p.set('level', LEVEL_KEY);
+      window.location.href = '/?' + p.toString();
+      return;
+    }
     const batchCards = batchIds.map(id => DataStore.getCard(id)).filter(Boolean);
     QuizMode.start({
       queue: batchCards,
