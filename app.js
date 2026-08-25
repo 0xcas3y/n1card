@@ -1385,6 +1385,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const dueCards = duePool
         .filter(c => dueIds.has(c.compositeId))
         .map(c => ({ ...c, id: c.compositeId }));
+      if (newCards.length === 0 && dueCards.length === 0) {
+        // 正常入口(首页)在没有新词/到期词时不会跳到这个页面；直接访问URL撞上这个情况就打回首页
+        window.location.href = '/';
+        return;
+      }
       Router.enterTodaySession(newCards, dueCards);
       _attachKeyboard();
       return;
