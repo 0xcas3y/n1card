@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool } from '../plan.js';
+import {
+  computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool,
+  INTERVAL_LADDER_DAYS, advanceIntervalStage, computeNextReviewAt, applySwipeResult, computeDueIds, migrateOldStatus
+} from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
   for (const t of [0, 1, 5, 9]) assert.strictEqual(computeQuota(t), 30);
@@ -287,5 +290,82 @@ test('computeGeneralReviewPool: 很久没复习的已掌握词，抽中概率明
     if (pool[0].id === 2) staleCount++; else freshCount++;
   }
   assert.ok(staleCount > freshCount * 2, `expected stale to dominate, got stale=${staleCount} fresh=${freshCount}`);
+});
+
+test('advanceIntervalStage: 0-4 逐档 +1，5 封顶不再增加', () => {
+  assert.strictEqual(advanceIntervalStage(0), 1);
+  assert.strictEqual(advanceIntervalStage(4), 5);
+  assert.strictEqual(advanceIntervalStage(5), 5);
+});
+
+test('computeNextReviewAt: 按阶梯天数换算毫秒', () => {
+  const now = 1000000;
+  assert.strictEqual(computeNextReviewAt(0, now), now + 1 * 86400000);
+  assert.strictEqual(computeNextReviewAt(3, now), now + 14 * 86400000);
+  assert.strictEqual(computeNextReviewAt(5, now), now + 90 * 86400000);
+});
+
+test('applySwipeResult: 首次右滑(无entry) -> stage 0, 1天后到期', () => {
+  const now = 1000000;
+  const r = applySwipeResult(undefined, true, now);
+  assert.strictEqual(r.intervalStage, 0);
+  assert.strictEqual(r.nextReviewAt, now + 86400000);
+  assert.strictEqual(r.graduated, false);
+  assert.strictEqual(r.firstLearnedAt, now);
+});
+
+test('applySwipeResult: 右滑推进一档', () => {
+  const now = 2000000;
+  const entry = { intervalStage: 2, firstLearnedAt: 100 };
+  const r = applySwipeResult(entry, true, now);
+  assert.strictEqual(r.intervalStage, 3);
+  assert.strictEqual(r.firstLearnedAt, 100); // 保留首次学习时间
+});
+
+test('applySwipeResult: 90天档(stage 5)右滑 -> graduated true', () => {
+  const now = 3000000;
+  const entry = { intervalStage: 5, firstLearnedAt: 100 };
+  const r = applySwipeResult(entry, true, now);
+  assert.strictEqual(r.intervalStage, 5);
+  assert.strictEqual(r.graduated, true);
+});
+
+test('applySwipeResult: 左滑无论当前在第几档都打回 stage 0，graduated 复位', () => {
+  const now = 4000000;
+  const entry = { intervalStage: 5, graduated: true, firstLearnedAt: 100 };
+  const r = applySwipeResult(entry, false, now);
+  assert.strictEqual(r.intervalStage, 0);
+  assert.strictEqual(r.graduated, false);
+  assert.strictEqual(r.nextReviewAt, now + 86400000);
+});
+
+test('computeDueIds: 只返回到期且未毕业的复合id', () => {
+  const now = 1000000;
+  const progress2 = {
+    'n2:noun:1': { nextReviewAt: now - 1000, graduated: false },   // 到期
+    'n2:noun:2': { nextReviewAt: now + 1000, graduated: false },   // 未到期
+    'n2:noun:3': { nextReviewAt: now - 1000, graduated: true },    // 已毕业，排除
+    'n2:noun:4': null
+  };
+  assert.deepStrictEqual(computeDueIds(progress2, now), ['n2:noun:1']);
+});
+
+test('migrateOldStatus: known -> 14天档(stage 3)', () => {
+  const now = 1000000;
+  const r = migrateOldStatus('known', now);
+  assert.strictEqual(r.intervalStage, 3);
+  assert.strictEqual(r.nextReviewAt, now + 14 * 86400000);
+});
+
+test('migrateOldStatus: unknown -> 1天档(stage 0)', () => {
+  const now = 1000000;
+  const r = migrateOldStatus('unknown', now);
+  assert.strictEqual(r.intervalStage, 0);
+  assert.strictEqual(r.nextReviewAt, now + 1 * 86400000);
+});
+
+test('migrateOldStatus: 非known/unknown(未学过) -> null', () => {
+  assert.strictEqual(migrateOldStatus(null, 1000000), null);
+  assert.strictEqual(migrateOldStatus(undefined, 1000000), null);
 });
 

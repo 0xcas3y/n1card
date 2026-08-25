@@ -142,3 +142,74 @@ export function computeGeneralReviewPool(cards, progress, now, size = 20) {
   return picked;
 }
 
+// ---- 间隔重复算法（Task 1，统一学习/复习机制重设计）----
+
+export const INTERVAL_LADDER_DAYS = [1, 3, 7, 14, 30, 90];
+
+export function advanceIntervalStage(stage) {
+  return Math.min(stage + 1, INTERVAL_LADDER_DAYS.length - 1);
+}
+
+export function computeNextReviewAt(stage, now) {
+  const clamped = Math.max(0, Math.min(stage, INTERVAL_LADDER_DAYS.length - 1));
+  return now + INTERVAL_LADDER_DAYS[clamped] * 86400000;
+}
+
+// 滑卡判定 -> 新的 progress2 条目（不读写 storage，纯计算）
+// entry: 现有条目或 undefined（首次学）；correct: 右滑(true)/左滑(false)
+export function applySwipeResult(entry, correct, now) {
+  const firstLearnedAt = entry?.firstLearnedAt ?? now;
+  if (correct) {
+    const wasMaxStage = (entry?.intervalStage ?? -1) >= INTERVAL_LADDER_DAYS.length - 1;
+    const nextStage = entry ? advanceIntervalStage(entry.intervalStage) : 0;
+    return {
+      intervalStage: nextStage,
+      nextReviewAt: computeNextReviewAt(nextStage, now),
+      lastReviewedAt: now,
+      firstLearnedAt,
+      graduated: wasMaxStage ? true : (entry?.graduated || false)
+    };
+  }
+  return {
+    intervalStage: 0,
+    nextReviewAt: computeNextReviewAt(0, now),
+    lastReviewedAt: now,
+    firstLearnedAt,
+    graduated: false
+  };
+}
+
+// 到期队列：从 progress2（复合id -> entry 的对象）里挑出未毕业且到期的复合id
+export function computeDueIds(progress2, now) {
+  const due = [];
+  for (const compositeId in progress2) {
+    const e = progress2[compositeId];
+    if (!e || e.graduated) continue;
+    if ((e.nextReviewAt ?? 0) <= now) due.push(compositeId);
+  }
+  return due;
+}
+
+// 旧 known/unknown 状态 -> 新 progress2 条目；已掌握从14天档起步，不熟从1天档重来
+export function migrateOldStatus(oldStatus, now) {
+  if (oldStatus === 'known') {
+    return {
+      intervalStage: 3,
+      nextReviewAt: computeNextReviewAt(3, now),
+      lastReviewedAt: now,
+      firstLearnedAt: now,
+      graduated: false
+    };
+  }
+  if (oldStatus === 'unknown') {
+    return {
+      intervalStage: 0,
+      nextReviewAt: computeNextReviewAt(0, now),
+      lastReviewedAt: now,
+      firstLearnedAt: now,
+      graduated: false
+    };
+  }
+  return null; // 未学过的词不生成条目
+}
+
