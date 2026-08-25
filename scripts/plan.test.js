@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert';
 import {
   computeQuota, computeLearnQueue, computeBatchesAllowed, isLearnWindowOpen, computeGeneralReviewPool,
-  INTERVAL_LADDER_DAYS, advanceIntervalStage, computeNextReviewAt, applySwipeResult, computeDueIds, migrateOldStatus
+  INTERVAL_LADDER_DAYS, advanceIntervalStage, computeNextReviewAt, applySwipeResult, computeDueIds, migrateOldStatus,
+  mergeLevelPool, pickRecommendedCategory, computeNewWordQueue, buildTodaySession, CATEGORY_ORDER
 } from '../plan.js';
 
 test('computeQuota default base 30: 0–9 days → 30 (1 group)', () => {
@@ -369,3 +370,69 @@ test('migrateOldStatus: 非known/unknown(未学过) -> null', () => {
   assert.strictEqual(migrateOldStatus(undefined, 1000000), null);
 });
 
+
+test('mergeLevelPool: 打category标签+复合id，保留原始id为origId', () => {
+  const input = [
+    { category: 'verb', cards: [{ id: 1, word: '話す' }, { id: 2, word: '書く' }] },
+    { category: 'noun', cards: [{ id: 1, word: '本' }] }
+  ];
+  const merged = mergeLevelPool('n2', input);
+  assert.strictEqual(merged.length, 3);
+  assert.strictEqual(merged[0].compositeId, 'n2:verb:1');
+  assert.strictEqual(merged[0].origId, 1);
+  assert.strictEqual(merged[0].category, 'verb');
+  assert.strictEqual(merged[2].compositeId, 'n2:noun:1'); // 名词的id=1和动词的id=1不冲突
+});
+
+test('pickRecommendedCategory: 动词没学完 -> 返回verb', () => {
+  const pool = [
+    { category: 'verb', compositeId: 'n2:verb:1' },
+    { category: 'noun', compositeId: 'n2:noun:1' }
+  ];
+  assert.strictEqual(pickRecommendedCategory(pool, {}), 'verb');
+});
+
+test('pickRecommendedCategory: 动词学完 -> 跳到noun', () => {
+  const pool = [
+    { category: 'verb', compositeId: 'n2:verb:1' },
+    { category: 'noun', compositeId: 'n2:noun:1' }
+  ];
+  const progress2 = { 'n2:verb:1': { intervalStage: 0 } };
+  assert.strictEqual(pickRecommendedCategory(pool, progress2), 'noun');
+});
+
+test('pickRecommendedCategory: 全部学完 -> null', () => {
+  const pool = [{ category: 'verb', compositeId: 'n2:verb:1' }];
+  const progress2 = { 'n2:verb:1': { intervalStage: 0 } };
+  assert.strictEqual(pickRecommendedCategory(pool, progress2), null);
+});
+
+test('computeNewWordQueue: 按原始id顺序挑未学词，数量不超过quota', () => {
+  const pool = [
+    { category: 'noun', origId: 3, compositeId: 'n2:noun:3' },
+    { category: 'noun', origId: 1, compositeId: 'n2:noun:1' },
+    { category: 'noun', origId: 2, compositeId: 'n2:noun:2' },
+    { category: 'verb', origId: 1, compositeId: 'n2:verb:1' }
+  ];
+  const q = computeNewWordQueue(pool, {}, 2, 'noun');
+  assert.deepStrictEqual(q.map(c => c.origId), [1, 2]);
+});
+
+test('computeNewWordQueue: 已学过的词被排除', () => {
+  const pool = [
+    { category: 'noun', origId: 1, compositeId: 'n2:noun:1' },
+    { category: 'noun', origId: 2, compositeId: 'n2:noun:2' }
+  ];
+  const progress2 = { 'n2:noun:1': { intervalStage: 0 } };
+  const q = computeNewWordQueue(pool, progress2, 10, 'noun');
+  assert.deepStrictEqual(q.map(c => c.origId), [2]);
+});
+
+test('buildTodaySession: 合并新词+到期词，长度正确且元素不丢失', () => {
+  const newCards = [{ compositeId: 'a' }, { compositeId: 'b' }];
+  const dueCards = [{ compositeId: 'c' }];
+  const session = buildTodaySession(newCards, dueCards);
+  assert.strictEqual(session.length, 3);
+  const ids = session.map(c => c.compositeId).sort();
+  assert.deepStrictEqual(ids, ['a', 'b', 'c']);
+});

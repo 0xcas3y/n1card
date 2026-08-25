@@ -213,3 +213,90 @@ export function migrateOldStatus(oldStatus, now) {
   return null; // 未学过的词不生成条目
 }
 
+// ---- 统一词池（Task 2，统一学习/复习机制重设计）----
+
+export const LEVEL_CATEGORY_FILES = {
+  n1: {
+    verb: 'data/cards.json',
+    noun: 'data/cards-n1-noun.json',
+    adj: 'data/cards-n1-adj.json',
+    adverb: 'data/cards-n1-adverb.json',
+    onomatope: 'data/cards-n1-onomatope.json'
+  },
+  n2: {
+    verb: 'data/cards-n2.json',
+    noun: 'data/cards-n2-noun.json',
+    compound: 'data/cards-n2-compound.json',
+    adj: 'data/cards-n2-adj.json',
+    adverb: 'data/cards-n2-adverb.json',
+    onomatope: 'data/cards-n2-onomatope.json'
+  },
+  n3: {
+    verb: 'data/cards-n3.json',
+    noun: 'data/cards-n3-noun.json',
+    adj: 'data/cards-n3-adj.json',
+    adverb: 'data/cards-n3-adverb.json',
+    onomatope: 'data/cards-n3-onomatope.json'
+  },
+  n4: {
+    verb: 'data/cards-n4.json',
+    noun: 'data/cards-n4-noun.json',
+    adj: 'data/cards-n4-adj.json',
+    adverb: 'data/cards-n4-adverb.json',
+    onomatope: 'data/cards-n4-onomatope.json'
+  },
+  n5: {
+    verb: 'data/cards-n5.json',
+    noun: 'data/cards-n5-noun.json',
+    adj: 'data/cards-n5-adj.json',
+    adverb: 'data/cards-n5-adverb.json',
+    onomatope: 'data/cards-n5-onomatope.json'
+  }
+};
+
+// 推荐学习顺序：动词 -> 名词 -> 复合动词(仅N2) -> 形容词 -> 副词 -> 拟声词
+export const CATEGORY_ORDER = ['verb', 'noun', 'compound', 'adj', 'adverb', 'onomatope'];
+
+// 合并已经 fetch 好的各词性文件，打 category 标签 + 复合id
+// categoryCardArrays: [{ category: 'verb', cards: [...] }, ...]
+export function mergeLevelPool(level, categoryCardArrays) {
+  const merged = [];
+  for (const { category, cards } of categoryCardArrays) {
+    for (const c of cards) {
+      merged.push({ ...c, category, origId: c.id, compositeId: `${level}:${category}:${c.id}` });
+    }
+  }
+  return merged;
+}
+
+// 找出第一个"还有未学词"的词性，全学完返回 null
+export function pickRecommendedCategory(pool, progress2) {
+  const byCategory = {};
+  for (const c of pool) {
+    (byCategory[c.category] ??= []).push(c);
+  }
+  for (const cat of CATEGORY_ORDER) {
+    const cards = byCategory[cat];
+    if (!cards) continue;
+    if (cards.some(c => !progress2[c.compositeId])) return cat;
+  }
+  return null;
+}
+
+// 从指定词性里按原始 id 顺序挑 quota 个未学词
+export function computeNewWordQueue(pool, progress2, quota, category) {
+  const candidates = pool.filter(c => c.category === category && !progress2[c.compositeId]);
+  const sorted = [...candidates].sort((a, b) => a.origId - b.origId);
+  return sorted.slice(0, Math.max(0, quota));
+}
+
+// 混合今日会话：新词 + 到期复习词，随机打散顺序
+export function buildTodaySession(newCards, dueCards) {
+  const combined = [...newCards, ...dueCards];
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  return combined;
+}
+
