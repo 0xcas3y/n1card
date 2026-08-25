@@ -1,4 +1,38 @@
-import { LEVEL_CATEGORY_FILES, mergeLevelPool } from './plan.js';
+import { LEVEL_CATEGORY_FILES, mergeLevelPool, migrateOldStatus } from './plan.js';
+
+// 回忆模式跟 today.html 是各自独立运行的页面，不共享 app.js 内部的 CardPool/Progress2 运行时对象，
+// 所以这里复刻一份同样的"一次性迁移"逻辑：确保用户就算从未用过"今日滑卡"、直接点进回忆模式，
+// 旧版独立词性页面(如 n2-noun.html)里已经积累的 known/unknown 进度也能被识别为"已学过"。
+function maybeMigrate(level, entries) {
+  const flagKey = `n1card:migrated:${level}`;
+  try { if (localStorage.getItem(flagKey)) return; } catch { return; }
+  const oldStatusMap = {};
+  for (const { category } of entries) {
+    const oldKey = category === 'verb' ? `n1card:progress:${level}` : `n1card:progress:${level}-${category}`;
+    try {
+      const raw = localStorage.getItem(oldKey);
+      if (!raw) continue;
+      const oldProgress = JSON.parse(raw);
+      for (const numId in oldProgress) {
+        const st = oldProgress[numId]?.status;
+        if (st) oldStatusMap[`${level}:${category}:${numId}`] = st;
+      }
+    } catch {}
+  }
+  if (Object.keys(oldStatusMap).length === 0) { try { localStorage.setItem(flagKey, '1'); } catch {} return; }
+  let progress2 = {};
+  const progress2Key = `n1card:progress2:${level}`;
+  try { progress2 = JSON.parse(localStorage.getItem(progress2Key)) || {}; } catch {}
+  const now = Date.now();
+  let changed = false;
+  for (const compositeId in oldStatusMap) {
+    if (progress2[compositeId]) continue;
+    const entry = migrateOldStatus(oldStatusMap[compositeId], now);
+    if (entry) { progress2[compositeId] = entry; changed = true; }
+  }
+  if (changed) { try { localStorage.setItem(progress2Key, JSON.stringify(progress2)); } catch {} }
+  try { localStorage.setItem(flagKey, '1'); } catch {}
+}
 
 const RecallTTS = {
   _supported: 'speechSynthesis' in window,
@@ -39,6 +73,7 @@ async function loadLevelPool(level) {
       return { category, cards: data.cards };
     })
   );
+  maybeMigrate(level, entries);
   return mergeLevelPool(level, entries);
 }
 
