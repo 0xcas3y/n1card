@@ -356,13 +356,13 @@ const TTSEngine = {
     return this.muted;
   },
 
-  speak(text, { rate = 0.9, onEnd = null, onStart = null } = {}) {
+  speak(text, { rate = 0.9, onEnd = null, onStart = null, lang = 'ja-JP' } = {}) {
     if (this.muted) { onEnd?.(); return Promise.resolve(); }
     if (!this._supported) { onEnd?.(); return Promise.resolve(); }
     return new Promise((resolve) => {
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ja-JP';
-      if (this._jaVoice) u.voice = this._jaVoice;
+      u.lang = lang;
+      if (lang === 'ja-JP' && this._jaVoice) u.voice = this._jaVoice;
       u.rate = rate;
       u.onstart = () => onStart?.();
       u.onend = () => { onEnd?.(); resolve(); };
