@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>回忆模式</title>
-  <link rel="stylesheet" href="styles.css?v=50">
+  <link rel="stylesheet" href="styles.css?v=51">
   <style>
     .recall-wrap { max-width: 480px; margin: 0 auto; padding: 24px 20px; }
     .recall-picker { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
@@ -43,11 +43,11 @@
     </div>
     <div class="recall-gap-setting" id="recall-gap-setting" style="display:none;">
       间隔：
-      <select id="recall-gap"><option value="3">3秒</option><option value="5" selected>5秒</option></select>
+      <select id="recall-gap"><option value="0.5">0.5秒</option><option value="1" selected>1秒</option></select>
     </div>
     <button class="ds-btn" id="recall-start" style="width:100%;margin-top:20px;">开始</button>
     <div id="recall-stage" class="recall-stage" style="display:none;"></div>
   </div>
-  <script type="module" src="recall.js?v=50"></script>
+  <script type="module" src="recall.js?v=51"></script>
 </body>
 </html>

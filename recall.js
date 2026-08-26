@@ -127,7 +127,7 @@ document.getElementById('recall-start').addEventListener('click', async () => {
   const scope = document.getElementById('recall-scope').value;
   const customLevel = document.getElementById('recall-level').value;
   const customCategory = document.getElementById('recall-category').value;
-  const gapSec = parseInt(document.getElementById('recall-gap').value, 10);
+  const gapSec = parseFloat(document.getElementById('recall-gap').value);
 
   const pool = shuffle(await buildPool(scope, customLevel, customCategory));
   const stage = document.getElementById('recall-stage');
@@ -141,19 +141,19 @@ document.getElementById('recall-start').addEventListener('click', async () => {
       <div class="recall-meaning" id="recall-meaning"></div>
       <div class="recall-progress">${i + 1} / ${pool.length}</div>
     `;
+    // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文；
+    // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认
     for (let rep = 0; rep < 3; rep++) {
-      if (rep < 2) {
-        await RecallTTS.speak(card.kana, 'ja-JP');
-        if (selectedMode === 'audio') await sleep(gapSec * 1000);
-      } else {
-        if (selectedMode === 'visual') {
-          document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
-          await RecallTTS.speak(card.kana, 'ja-JP');
-        } else {
-          const meaning = (card.meanings && card.meanings[0]) || '';
-          await RecallTTS.speak(meaning, 'zh-CN');
-        }
+      if (rep === 2 && selectedMode === 'visual') {
+        document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
       }
+      await RecallTTS.speak(card.kana, 'ja-JP');
+      if (selectedMode === 'audio' && rep < 2) await sleep(gapSec * 1000);
+    }
+    if (selectedMode === 'audio') {
+      await sleep(gapSec * 1000);
+      const meaning = (card.meanings && card.meanings[0]) || '';
+      await RecallTTS.speak(meaning, 'zh-CN');
     }
     await sleep(400);
   }
