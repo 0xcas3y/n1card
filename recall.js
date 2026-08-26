@@ -58,6 +58,9 @@ const RecallTTS = {
       u.onerror = () => resolve();
       speechSynthesis.speak(u);
     });
+  },
+  cancel() {
+    if (this._supported) speechSynthesis.cancel();
   }
 };
 RecallTTS.init();
@@ -107,13 +110,13 @@ function shuffle(arr) {
 
 let selectedMode = 'visual';
 let running = false;
+let stopRequested = false;
 
 document.querySelectorAll('.recall-mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.recall-mode-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     selectedMode = tab.dataset.mode;
-    document.getElementById('recall-gap-setting').style.display = selectedMode === 'audio' ? 'flex' : 'none';
   });
 });
 
@@ -121,9 +124,18 @@ document.getElementById('recall-scope').addEventListener('change', (e) => {
   document.getElementById('recall-custom-picker').style.display = e.target.value === 'custom' ? 'block' : 'none';
 });
 
-document.getElementById('recall-start').addEventListener('click', async () => {
-  if (running) return;
+function stopSession() {
+  stopRequested = true;
+  RecallTTS.cancel();
+}
+
+const startBtn = document.getElementById('recall-start');
+
+startBtn.addEventListener('click', async () => {
+  if (running) { stopSession(); return; }
   running = true;
+  stopRequested = false;
+  startBtn.textContent = '⏹ 停止';
   const scope = document.getElementById('recall-scope').value;
   const customLevel = document.getElementById('recall-level').value;
   const customCategory = document.getElementById('recall-category').value;
@@ -134,7 +146,14 @@ document.getElementById('recall-start').addEventListener('click', async () => {
   stage.style.display = 'block';
 
   for (let i = 0; i < pool.length; i++) {
+    if (stopRequested) break;
     const card = pool[i];
+
+    // 先给一段纯回忆时间：不显示单词/假名/释义、不朗读，让用户自己先想
+    stage.innerHTML = `<div class="recall-progress">${i + 1} / ${pool.length} · 回忆中…</div>`;
+    await sleep(gapSec * 1000);
+    if (stopRequested) break;
+
     stage.innerHTML = `
       <div class="recall-word">${card.word}</div>
       <div class="recall-kana">${card.word !== card.kana ? card.kana : ''}</div>
@@ -144,19 +163,28 @@ document.getElementById('recall-start').addEventListener('click', async () => {
     // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文；
     // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认
     for (let rep = 0; rep < 3; rep++) {
+      if (stopRequested) break;
       if (rep === 2 && selectedMode === 'visual') {
         document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
       }
       await RecallTTS.speak(card.kana, 'ja-JP');
+      if (stopRequested) break;
       if (selectedMode === 'audio' && rep < 2) await sleep(gapSec * 1000);
     }
+    if (stopRequested) break;
     if (selectedMode === 'audio') {
       await sleep(gapSec * 1000);
+      if (stopRequested) break;
       const meaning = (card.meanings && card.meanings[0]) || '';
       await RecallTTS.speak(meaning, 'zh-CN');
     }
+    if (stopRequested) break;
     await sleep(400);
   }
-  stage.innerHTML = `<div class="recall-word">🎉 本轮完成</div>`;
+  stage.innerHTML = stopRequested
+    ? `<div class="recall-word">已停止</div>`
+    : `<div class="recall-word">🎉 本轮完成</div>`;
   running = false;
+  stopRequested = false;
+  startBtn.textContent = '开始';
 });
