@@ -1374,11 +1374,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       const pool = await CardPool.load(level);
       Progress2.load();
       const progress2 = Progress2.all();
-      const category = params.get('category') || pickRecommendedCategory(pool, progress2) || 'verb';
-      const quota = parseInt(params.get('quota') || '60', 10);
+
+      // 今日新词批次固定化：同一天内不管进出几次都复用当天第一次选定的那批词，
+      // 不会因为已经滑过的词退出词库而"自动补新的"凑够配额
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const batchKey = `n1card:todaybatch:${level}`;
+      let stored = null;
+      try {
+        const raw = localStorage.getItem(batchKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.date === dateStr) stored = parsed;
+        }
+      } catch {}
+
+      let category, newCards;
+      if (stored) {
+        category = stored.category;
+        newCards = stored.newIds
+          .map(cid => pool.find(c => c.compositeId === cid))
+          .filter(c => c && !progress2[c.compositeId]);
+      } else {
+        category = params.get('category') || pickRecommendedCategory(pool, progress2) || 'verb';
+        const quota = parseInt(params.get('quota') || '60', 10);
+        newCards = computeNewWordQueue(pool, progress2, quota, category);
+        try {
+          localStorage.setItem(batchKey, JSON.stringify({
+            date: dateStr, category, newIds: newCards.map(c => c.compositeId)
+          }));
+        } catch {}
+      }
+      newCards = newCards.map(c => ({ ...c, id: c.compositeId }));
+
       const scope = params.get('scope') || 'current'; // current | overall
-      const newCards = computeNewWordQueue(pool, progress2, quota, category)
-        .map(c => ({ ...c, id: c.compositeId }));
       let duePool = pool;
       if (scope === 'current') duePool = pool.filter(c => c.category === category);
       const dueIds = new Set(computeDueIds(progress2, Date.now()));

@@ -158,8 +158,28 @@ async function _todaySummary(level) {
   }
   const streakState = Streak.load();
   const batchesAllowed = computeBatchesAllowed(streakState.total || 0);
-  const category = pickRecommendedCategory(pool, progress2) || 'verb';
-  const newCount = computeNewWordQueue(pool, progress2, batchesAllowed * 60, category).length;
+
+  // 今日批次固定化：如果今天已经选定过一批新词(today.html里存的)，数量要按那批"还没做完的"算，
+  // 不能重新计算出一个包含"自动补新词"的数字，跟实际进去看到的对不上
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  let stored = null;
+  try {
+    const raw = localStorage.getItem(`n1card:todaybatch:${level}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.date === dateStr) stored = parsed;
+    }
+  } catch {}
+
+  let category, newCount;
+  if (stored) {
+    category = stored.category;
+    newCount = stored.newIds.filter(cid => !progress2[cid]).length;
+  } else {
+    category = pickRecommendedCategory(pool, progress2) || 'verb';
+    newCount = computeNewWordQueue(pool, progress2, batchesAllowed * 60, category).length;
+  }
   const dueCount = computeDueIds(progress2, Date.now()).length;
   return { newCount, dueCount, category, batchesAllowed };
 }
