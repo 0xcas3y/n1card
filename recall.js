@@ -51,6 +51,16 @@ const RecallTTS = {
     pick();
     speechSynthesis.addEventListener('voiceschanged', pick);
   },
+  // iOS Safari／部分安卓浏览器要求 speak() 必须在用户点击的调用栈内同步触发一次才会"解锁"，
+  // 之后异步流程里(await fetch 之后)再调用 speak() 才会真正出声；否则会一直静默排队、不报错也不出声。
+  // 必须在按钮 click 回调最开头、任何 await 之前同步调用。
+  unlock() {
+    if (!this._supported) return;
+    try {
+      speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+      speechSynthesis.cancel();
+    } catch {}
+  },
   // Chrome 等浏览器在标签页切到后台/锁屏一段时间后会把 speechSynthesis 引擎自动挂起，
   // 之后 speak() 只会静默排队、永远不真正出声；定期 pause+resume 一下防止它睡死，
   // 这正是"听力/通勤复习"场景（锁屏听）最容易触发的情况。
@@ -169,6 +179,7 @@ async function checkpoint() {
 
 startBtn.addEventListener('click', () => {
   if (sessionState === 'idle') {
+    RecallTTS.unlock();
     startSession();
   } else if (sessionState === 'running') {
     pauseRequested = true;
