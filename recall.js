@@ -57,8 +57,12 @@ const RecallTTS = {
   unlock() {
     if (!this._supported) return;
     try {
-      speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-      speechSynthesis.cancel();
+      // 注意：不能紧接着调用 cancel()——iOS Safari 上 speak() 后立刻 cancel()
+      // 是已知会把引擎晾在"暂停"状态的坑，之后所有 speak() 都会静默排队不出声。
+      // 用一个几乎不可闻的极短停顿代替空文本，让它自然放完触发 onend。
+      const u = new SpeechSynthesisUtterance('.');
+      u.volume = 0;
+      speechSynthesis.speak(u);
     } catch {}
   },
   // Chrome 等浏览器在标签页切到后台/锁屏一段时间后会把 speechSynthesis 引擎自动挂起，
