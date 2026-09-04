@@ -38,6 +38,9 @@ const RecallTTS = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
   _zhVoice: null,
+  _pendingDone: null,
+  _pendingTimer: null,
+  _keepAliveTimer: null,
   init() {
     if (!this._supported) return;
     const pick = () => {
@@ -48,19 +51,45 @@ const RecallTTS = {
     pick();
     speechSynthesis.addEventListener('voiceschanged', pick);
   },
+  // Chrome 等浏览器在标签页切到后台/锁屏一段时间后会把 speechSynthesis 引擎自动挂起，
+  // 之后 speak() 只会静默排队、永远不真正出声；定期 pause+resume 一下防止它睡死，
+  // 这正是"听力/通勤复习"场景（锁屏听）最容易触发的情况。
+  _startKeepAlive() {
+    if (!this._supported || this._keepAliveTimer) return;
+    this._keepAliveTimer = setInterval(() => {
+      speechSynthesis.pause();
+      speechSynthesis.resume();
+    }, 5000);
+  },
+  _stopKeepAlive() {
+    clearInterval(this._keepAliveTimer);
+    this._keepAliveTimer = null;
+  },
   speak(text, lang) {
     if (!this._supported) return Promise.resolve();
+    this._startKeepAlive();
     return new Promise((resolve) => {
+      const done = () => {
+        if (this._pendingDone !== done) return; // 已经被 timeout 或 cancel() resolve 过了
+        this._pendingDone = null;
+        clearTimeout(this._pendingTimer);
+        resolve();
+      };
+      this._pendingDone = done;
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
       u.voice = lang === 'zh-CN' ? this._zhVoice : this._jaVoice;
-      u.onend = () => resolve();
-      u.onerror = () => resolve();
+      u.onend = done;
+      u.onerror = done;
       speechSynthesis.speak(u);
+      // Safari 在 cancel() 之后经常不触发 onend/onerror，兜底超时避免整个回忆流程卡死
+      this._pendingTimer = setTimeout(done, 8000);
     });
   },
   cancel() {
     if (this._supported) speechSynthesis.cancel();
+    if (this._pendingDone) this._pendingDone();
+    this._stopKeepAlive();
   }
 };
 RecallTTS.init();
@@ -109,8 +138,10 @@ function shuffle(arr) {
 }
 
 let selectedMode = 'visual';
-let running = false;
-let stopRequested = false;
+// idle：还没开始/已结束；running：正在播放；paused：已暂停，等待"继续"
+let sessionState = 'idle';
+let pauseRequested = false;
+let resumeSignal = null;
 
 document.querySelectorAll('.recall-mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -124,67 +155,102 @@ document.getElementById('recall-scope').addEventListener('change', (e) => {
   document.getElementById('recall-custom-picker').style.display = e.target.value === 'custom' ? 'block' : 'none';
 });
 
-function stopSession() {
-  stopRequested = true;
-  RecallTTS.cancel();
-}
-
 const startBtn = document.getElementById('recall-start');
 
-startBtn.addEventListener('click', async () => {
-  if (running) { stopSession(); return; }
-  running = true;
-  stopRequested = false;
-  startBtn.textContent = '⏹ 停止';
-  const scope = document.getElementById('recall-scope').value;
-  const customLevel = document.getElementById('recall-level').value;
-  const customCategory = document.getElementById('recall-category').value;
-  const gapSec = parseFloat(document.getElementById('recall-gap').value);
+// 循环体里每个耗时步骤之间都要经过这里：如果用户点了"暂停"，就地挂起等"继续"，
+// 不丢当前进度（第几张卡、第几遍朗读）；点"暂停"的同时会 RecallTTS.cancel()，
+// 所以即使正卡在朗读中途也能立刻响应，不用等它自然读完。
+async function checkpoint() {
+  if (!pauseRequested) return;
+  sessionState = 'paused';
+  startBtn.textContent = '▶ 继续';
+  await new Promise(resolve => { resumeSignal = resolve; });
+}
 
-  const pool = shuffle(await buildPool(scope, customLevel, customCategory));
-  const stage = document.getElementById('recall-stage');
-  stage.style.display = 'block';
-
-  for (let i = 0; i < pool.length; i++) {
-    if (stopRequested) break;
-    const card = pool[i];
-
-    // 先给一段纯回忆时间：不显示单词/假名/释义、不朗读，让用户自己先想
-    stage.innerHTML = `<div class="recall-progress">${i + 1} / ${pool.length} · 回忆中…</div>`;
-    await sleep(gapSec * 1000);
-    if (stopRequested) break;
-
-    stage.innerHTML = `
-      <div class="recall-word">${card.word}</div>
-      <div class="recall-kana">${card.word !== card.kana ? card.kana : ''}</div>
-      <div class="recall-meaning" id="recall-meaning"></div>
-      <div class="recall-progress">${i + 1} / ${pool.length}</div>
-    `;
-    // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文；
-    // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认
-    for (let rep = 0; rep < 3; rep++) {
-      if (stopRequested) break;
-      if (rep === 2 && selectedMode === 'visual') {
-        document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
-      }
-      await RecallTTS.speak(card.kana, 'ja-JP');
-      if (stopRequested) break;
-      if (selectedMode === 'audio' && rep < 2) await sleep(gapSec * 1000);
-    }
-    if (stopRequested) break;
-    if (selectedMode === 'audio') {
-      await sleep(gapSec * 1000);
-      if (stopRequested) break;
-      const meaning = (card.meanings && card.meanings[0]) || '';
-      await RecallTTS.speak(meaning, 'zh-CN');
-    }
-    if (stopRequested) break;
-    await sleep(400);
+startBtn.addEventListener('click', () => {
+  if (sessionState === 'idle') {
+    startSession();
+  } else if (sessionState === 'running') {
+    pauseRequested = true;
+    RecallTTS.cancel();
+  } else if (sessionState === 'paused') {
+    pauseRequested = false;
+    sessionState = 'running';
+    startBtn.textContent = '⏸ 暂停';
+    const resolve = resumeSignal;
+    resumeSignal = null;
+    resolve();
   }
-  stage.innerHTML = stopRequested
-    ? `<div class="recall-word">已停止</div>`
-    : `<div class="recall-word">🎉 本轮完成</div>`;
-  running = false;
-  stopRequested = false;
-  startBtn.textContent = '开始';
 });
+
+async function startSession() {
+  sessionState = 'running';
+  pauseRequested = false;
+  startBtn.textContent = '⏸ 暂停';
+  const stage = document.getElementById('recall-stage');
+
+  try {
+    const scope = document.getElementById('recall-scope').value;
+    const customLevel = document.getElementById('recall-level').value;
+    const customCategory = document.getElementById('recall-category').value;
+    const gapSec = parseFloat(document.getElementById('recall-gap').value);
+
+    const pool = shuffle(await buildPool(scope, customLevel, customCategory));
+    stage.style.display = 'block';
+
+    if (pool.length === 0) {
+      stage.innerHTML = `<div class="recall-word">这个范围里还没有已学过的词</div>`;
+      return;
+    }
+
+    for (let i = 0; i < pool.length; i++) {
+      await checkpoint();
+      const card = pool[i];
+
+      // 先给一段纯回忆时间：不显示单词/假名/释义、不朗读，让用户自己先想
+      stage.innerHTML = `<div class="recall-progress">${i + 1} / ${pool.length} · 回忆中…</div>`;
+      await sleep(gapSec * 1000);
+      await checkpoint();
+
+      stage.innerHTML = `
+        <div class="recall-word">${card.word}</div>
+        <div class="recall-kana">${card.word !== card.kana ? card.kana : ''}</div>
+        <div class="recall-meaning" id="recall-meaning"></div>
+        <div class="recall-progress">${i + 1} / ${pool.length}</div>
+      `;
+      // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文；
+      // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认
+      for (let rep = 0; rep < 3; rep++) {
+        await checkpoint();
+        if (rep === 2 && selectedMode === 'visual') {
+          document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
+        }
+        await RecallTTS.speak(card.kana, 'ja-JP');
+        await checkpoint();
+        if (selectedMode === 'audio' && rep < 2) await sleep(gapSec * 1000);
+      }
+      await checkpoint();
+      if (selectedMode === 'audio') {
+        await sleep(gapSec * 1000);
+        await checkpoint();
+        const meaning = (card.meanings && card.meanings[0]) || '';
+        await RecallTTS.speak(meaning, 'zh-CN');
+      }
+      await checkpoint();
+      await sleep(400);
+    }
+    stage.innerHTML = `<div class="recall-word">🎉 本轮完成</div>`;
+  } catch (err) {
+    console.error('回忆模式出错', err);
+    stage.style.display = 'block';
+    stage.innerHTML = `<div class="recall-word">出错了，已停止</div><div class="recall-progress">${err.message || err}</div>`;
+  } finally {
+    // 不管是正常读完、中途出错，还是取词范围没有内容，都必须回到 idle，
+    // 否则按钮会永远卡在"暂停"上，点了没反应——这正是之前的 bug。
+    RecallTTS.cancel();
+    sessionState = 'idle';
+    pauseRequested = false;
+    resumeSignal = null;
+    startBtn.textContent = '开始';
+  }
+}
