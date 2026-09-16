@@ -370,10 +370,7 @@ class GrammarApp {
   <div class="tb-sub" id="tbSub" style="display:none"></div>
 </div>
 <div class="fbar" id="fbar" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px)">
-  <button class="fbtn on" data-f="all">全部</button>
   <button class="fbtn" data-f="fav">⭐ 收藏</button>
-  <button class="fbtn" data-f="unmastered">未掌握</button>
-  ${fg.map(g=>`<button class="fbtn" data-f="${g.key}">${g.label}</button>`).join('')}
   <button class="fbtn" data-f="★">★</button>
   <button class="fbtn" data-f="★★">★★</button>
   <button class="fbtn" data-f="★★★">★★★</button>
@@ -479,18 +476,10 @@ class GrammarApp {
     // filter
     document.getElementById('fbar').addEventListener('click', e => {
       const b = e.target.closest('.fbtn'); if (!b) return;
+      const already = b.classList.contains('on');
       document.querySelectorAll('.fbtn').forEach(x=>{x.classList.remove('on');x.style.background='';x.style.color='#fff'});
-      b.classList.add('on');
-      // 设置选中按钮的背景色
-      const filterKey = b.dataset.f;
-      if(filterKey !== 'all' && filterKey !== 'fav' && filterKey !== 'unmastered' && !filterKey.startsWith('★')){
-        const grp = this.fgs.find(x=>x.key===filterKey);
-        if(grp){
-          b.style.background = grp.color;
-          b.style.color = grp.fg;
-        }
-      }
-      this.filter = filterKey;
+      if (already) { this.filter = 'all'; }
+      else { b.classList.add('on'); this.filter = b.dataset.f; }
       this.deck = this._fDeck();
       this.cur = 0;
       if (this.view === 'card') this._renderCard();
@@ -563,7 +552,8 @@ class GrammarApp {
   _matchS(g) {
     if(!this.search)return true;
     const q=this.search.toLowerCase();
-    return g.t.includes(q)||g.m.includes(q)||g.mz.includes(q)||g.e.includes(q)||g.ez.includes(q);
+    if(g.t.includes(q)||g.m.includes(q)||g.mz.includes(q)||g.e.includes(q)||g.ez.includes(q))return true;
+    return (g.ex||[]).some(x=>(x.j&&x.j.includes(q))||(x.z&&x.z.includes(q)));
   }
 
   /* ─────────── CARD RENDER ─────────── */
