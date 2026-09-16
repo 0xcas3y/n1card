@@ -275,6 +275,36 @@ body{font-family:'M PLUS Rounded 1c','Noto Sans JP',sans-serif;min-height:100vh}
 
 `;
 
+/* 卡片例句真人语音播放：优先播 grammar/audio/{level}/{id}-{index}.mp3 这个
+   预生成的真人录音，文件缺失/加载失败才退回浏览器朗读。慢速播放直接调
+   playbackRate，不需要额外录一份慢速音频。 */
+const __cardAudioEl = new Audio();
+function playCardAudio(src, rate) {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      __cardAudioEl.removeEventListener('ended', onEnd);
+      __cardAudioEl.removeEventListener('error', onError);
+      clearTimeout(timer);
+      ok ? resolve() : reject(new Error('audio play failed'));
+    };
+    const onEnd = () => finish(true);
+    const onError = () => finish(false);
+    __cardAudioEl.addEventListener('ended', onEnd);
+    __cardAudioEl.addEventListener('error', onError);
+    const timer = setTimeout(() => finish(true), 8000);
+    __cardAudioEl.src = src;
+    __cardAudioEl.currentTime = 0;
+    __cardAudioEl.playbackRate = rate || 1.0;
+    __cardAudioEl.play().catch(() => finish(false));
+  });
+}
+function cancelCardAudio() {
+  try { __cardAudioEl.pause(); __cardAudioEl.removeAttribute('src'); __cardAudioEl.load(); } catch {}
+}
+
 /* ═══════════════════════════════════════════════
    GrammarApp
    ═══════════════════════════════════════════════ */
@@ -612,10 +642,11 @@ class GrammarApp {
     document.getElementById('anaBtn').innerHTML='✨ 注音·词性分析';
     document.getElementById('anaBtn').disabled=false;
     const allEx = [{j:g.eh,z:g.ez,main:true},...g.ex.map(e=>({j:e.j,z:e.z}))];
-    document.getElementById('cExList').innerHTML = allEx.map(ex => {
+    const lvl = this.level.toLowerCase();
+    document.getElementById('cExList').innerHTML = allEx.map((ex, i) => {
       const plain = ex.j.replace(/<[^>]*>/g,'');
       const safe = plain.replace(/"/g,'&quot;');
-      return `<div class="exb ${ex.main?'main':'sub'}" data-speak="${safe}">
+      return `<div class="exb ${ex.main?'main':'sub'}" data-speak="${safe}" data-audio="audio/${lvl}/${g.id}-${i}.mp3">
         <div class="plain-ex">${ex.j}</div>
         <div class="ex-zh">${ex.z}</div>
       </div>`;
@@ -631,11 +662,13 @@ class GrammarApp {
     const allEx = [{j:g.eh,z:g.ez,main:true},...g.ex.map(e=>({j:e.j,z:e.z}))];
     const listEl = document.getElementById('cExList');
     listEl.innerHTML='';
+    const lvl = this.level.toLowerCase();
 
     allEx.forEach((ex,i) => {
       const toks = tokenSets[i];
       const plain = ex.j.replace(/<[^>]*>/g,'').replace(/'/g,"\\'");
       const div = document.createElement('div');
+      div.dataset.audio = `audio/${lvl}/${g.id}-${i}.mp3`;
       div.className = 'exb '+(ex.main?'main':'sub');
 
       const furiDiv = document.createElement('div');
@@ -792,6 +825,8 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
     const tb=grp?.color||'#e8f0ff', tf=grp?.fg||'#3a5bc7';
     const et=g.e.replace(/'/g,"\\'");
     const fav=!!this.cs.favs[g.id];
+    const gLvl=this.level.toLowerCase();
+    const mainAudio=`audio/${gLvl}/${g.id}-0.mp3`;
     d.innerHTML=`
     <div class="gch"><div class="gnum" style="background:${this.color}">${g.id}</div>
       <div class="gt">～<span class="hl">${g.hl}</span></div>
@@ -799,8 +834,8 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
       <button class="gc-fav" data-id="${g.id}" style="color:${fav?'#f5a030':'#ccc'}">${fav?'⭐':'☆'}</button></div>
     <div class="gea"><div class="gejp">${g.eh}</div><div class="gezh">${g.ez}</div>
       <div class="tts-row">
-        <button class="tts-b" onclick="app.speak('${et}',1.0)">🔊 朗读</button>
-        <button class="tts-b" onclick="app.speak('${et}',0.65)">🐢 慢速</button>
+        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',1.0)">🔊 朗读</button>
+        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',0.65)">🐢 慢速</button>
       </div></div>
     <div class="gi">
       <div class="gmb"><span class="lb">意思</span>${g.m}<br><span style="font-size:10.5px;color:#999">${g.mz}</span></div>
@@ -826,9 +861,10 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
     (document.getElementById('mZh')||{textContent:''}).textContent=g.ez;
     document.getElementById('mMean').innerHTML=`${g.m}<br><span style="font-size:11px;color:#aaa">${g.mz}</span>`;
     document.getElementById('mPat').innerHTML=g.p;
-    document.getElementById('mMore').innerHTML=g.ex.map(e=>`<div class="gei">${e.j}<span class="tr">${e.z}</span>
+    const mLvl=this.level.toLowerCase();
+    document.getElementById('mMore').innerHTML=g.ex.map((e,i)=>`<div class="gei">${e.j}<span class="tr">${e.z}</span>
       <button class="tts-b" style="margin-top:5px;font-size:10px;padding:3px 9px"
-        onclick="app.speak('${e.j.replace(/<[^>]*>/g,'').replace(/'/g,"\\'")}',1.0)">🔊</button></div>`).join('');
+        onclick="app.playOrSpeak('audio/${mLvl}/${g.id}-${i+1}.mp3','${e.j.replace(/<[^>]*>/g,'').replace(/'/g,"\\'")}',1.0)">🔊</button></div>`).join('');
     document.getElementById('mov').classList.add('on');
     document.body.style.overflow='hidden';
   }
@@ -841,7 +877,7 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
   _spkMod(r) {
     if(!this.curMod)return;
     const g=this.G.find(x=>x.id===this.curMod);
-    if(g)this.speak(g.e,r);
+    if(g)this.playOrSpeak(`audio/${this.level.toLowerCase()}/${g.id}-0.mp3`, g.e, r);
   }
 
   /* ─────────── TTS ─────────── */
@@ -947,24 +983,44 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
   }
 
   _playExample(el,text) {
-    if(!window.speechSynthesis || !text) return;
+    if(!text) return;
     document.querySelectorAll('.exb.playing').forEach(x => x.classList.remove('playing'));
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ja-JP';
-    u.rate = 1.0;
-    const vs = window.speechSynthesis.getVoices();
-    const jp = vs.find(v => v.lang === 'ja-JP') || vs.find(v => v.lang && v.lang.startsWith('ja'));
-    if (jp) u.voice = jp;
+    cancelCardAudio();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
     this._playingExample = el;
     el.classList.add('playing');
     const clear = () => {
       if (this._playingExample === el) this._playingExample = null;
       el.classList.remove('playing');
     };
-    u.onend = clear;
-    u.onerror = clear;
+    const audioSrc = el.dataset && el.dataset.audio;
+    if (audioSrc) {
+      playCardAudio(audioSrc, 1.0).then(clear).catch(() => this._speakFallback(text, 1.0, clear));
+    } else {
+      this._speakFallback(text, 1.0, clear);
+    }
+  }
+  _speakFallback(text, rate, clear) {
+    if (!window.speechSynthesis || !text) { if (clear) clear(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = rate || 1.0;
+    const vs = window.speechSynthesis.getVoices();
+    const jp = vs.find(v => v.lang === 'ja-JP') || vs.find(v => v.lang && v.lang.startsWith('ja'));
+    if (jp) u.voice = jp;
+    if (clear) { u.onend = clear; u.onerror = clear; }
     window.speechSynthesis.speak(u);
+  }
+  playOrSpeak(audioSrc, text, rate=1.0) {
+    document.querySelectorAll('.exb.playing').forEach(x => x.classList.remove('playing'));
+    this._playingExample = null;
+    cancelCardAudio();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (audioSrc) {
+      playCardAudio(audioSrc, rate).catch(() => this._speakFallback(text, rate));
+    } else {
+      this._speakFallback(text, rate);
+    }
   }
 
   speak(text,rate) {
