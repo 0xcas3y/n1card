@@ -81,7 +81,7 @@
 
   /* ── HERO ── */
   .hero {
-    padding: 52px 0 48px;
+    padding: 32px 0 20px;
   }
 
   .hero-label {
@@ -90,30 +90,7 @@
     letter-spacing: 4px;
     color: var(--muted);
     text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-
-  .hero h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(38px, 7vw, 64px);
-    line-height: 1.08;
-    font-weight: 400;
-    margin-bottom: 10px;
-  }
-
-  .hero h1 em {
-    font-style: italic;
-    background: linear-gradient(90deg, #10ac84, #54a0ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .hero-sub {
-    font-size: 16px;
-    color: var(--muted);
-    line-height: 1.7;
-    max-width: 520px;
-    margin-top: 18px;
+    margin-bottom: 0;
   }
 
   /* ── LEVEL CARDS ── */
@@ -247,7 +224,7 @@
     text-align: center;
     font-size: 13px;
     color: var(--muted);
-    margin: 0 0 40px;
+    margin: 24px 0 40px;
   }
   .support-line a { color: inherit; text-decoration: none; }
   .support-line a:hover { color: var(--tx); }
@@ -279,7 +256,6 @@
     .lv-badge { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; }
     .lv-count strong { font-size: 13px; }
     .lv-count { font-size: 10px; }
-    .hero h1 { font-size: 36px; }
   }
 </style>
 </head>
@@ -297,10 +273,6 @@
   <!-- HERO -->
   <section class="hero">
     <div class="hero-label">文法卡片 / Grammar Cards</div>
-    <h1>从 N5 到 N1，<br><em>全部搞定。</em></h1>
-    <p class="hero-sub">
-      626 条文法要点，例句全部可点击朗读，中文翻译 + 接续说明一目了然。
-    </p>
   </section>
 
   <!-- LEVEL CARDS -->
@@ -353,7 +325,7 @@
     <div class="comp-left">
       <div class="comp-icon">🎴</div>
       <div>
-        <div class="comp-title">配套語彙卡片</div>
+        <div class="comp-title">語彙卡片</div>
         <div class="comp-sub">7284 个 N5 → N1 词汇</div>
       </div>
     </div>
