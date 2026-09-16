@@ -333,13 +333,22 @@ const Streak = {
   getAllDates() { this.load(); return [...this._state.dates]; }
 };
 
+// 单词卡片的读音/例句真人语音：data/audio/{level}-{category}-{id}-w.mp3(读音)
+// 或 -e{index}.mp3(第几条例句)，跟 compositeId(level:category:id) 一一对应。
+function vocabAudioSrc(compositeId, suffix) {
+  if (!compositeId) return null;
+  return `data/audio/${compositeId.replace(/:/g, '-')}-${suffix}.mp3`;
+}
+
 const TTSEngine = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
   _errorCount: 0,
   muted: false,
+  _audioEl: null,
 
   init() {
+    this._audioEl = new Audio();
     if (!this._supported) return;
     const pick = () => {
       const voices = speechSynthesis.getVoices();
@@ -356,8 +365,42 @@ const TTSEngine = {
     return this.muted;
   },
 
-  speak(text, { rate = 0.9, onEnd = null, onStart = null, lang = 'ja-JP' } = {}) {
+  _playAudioFile(src, rate) {
+    return new Promise((resolve, reject) => {
+      const el = this._audioEl;
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        el.removeEventListener('ended', onEnd);
+        el.removeEventListener('error', onError);
+        clearTimeout(timer);
+        ok ? resolve() : reject(new Error('audio play failed'));
+      };
+      const onEnd = () => finish(true);
+      const onError = () => finish(false);
+      el.addEventListener('ended', onEnd);
+      el.addEventListener('error', onError);
+      const timer = setTimeout(() => finish(true), 8000);
+      el.src = src;
+      el.currentTime = 0;
+      el.playbackRate = rate || 1.0;
+      el.play().catch(() => finish(false));
+    });
+  },
+
+  // audioSrc 有值就优先播预生成的真人录音，播放失败(文件缺失/加载出错)才退回浏览器朗读
+  speak(text, { rate = 0.9, onEnd = null, onStart = null, lang = 'ja-JP', audioSrc = null } = {}) {
     if (this.muted) { onEnd?.(); return Promise.resolve(); }
+    if (audioSrc && lang === 'ja-JP') {
+      onStart?.();
+      return this._playAudioFile(audioSrc, rate)
+        .then(() => { onEnd?.(); })
+        .catch(() => this._speakTTS(text, rate, lang, onEnd, null));
+    }
+    return this._speakTTS(text, rate, lang, onEnd, onStart);
+  },
+  _speakTTS(text, rate, lang, onEnd, onStart) {
     if (!this._supported) { onEnd?.(); return Promise.resolve(); }
     return new Promise((resolve) => {
       const u = new SpeechSynthesisUtterance(text);
@@ -379,6 +422,7 @@ const TTSEngine = {
   },
   cancel() {
     if (this._supported) speechSynthesis.cancel();
+    if (this._audioEl) { try { this._audioEl.pause(); } catch {} }
   }
 };
 
@@ -629,7 +673,7 @@ const BrainwashMode = {
     for (let i = 0; i < 10 && !this._aborted; i++) {
       await this._waitIfPaused();
       this._pulseWord();
-      await TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+      await TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
       if (this._aborted) return;
       await this._sleep(300);
     }
@@ -647,7 +691,7 @@ const BrainwashMode = {
       for (let rep = 0; rep < 2 && !this._aborted; rep++) {
         await this._waitIfPaused();
         this._highlightExampleRow(exIdx);
-        await TTSEngine.speak(ex.jp, { rate: Progress.getTTSRate() });
+        await TTSEngine.speak(ex.jp, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, `e${exIdx}`) });
         if (this._aborted) return;
         await this._sleep(300);
       }
@@ -770,7 +814,7 @@ const LearnListMode = {
         e.stopPropagation();
         const id = parseInt(btn.dataset.id, 10);
         const card = DataStore.getCard(id);
-        if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+        if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
       });
     });
     stage.querySelector('#ll-done').addEventListener('click', () => {
@@ -882,7 +926,7 @@ const QuizMode = {
       if (b.dataset.val === answer) b.classList.add('quiz-correct');
       else if (b === btn) b.classList.add('quiz-wrong');
     });
-    if (correct) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+    if (correct) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
 
     setTimeout(() => {
       this._idx++;
@@ -976,7 +1020,7 @@ const HardReviewMode = {
     const el = this.flipped ? CardView.renderBack(card, color) : CardView.renderFront(card, color);
     stage.appendChild(el);
     Gestures.attach(el, {
-      onTap: () => TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() }),
+      onTap: () => TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') }),
       onDoubleTap: () => { this.flipped = !this.flipped; this._render(); },
       onSwipe: (dir) => {
         Progress.mark(card.id, dir === 'left' ? 'unknown' : 'known');
@@ -1292,10 +1336,10 @@ const Router = {
     const card = this.visibleCards[this.currentIndex];
     if (!card) return;
     const rate = Progress.getTTSRate();
-    await TTSEngine.speak(card.kana, { rate });
+    await TTSEngine.speak(card.kana, { rate, audioSrc: vocabAudioSrc(card.compositeId, 'w') });
     // 如果用户已经切卡或洗脑模式打断，就不要读第二遍
     if (this.visibleCards[this.currentIndex] !== card || BrainwashMode.active) return;
-    await TTSEngine.speak(card.kana, { rate });
+    await TTSEngine.speak(card.kana, { rate, audioSrc: vocabAudioSrc(card.compositeId, 'w') });
   },
 
   applyFilter(filter) {
@@ -1312,11 +1356,11 @@ const Router = {
 
   playCurrentWord() {
     const card = this.visibleCards[this.currentIndex];
-    if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate() });
+    if (card) TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
   },
   playExample(idx) {
     const card = this.visibleCards[this.currentIndex];
-    if (card) TTSEngine.speak(card.examples[idx].jp, { rate: Progress.getTTSRate() });
+    if (card) TTSEngine.speak(card.examples[idx].jp, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, `e${idx}`) });
   }
 };
 
