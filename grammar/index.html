@@ -206,198 +206,14 @@
   .comp-sub { font-size: 12px; opacity: 0.6; margin-top: 3px; }
   .comp-arrow { font-size: 22px; opacity: 0.5; }
 
-  /* ── FEATURES ── */
-  .section-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-
-  .features {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-
-  .feat {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 22px 22px 20px;
-  }
-
-  .feat-icon {
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-
-  .feat h3 {
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-
-  .feat p {
+  /* ── SUPPORT LINE ── */
+  .support-line {
+    text-align: center;
     font-size: 13px;
     color: var(--muted);
-    line-height: 1.6;
+    margin: 0 0 40px;
   }
-
-  /* ── DEMO CARD ── */
-  .demo-wrap {
-    margin-bottom: 40px;
-  }
-
-  .demo-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-  }
-
-  .demo-topbar {
-    background: rgba(16,172,132,0.12);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .demo-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--n2);
-    opacity: 0.7;
-  }
-
-  .demo-topbar span {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  .demo-body {
-    padding: 24px;
-  }
-
-  .demo-gram {
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--tx);
-    margin-bottom: 6px;
-  }
-
-  .demo-gram .hl { color: var(--n2); }
-
-  .demo-mean {
-    font-size: 14px;
-    color: var(--muted);
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .demo-ex {
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    border: 1px solid var(--border);
-  }
-
-  .demo-ex .jp {
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .demo-ex .jp .gm { color: var(--n2); }
-
-  .demo-ex .zh {
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  /* ── CTA ── */
-  .cta-box {
-    background: linear-gradient(135deg, rgba(16,172,132,0.12), rgba(84,160,255,0.08));
-    border: 1px solid rgba(16,172,132,0.25);
-    border-radius: 20px;
-    padding: 36px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-  }
-
-  .cta-left h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 28px;
-    font-weight: 400;
-    margin-bottom: 8px;
-  }
-
-  .cta-left p {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  .cta-right {
-    flex-shrink: 0;
-    text-align: center;
-  }
-
-  .price {
-    font-family: 'Space Mono', monospace;
-    font-size: 42px;
-    font-weight: 700;
-    color: var(--tx);
-    line-height: 1;
-  }
-
-  .price sup {
-    font-size: 18px;
-    vertical-align: super;
-  }
-
-  .price-note {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 4px;
-    letter-spacing: 1px;
-  }
-
-  .btn-buy {
-    display: block;
-    margin-top: 16px;
-    background: var(--n2);
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 14px 32px;
-    font-size: 15px;
-    font-weight: 700;
-    font-family: 'Noto Sans JP', sans-serif;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
-    white-space: nowrap;
-    text-decoration: none;
-  }
-
-  .btn-buy:hover { opacity: 0.85; transform: translateY(-2px); }
-
-  /* ── DIVIDER ── */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 40px 0;
-  }
+  .support-line a { color: var(--tx); text-decoration: underline; text-underline-offset: 3px; }
 
   /* ── FOOTER ── */
   footer {
@@ -414,13 +230,10 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .hero, .levels, .features, .demo-wrap, .cta-box {
+  .hero, .levels {
     animation: fadeUp 0.6s ease both;
   }
-  .levels   { animation-delay: 0.1s; }
-  .features { animation-delay: 0.2s; }
-  .demo-wrap{ animation-delay: 0.25s; }
-  .cta-box  { animation-delay: 0.3s; }
+  .levels { animation-delay: 0.1s; }
 
   /* ── MOBILE ── */
   @media (max-width: 600px) {
@@ -429,8 +242,6 @@
     .lv-badge { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; }
     .lv-count strong { font-size: 13px; }
     .lv-count { font-size: 10px; }
-    .features { grid-template-columns: 1fr; }
-    .cta-box { flex-direction: column; text-align: center; }
     .hero h1 { font-size: 36px; }
   }
 </style>
@@ -452,7 +263,6 @@
     <h1>从 N5 到 N1，<br><em>全部搞定。</em></h1>
     <p class="hero-sub">
       626 条文法要点，例句全部可点击朗读，中文翻译 + 接续说明一目了然。
-      无需注册，限时免费。
     </p>
   </section>
 
@@ -489,90 +299,14 @@
     <div class="comp-left">
       <div class="comp-icon">🎴</div>
       <div>
-        <div class="comp-title">配套动词卡片</div>
-        <div class="comp-sub">1123 个 N5 → N1 动词 · 汉字拆解读音记忆法 · 免费</div>
+        <div class="comp-title">配套語彙卡片</div>
+        <div class="comp-sub">7284 个 N5 → N1 词汇 · 免费</div>
       </div>
     </div>
     <div class="comp-arrow">›</div>
   </a>
 
-  <hr class="divider">
-
-  <!-- FEATURES -->
-  <div class="section-label">功能特点</div>
-  <div class="features">
-    <div class="feat">
-      <div class="feat-icon">🔊</div>
-      <h3>点击例句朗读</h3>
-      <p>每条文法的例句直接点击即可播放日语语音，边看边听，加深印象。</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">📖</div>
-      <h3>双语解释 + 接续</h3>
-      <p>意思、接续方式、中文翻译全部标注清楚，不用查字典就能看懂。</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">⭐</div>
-      <h3>收藏 & 掌握标记</h3>
-      <p>标记不熟悉的文法，专项复习；打上✅后从未掌握列表中移除。</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">📱</div>
-      <h3>手机滑动翻卡</h3>
-      <p>左右滑动切换，单手操作，随时随地刷题。支持随机顺序练习。</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">☰</div>
-      <h3>一览 & 搜索</h3>
-      <p>切换到一览模式，所有文法一页呈现，按难度或章节筛选。</p>
-    </div>
-    <div class="feat">
-      <div class="feat-icon">📱</div>
-      <h3>添加到主屏</h3>
-      <p>Safari「共享 → 添加到主屏幕」可以像 App 一样秒开，不占存储空间。</p>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- DEMO CARD -->
-  <div class="demo-wrap">
-    <div class="section-label">示例卡片 — N2</div>
-    <div class="demo-card">
-      <div class="demo-topbar">
-        <div class="demo-dot"></div>
-        <span>N2 · 第 12 条 · ～にすぎない</span>
-      </div>
-      <div class="demo-body">
-        <div class="demo-gram">～<span class="hl">にすぎない</span></div>
-        <div class="demo-mean">
-          只不过是～（强调程度之低）<br>
-          <span style="font-size:11px;opacity:0.6">接续：动词普通形 / 名词 + にすぎない</span>
-        </div>
-        <div class="demo-ex">
-          <div class="jp">これは私の意見<span class="gm">にすぎない</span>。</div>
-          <div class="zh">这只不过是我个人的意见而已。</div>
-        </div>
-        <div class="demo-ex">
-          <div class="jp">彼は運が良かった<span class="gm">にすぎない</span>。</div>
-          <div class="zh">他只不过是运气好罢了。</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <hr class="divider">
-
-  <!-- CTA -->
-  <div class="cta-box">
-    <div class="cta-left">
-      <h2>限时免费，支持开发</h2>
-      <p>626 条文法 · 5 个级别 · 中文界面<br>如果帮到你，欢迎随心赞赏 🌹</p>
-    </div>
-    <div class="cta-right">
-      <a class="btn-buy" href="/support.html">🌹 支持一下</a>
-    </div>
-  </div>
+  <p class="support-line">如果帮到你，欢迎<a href="/support.html">支持一下</a> 🌹</p>
 
   <footer>
     <p>© 2025 jlptcards.app · 无追踪 · 无广告</p>
