@@ -212,6 +212,21 @@
   .random-play button:disabled { opacity: 0.5; cursor: default; }
   .random-play button.playing { background: #55555a; }
 
+  .rp-caption {
+    display: none;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px;
+    margin: 0 0 14px;
+  }
+  .rp-caption.show { display: block; }
+  .rp-caption .rp-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .rp-caption .rp-jp { font-size: 17px; font-weight: 700; line-height: 1.6; }
+  .rp-caption .rp-zh { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+
   /* ── COMPANION LINK ── */
   .companion-link {
     display: flex; justify-content: space-between; align-items: center;
@@ -328,6 +343,12 @@
     <button id="rp-btn">🔀 随机播放例句</button>
   </div>
 
+  <div class="rp-caption" id="rp-caption">
+    <div class="rp-tag" id="rp-tag"></div>
+    <div class="rp-jp" id="rp-jp"></div>
+    <div class="rp-zh" id="rp-zh"></div>
+  </div>
+
   <a class="companion-link" href="/">
     <div class="comp-left">
       <div class="comp-icon">🎴</div>
@@ -428,6 +449,10 @@
 
   const levelSelect = document.getElementById('rp-level');
   const btn = document.getElementById('rp-btn');
+  const caption = document.getElementById('rp-caption');
+  const captionTag = document.getElementById('rp-tag');
+  const captionJp = document.getElementById('rp-jp');
+  const captionZh = document.getElementById('rp-zh');
   const cache = {};
   let playing = false;
   let stopRequested = false;
@@ -457,6 +482,9 @@
         idx = 0;
       }
       const item = queue[idx++];
+      captionTag.textContent = item.t;
+      captionJp.textContent = item.e;
+      captionZh.textContent = item.z;
       await TTS.speak(item.e);
       if (stopRequested) break;
       await sleep(500);
@@ -475,6 +503,7 @@
     levelSelect.disabled = true;
     btn.textContent = '⏹ 停止';
     btn.classList.add('playing');
+    caption.classList.add('show');
     const lvl = levelSelect.value;
     try {
       await playLoop(lvl);
@@ -485,6 +514,7 @@
       playing = false;
       stopRequested = false;
       levelSelect.disabled = false;
+      caption.classList.remove('show');
       btn.textContent = '🔀 随机播放例句';
       btn.classList.remove('playing');
     }
