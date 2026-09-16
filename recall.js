@@ -34,6 +34,13 @@ function maybeMigrate(level, entries) {
   try { localStorage.setItem(flagKey, '1'); } catch {}
 }
 
+// 跟 app.js 里的 vocabAudioSrc 是同一套命名规则：真人语音只录了日语读音(w)，
+// 中文释义没有对应的真人音频，所以中文那一路仍然只能走浏览器朗读兜底。
+function vocabAudioSrc(compositeId) {
+  if (!compositeId) return null;
+  return `data/audio/${compositeId.replace(/:/g, '-')}-w.mp3`;
+}
+
 const RecallTTS = {
   _supported: 'speechSynthesis' in window,
   _jaVoice: null,
@@ -41,6 +48,7 @@ const RecallTTS = {
   _pendingDone: null,
   _pendingTimer: null,
   _keepAliveTimer: null,
+  _audioEl: null,
   init() {
     if (!this._supported) return;
     const pick = () => {
@@ -55,14 +63,23 @@ const RecallTTS = {
   // 之后异步流程里(await fetch 之后)再调用 speak() 才会真正出声；否则会一直静默排队、不报错也不出声。
   // 必须在按钮 click 回调最开头、任何 await 之前同步调用。
   unlock() {
-    if (!this._supported) return;
+    if (this._supported) {
+      try {
+        // 注意：不能紧接着调用 cancel()——iOS Safari 上 speak() 后立刻 cancel()
+        // 是已知会把引擎晾在"暂停"状态的坑，之后所有 speak() 都会静默排队不出声。
+        // 用一个几乎不可闻的极短停顿代替空文本，让它自然放完触发 onend。
+        const u = new SpeechSynthesisUtterance('.');
+        u.volume = 0;
+        speechSynthesis.speak(u);
+      } catch {}
+    }
+    // <audio> 元素在 iOS Safari 上有同样的限制：必须在用户手势的调用栈内先摸一下
+    // play()，之后在 await 之后(异步流程里)才能真正播放，否则会被静默拦下。
     try {
-      // 注意：不能紧接着调用 cancel()——iOS Safari 上 speak() 后立刻 cancel()
-      // 是已知会把引擎晾在"暂停"状态的坑，之后所有 speak() 都会静默排队不出声。
-      // 用一个几乎不可闻的极短停顿代替空文本，让它自然放完触发 onend。
-      const u = new SpeechSynthesisUtterance('.');
-      u.volume = 0;
-      speechSynthesis.speak(u);
+      if (!this._audioEl) this._audioEl = new Audio();
+      const p = this._audioEl.play();
+      if (p && p.catch) p.catch(() => {});
+      this._audioEl.pause();
     } catch {}
   },
   // Chrome 等浏览器在标签页切到后台/锁屏一段时间后会把 speechSynthesis 引擎自动挂起，
@@ -79,7 +96,27 @@ const RecallTTS = {
     clearInterval(this._keepAliveTimer);
     this._keepAliveTimer = null;
   },
-  speak(text, lang) {
+  // audioSrc 有值时优先播放真人录音文件，失败(文件不存在/加载出错)再回退到浏览器朗读；
+  // 目前只有日语读音录了真人音频，中文释义(zh-CN)没有，调用方不传 audioSrc 就是了。
+  speak(text, lang, audioSrc) {
+    if (audioSrc) {
+      return this._playAudioFile(audioSrc).catch(() => this._speakTTS(text, lang));
+    }
+    return this._speakTTS(text, lang);
+  },
+  _playAudioFile(src) {
+    return new Promise((resolve, reject) => {
+      if (!this._audioEl) this._audioEl = new Audio();
+      const audio = this._audioEl;
+      const cleanup = () => { audio.onended = null; audio.onerror = null; };
+      audio.onended = () => { cleanup(); resolve(); };
+      audio.onerror = () => { cleanup(); reject(new Error('audio load failed')); };
+      audio.src = src;
+      const p = audio.play();
+      if (p && p.catch) p.catch(err => { cleanup(); reject(err); });
+    });
+  },
+  _speakTTS(text, lang) {
     if (!this._supported) return Promise.resolve();
     this._startKeepAlive();
     return new Promise((resolve) => {
@@ -102,6 +139,7 @@ const RecallTTS = {
   },
   cancel() {
     if (this._supported) speechSynthesis.cancel();
+    if (this._audioEl) { try { this._audioEl.pause(); } catch {} }
     if (this._pendingDone) this._pendingDone();
     this._stopKeepAlive();
   }
@@ -240,7 +278,7 @@ async function startSession() {
         if (rep === 2 && selectedMode === 'visual') {
           document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
         }
-        await RecallTTS.speak(card.kana, 'ja-JP');
+        await RecallTTS.speak(card.kana, 'ja-JP', vocabAudioSrc(card.compositeId));
         await checkpoint();
         if (selectedMode === 'audio' && rep < 2) await sleep(gapSec * 1000);
       }
