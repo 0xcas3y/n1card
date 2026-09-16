@@ -190,6 +190,28 @@
     display: block;
   }
 
+  /* ── RANDOM PLAY ── */
+  .random-play {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    margin: 0 0 14px;
+  }
+  .random-play select {
+    background: var(--bg); color: var(--tx); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 10px; font-size: 14px; font-family: inherit;
+    flex-shrink: 0;
+  }
+  .random-play button {
+    flex: 1;
+    background: var(--n2); color: #fff; border: none; border-radius: 10px;
+    padding: 11px 16px; font-size: 14px; font-weight: 700; font-family: inherit;
+    cursor: pointer; transition: opacity 0.2s, background 0.2s;
+  }
+  .random-play button:hover { opacity: 0.85; }
+  .random-play button:disabled { opacity: 0.5; cursor: default; }
+  .random-play button.playing { background: #55555a; }
+
   /* ── COMPANION LINK ── */
   .companion-link {
     display: flex; justify-content: space-between; align-items: center;
@@ -295,6 +317,17 @@
     </a>
   </div>
 
+  <div class="random-play">
+    <select id="rp-level" aria-label="选择等级">
+      <option value="n5">N5</option>
+      <option value="n4">N4</option>
+      <option value="n3">N3</option>
+      <option value="n2">N2</option>
+      <option value="n1" selected>N1</option>
+    </select>
+    <button id="rp-btn">🔀 随机播放例句</button>
+  </div>
+
   <a class="companion-link" href="/">
     <div class="comp-left">
       <div class="comp-icon">🎴</div>
@@ -313,6 +346,151 @@
   </footer>
 
 </div>
+
+<script>
+(function () {
+  // 朗读引擎：照搬 recall.js 里已经踩过坑、验证过的写法——
+  // iOS Safari 要求 speak() 必须在点击的调用栈内同步触发一次才会"解锁"；
+  // speak() 后不能紧跟 cancel()（会把引擎晾在暂停状态，之后静默不出声）；
+  // Chrome 标签页后台一段时间会挂起引擎，需要定期 pause/resume 保活；
+  // cancel() 之后不保证触发 onend/onerror，需要超时兜底避免卡死。
+  const TTS = {
+    _supported: 'speechSynthesis' in window,
+    _jaVoice: null,
+    _pendingDone: null,
+    _pendingTimer: null,
+    _keepAliveTimer: null,
+    init() {
+      if (!this._supported) return;
+      const pick = () => {
+        const voices = speechSynthesis.getVoices();
+        this._jaVoice = voices.find(v => v.lang.startsWith('ja')) || null;
+      };
+      pick();
+      speechSynthesis.addEventListener('voiceschanged', pick);
+    },
+    unlock() {
+      if (!this._supported) return;
+      try {
+        const u = new SpeechSynthesisUtterance('.');
+        u.volume = 0;
+        speechSynthesis.speak(u);
+      } catch {}
+    },
+    _startKeepAlive() {
+      if (!this._supported || this._keepAliveTimer) return;
+      this._keepAliveTimer = setInterval(() => {
+        speechSynthesis.pause();
+        speechSynthesis.resume();
+      }, 5000);
+    },
+    _stopKeepAlive() {
+      clearInterval(this._keepAliveTimer);
+      this._keepAliveTimer = null;
+    },
+    speak(text) {
+      if (!this._supported) return Promise.resolve();
+      this._startKeepAlive();
+      return new Promise((resolve) => {
+        const done = () => {
+          if (this._pendingDone !== done) return;
+          this._pendingDone = null;
+          clearTimeout(this._pendingTimer);
+          resolve();
+        };
+        this._pendingDone = done;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'ja-JP';
+        u.voice = this._jaVoice;
+        u.onend = done;
+        u.onerror = done;
+        speechSynthesis.speak(u);
+        this._pendingTimer = setTimeout(done, 8000);
+      });
+    },
+    cancel() {
+      if (this._supported) speechSynthesis.cancel();
+      if (this._pendingDone) this._pendingDone();
+      this._stopKeepAlive();
+    }
+  };
+  TTS.init();
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const levelSelect = document.getElementById('rp-level');
+  const btn = document.getElementById('rp-btn');
+  const cache = {};
+  let playing = false;
+  let stopRequested = false;
+
+  if (!TTS._supported) {
+    btn.disabled = true;
+    btn.textContent = '当前浏览器不支持朗读';
+    return;
+  }
+
+  async function loadLevel(lvl) {
+    if (cache[lvl]) return cache[lvl];
+    const res = await fetch(`data/examples-${lvl}.json`);
+    if (!res.ok) throw new Error(`加载失败: ${res.status}`);
+    const data = await res.json();
+    cache[lvl] = data;
+    return data;
+  }
+
+  // 打乱后按顺序播完一轮就重新打乱，无限循环，直到 stopRequested
+  async function playLoop(lvl) {
+    let queue = shuffle(await loadLevel(lvl));
+    let idx = 0;
+    while (!stopRequested) {
+      if (idx >= queue.length) {
+        queue = shuffle(queue);
+        idx = 0;
+      }
+      const item = queue[idx++];
+      await TTS.speak(item.e);
+      if (stopRequested) break;
+      await sleep(500);
+    }
+  }
+
+  btn.addEventListener('click', async () => {
+    if (playing) {
+      stopRequested = true;
+      TTS.cancel();
+      return;
+    }
+    TTS.unlock();
+    playing = true;
+    stopRequested = false;
+    levelSelect.disabled = true;
+    btn.textContent = '⏹ 停止';
+    btn.classList.add('playing');
+    const lvl = levelSelect.value;
+    try {
+      await playLoop(lvl);
+    } catch (err) {
+      console.error('随机播放例句出错', err);
+    } finally {
+      TTS.cancel();
+      playing = false;
+      stopRequested = false;
+      levelSelect.disabled = false;
+      btn.textContent = '🔀 随机播放例句';
+      btn.classList.remove('playing');
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
