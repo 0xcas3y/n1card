@@ -506,6 +506,22 @@
     return data;
   }
 
+  // 锁屏/通知栏的"正在播放"卡片：把当前朗读的日语例句设成标题，这样锁屏时
+  // 也能看到"字幕"，不用点亮屏幕。播放/暂停这两个系统级按钮也接到我们自己的
+  // 开始/停止逻辑上，不然锁屏上点了会没反应。
+  const hasMediaSession = 'mediaSession' in navigator;
+  function updateNowPlaying(title, artist, album) {
+    if (!hasMediaSession) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title, artist, album });
+    } catch {}
+  }
+  if (hasMediaSession) {
+    navigator.mediaSession.setActionHandler('play', () => { if (!playing) btn.click(); });
+    navigator.mediaSession.setActionHandler('pause', () => { if (playing) btn.click(); });
+    navigator.mediaSession.setActionHandler('stop', () => { if (playing) btn.click(); });
+  }
+
   // 打乱后按顺序播完一轮就重新打乱，无限循环，直到 stopRequested；
   // 同一个文法点的主例句+补充例句连着读完，再切换到下一个（随机的）文法点，方便记忆。
   async function playLoop(lvl) {
@@ -527,6 +543,7 @@
         const s = sentences[i];
         captionJp.textContent = s.text;
         captionZh.textContent = s.z;
+        updateNowPlaying(s.text, item.t, s.z);
         try {
           await AudioPlayer.play(`audio/${lvl}/${item.id}-${i}.mp3`);
         } catch {
@@ -554,6 +571,7 @@
     btn.textContent = '⏹ 停止';
     btn.classList.add('playing');
     caption.classList.add('show');
+    if (hasMediaSession) navigator.mediaSession.playbackState = 'playing';
     const lvl = levelSelect.value;
     try {
       await playLoop(lvl);
@@ -562,6 +580,7 @@
     } finally {
       AudioPlayer.cancel();
       TTS.cancel();
+      if (hasMediaSession) { navigator.mediaSession.playbackState = 'none'; navigator.mediaSession.metadata = null; }
       playing = false;
       stopRequested = false;
       levelSelect.disabled = false;
