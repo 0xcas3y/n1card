@@ -81,17 +81,31 @@
 
   /* ── HERO ── */
   .hero {
-    padding: 32px 0 20px;
+    padding: 40px 0 28px;
   }
 
-  .hero-label {
+  .hero-eyebrow {
     font-family: 'Space Mono', monospace;
-    font-size: clamp(22px, 5vw, 30px);
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--tx);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
     text-transform: uppercase;
-    margin-bottom: 0;
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 8vw, 60px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+  }
+
+  .hero-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #10ac84, #54a0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   /* ── LEVEL CARDS ── */
@@ -182,13 +196,15 @@
   }
   .random-play button {
     flex: 1;
-    background: var(--n2); color: #fff; border: none; border-radius: 10px;
+    background: linear-gradient(120deg, #0f8f74, #2f6fb0);
+    box-shadow: 0 6px 18px rgba(16,172,132,0.22);
+    color: #fff; border: none; border-radius: 10px;
     padding: 11px 16px; font-size: 14px; font-weight: 700; font-family: inherit;
-    cursor: pointer; transition: opacity 0.2s, background 0.2s;
+    cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s;
   }
-  .random-play button:hover { opacity: 0.85; }
-  .random-play button:disabled { opacity: 0.5; cursor: default; }
-  .random-play button.playing { background: #55555a; }
+  .random-play button:hover { opacity: 0.88; }
+  .random-play button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
+  .random-play button.playing { background: #3a3a42; box-shadow: none; }
 
   .rp-caption {
     display: none;
@@ -273,7 +289,8 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-label">文法卡片 / Grammar Cards</div>
+    <div class="hero-eyebrow">Grammar Cards</div>
+    <h1 class="hero-title">文法<em>卡片</em></h1>
   </section>
 
   <!-- LEVEL CARDS -->
