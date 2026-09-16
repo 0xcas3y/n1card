@@ -214,9 +214,8 @@
 
   .rp-caption {
     display: none;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px 18px;
-    margin: 0 0 14px;
+    padding: 4px 4px 18px;
+    text-align: center;
   }
   .rp-caption.show { display: block; }
   .rp-caption .rp-tag {
@@ -250,7 +249,8 @@
     color: var(--muted);
     margin: 0 0 40px;
   }
-  .support-line a { color: var(--tx); text-decoration: underline; text-underline-offset: 3px; }
+  .support-line a { color: inherit; text-decoration: none; }
+  .support-line a:hover { color: var(--tx); }
 
   /* ── FOOTER ── */
   footer {
@@ -340,7 +340,7 @@
       <option value="n2">N2</option>
       <option value="n1" selected>N1</option>
     </select>
-    <button id="rp-btn">🔀 随机播放例句</button>
+    <button id="rp-btn">随机播放例句</button>
   </div>
 
   <div class="rp-caption" id="rp-caption">
@@ -360,7 +360,7 @@
     <div class="comp-arrow">›</div>
   </a>
 
-  <p class="support-line">如果帮到你，欢迎<a href="/support.html">支持一下</a> 🌹</p>
+  <p class="support-line">如果帮到你，欢迎<a href="/support.html">支持一下</a></p>
 
   <footer>
     <p>© 2025 jlptcards.app · 无追踪 · 无广告</p>
@@ -515,7 +515,7 @@
       stopRequested = false;
       levelSelect.disabled = false;
       caption.classList.remove('show');
-      btn.textContent = '🔀 随机播放例句';
+      btn.textContent = '随机播放例句';
       btn.classList.remove('playing');
     }
   });
