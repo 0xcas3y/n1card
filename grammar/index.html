@@ -437,6 +437,45 @@
   };
   TTS.init();
 
+  // 播放预先生成好的真人语音文件(grammar/audio/{level}/{id}.mp3)；
+  // 复用同一个 <audio> 元素，第一次在点击回调里同步 play() 一下"解锁"，
+  // 之后异步流程里换 src 继续 play() 才不会被 iOS Safari 拦截。
+  const AudioPlayer = {
+    el: new Audio(),
+    unlock() {
+      try {
+        this.el.muted = true;
+        this.el.play().catch(() => {});
+        this.el.pause();
+        this.el.muted = false;
+      } catch {}
+    },
+    play(src) {
+      return new Promise((resolve, reject) => {
+        let done = false;
+        const finish = (ok) => {
+          if (done) return;
+          done = true;
+          this.el.removeEventListener('ended', onEnd);
+          this.el.removeEventListener('error', onError);
+          clearTimeout(timer);
+          ok ? resolve() : reject(new Error('audio play failed'));
+        };
+        const onEnd = () => finish(true);
+        const onError = () => finish(false);
+        this.el.addEventListener('ended', onEnd);
+        this.el.addEventListener('error', onError);
+        const timer = setTimeout(() => finish(true), 8000);
+        this.el.src = src;
+        this.el.currentTime = 0;
+        this.el.play().catch(() => finish(false));
+      });
+    },
+    cancel() {
+      try { this.el.pause(); this.el.removeAttribute('src'); this.el.load(); } catch {}
+    }
+  };
+
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   function shuffle(arr) {
     const a = arr.slice();
@@ -457,11 +496,6 @@
   let playing = false;
   let stopRequested = false;
 
-  if (!TTS._supported) {
-    btn.disabled = true;
-    btn.textContent = '当前浏览器不支持朗读';
-    return;
-  }
 
   async function loadLevel(lvl) {
     if (cache[lvl]) return cache[lvl];
@@ -485,7 +519,12 @@
       captionTag.textContent = item.t;
       captionJp.textContent = item.e;
       captionZh.textContent = item.z;
-      await TTS.speak(item.e);
+      try {
+        await AudioPlayer.play(`audio/${lvl}/${item.id}.mp3`);
+      } catch {
+        // 万一某条音频文件缺失/加载失败，退回浏览器朗读，不中断整个播放
+        await TTS.speak(item.e);
+      }
       if (stopRequested) break;
       await sleep(500);
     }
@@ -494,9 +533,11 @@
   btn.addEventListener('click', async () => {
     if (playing) {
       stopRequested = true;
+      AudioPlayer.cancel();
       TTS.cancel();
       return;
     }
+    AudioPlayer.unlock();
     TTS.unlock();
     playing = true;
     stopRequested = false;
@@ -510,6 +551,7 @@
     } catch (err) {
       console.error('随机播放例句出错', err);
     } finally {
+      AudioPlayer.cancel();
       TTS.cancel();
       playing = false;
       stopRequested = false;
