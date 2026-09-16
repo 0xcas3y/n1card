@@ -506,7 +506,8 @@
     return data;
   }
 
-  // 打乱后按顺序播完一轮就重新打乱，无限循环，直到 stopRequested
+  // 打乱后按顺序播完一轮就重新打乱，无限循环，直到 stopRequested；
+  // 同一个文法点的主例句+补充例句连着读完，再切换到下一个（随机的）文法点，方便记忆。
   async function playLoop(lvl) {
     let queue = shuffle(await loadLevel(lvl));
     let idx = 0;
@@ -517,16 +518,24 @@
       }
       const item = queue[idx++];
       captionTag.textContent = item.t;
-      captionJp.textContent = item.e;
-      captionZh.textContent = item.z;
-      try {
-        await AudioPlayer.play(`audio/${lvl}/${item.id}.mp3`);
-      } catch {
-        // 万一某条音频文件缺失/加载失败，退回浏览器朗读，不中断整个播放
-        await TTS.speak(item.e);
+      const sentences = [
+        { text: item.e, z: item.z },
+        ...(item.ex || []).map(x => ({ text: x.j, z: x.z })),
+      ];
+      for (let i = 0; i < sentences.length; i++) {
+        if (stopRequested) break;
+        const s = sentences[i];
+        captionJp.textContent = s.text;
+        captionZh.textContent = s.z;
+        try {
+          await AudioPlayer.play(`audio/${lvl}/${item.id}-${i}.mp3`);
+        } catch {
+          // 万一某条音频文件缺失/加载失败，退回浏览器朗读，不中断整个播放
+          await TTS.speak(s.text);
+        }
+        if (stopRequested) break;
+        await sleep(i < sentences.length - 1 ? 300 : 500);
       }
-      if (stopRequested) break;
-      await sleep(500);
     }
   }
 

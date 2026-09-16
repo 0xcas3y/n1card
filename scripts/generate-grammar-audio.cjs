@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// 批量把 grammar/data/examples-*.json 里的日语例句生成语音，存到 grammar/audio/{level}/{id}.mp3
-// 用法: node scripts/generate-grammar-audio.js
+// 批量把 grammar/data/examples-*.json 里的日语例句(主例句+补充例句)生成语音，
+// 存到 grammar/audio/{level}/{id}-{index}.mp3 —— index 0 是主例句(e)，
+// 1、2...是补充例句(ex[0], ex[1], ...)，跟卡片里 allEx 数组的顺序一一对应。
+// 用法: node scripts/generate-grammar-audio.cjs
 // 需要先跑过: gcloud auth application-default login
 'use strict';
 
@@ -54,26 +56,33 @@ async function main() {
     fs.mkdirSync(outDir, { recursive: true });
 
     for (const item of items) {
-      total++;
-      const outPath = path.join(outDir, `${item.id}.mp3`);
-      if (fs.existsSync(outPath)) { skipped++; continue; }
+      // index 0 = 主例句(e)，1..n = 补充例句(ex[])，跟卡片 allEx 顺序一致
+      const texts = [item.e, ...(item.ex || []).map(x => x.j)];
 
-      // access token 大约1小时过期，跑得久就刷新一下
-      if (Date.now() - tokenFetchedAt > 45 * 60 * 1000) {
-        token = getAccessToken();
-        tokenFetchedAt = Date.now();
-      }
+      for (let i = 0; i < texts.length; i++) {
+        total++;
+        const text = texts[i];
+        const outPath = path.join(outDir, `${item.id}-${i}.mp3`);
+        if (!text || !text.trim()) { skipped++; continue; }
+        if (fs.existsSync(outPath)) { skipped++; continue; }
 
-      try {
-        const audio = await synthesize(token, item.e);
-        fs.writeFileSync(outPath, audio);
-        generated++;
-        process.stdout.write(`\r${lvl} ${item.id}: 生成 ${generated}, 跳过 ${skipped}, 失败 ${failed} / 共 ${total}   `);
-      } catch (err) {
-        failed++;
-        console.error(`\n${lvl} id=${item.id} 失败: ${err.message}`);
+        // access token 大约1小时过期，跑得久就刷新一下
+        if (Date.now() - tokenFetchedAt > 45 * 60 * 1000) {
+          token = getAccessToken();
+          tokenFetchedAt = Date.now();
+        }
+
+        try {
+          const audio = await synthesize(token, text);
+          fs.writeFileSync(outPath, audio);
+          generated++;
+          process.stdout.write(`\r${lvl} ${item.id}-${i}: 生成 ${generated}, 跳过 ${skipped}, 失败 ${failed} / 共 ${total}   `);
+        } catch (err) {
+          failed++;
+          console.error(`\n${lvl} id=${item.id}-${i} 失败: ${err.message}`);
+        }
+        await sleep(50); // 轻微限速，别把 QPS 打太猛
       }
-      await sleep(50); // 轻微限速，别把 QPS 打太猛
     }
   }
 
