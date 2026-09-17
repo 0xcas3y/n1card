@@ -851,6 +851,10 @@ const QuizMode = {
 
   start({ queue, pool, title, onComplete }) {
     this._queue = queue.slice();
+    for (let i = this._queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this._queue[i], this._queue[j]] = [this._queue[j], this._queue[i]];
+    }
     this._pool = pool;
     this._idx = 0;
     this._correct = 0;
