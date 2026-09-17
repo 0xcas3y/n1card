@@ -1147,6 +1147,74 @@ const N5_GRAMMAR = [
 {id:35,cat:'exist',t:'〜がある / いる',hl:'がある',d:'★',m:'〜がある（物） / 〜がいる（人・動物）',mz:'有~（物用ある，人/动物用いる）',p:'<code>名词<span class="gram">＋がある / がいる</span></code>',e:'机の上に本があります。',eh:'机の上に本が<span class="hl">あります</span>。',ez:'桌子上有书。',ex:[{j:'公園に子どもが<span class="gm">います</span>。',z:'公园里有小孩。'},{j:'冷蔵庫に何も<span class="gm">ない</span>。',z:'冰箱里什么都没有。'}],furi:[[{"text": "机", "reading": "つくえ", "pos": "noun", "isGram": false}, {"text": "の", "reading": "", "pos": "part", "isGram": false}, {"text": "上", "reading": "うえ", "pos": "noun", "isGram": false}, {"text": "に", "reading": "", "pos": "part", "isGram": false}, {"text": "本", "reading": "ほん", "pos": "noun", "isGram": false}, {"text": "が", "reading": "", "pos": "part", "isGram": false}, {"text": "あります", "reading": "", "pos": "verb", "isGram": true}, {"text": "。", "reading": "", "pos": "punc", "isGram": false}], [{"text": "公園", "reading": "こうえん", "pos": "noun", "isGram": false}, {"text": "に", "reading": "", "pos": "part", "isGram": false}, {"text": "子ども", "reading": "こども", "pos": "noun", "isGram": false}, {"text": "が", "reading": "", "pos": "part", "isGram": false}, {"text": "います", "reading": "", "pos": "verb", "isGram": true}, {"text": "。", "reading": "", "pos": "punc", "isGram": false}], [{"text": "冷蔵庫", "reading": "れいぞうこ", "pos": "noun", "isGram": false}, {"text": "に", "reading": "", "pos": "part", "isGram": false}, {"text": "何も", "reading": "なにも", "pos": "noun", "isGram": false}, {"text": "ない", "reading": "", "pos": "verb", "isGram": true}, {"text": "。", "reading": "", "pos": "punc", "isGram": false}]]},
 
 
+// ══ 助詞 補充 Particles ══
+{id:36,cat:'particle',t:'〜の',hl:'の',d:'★',m:'名詞＋の＋名詞（所有・所属）',mz:'~的（表示所属、所有）',p:'<code>名詞<span class="gram">＋の＋</span>名詞</code>',e:'これは私の本です。',eh:'これは私<span class="hl">の</span>本です。',ez:'这是我的书。',ex:[{j:'田中さん<span class="gm">の</span>会社は駅の近くです。',z:'田中先生的公司在车站附近。'},{j:'これは日本語<span class="gm">の</span>教科書です。',z:'这是日语教科书。'}]},
+
+{id:37,cat:'particle',t:'〜も',hl:'も',d:'★',m:'〜も〜（並列・添加を表す）',mz:'~也~（并列、追加）',p:'<code>名詞<span class="gram">＋も</span></code>',e:'私は学生です。田中さんも学生です。',eh:'田中さんも学生です。',ez:'田中先生也是学生。',ex:[{j:'この店はパン<span class="gm">も</span>ケーキ<span class="gm">も</span>おいしいです。',z:'这家店的面包和蛋糕都好吃。'},{j:'今日<span class="gm">も</span>雨です。',z:'今天也下雨。'}]},
+
+{id:38,cat:'particle',t:'〜か（疑問）',hl:'か',d:'★',m:'文末に付けて疑問文を作る',mz:'加在句尾构成疑问句',p:'<code>文<span class="gram">＋か</span>？</code>',e:'これは辞書ですか。',eh:'これは辞書です<span class="hl">か</span>。',ez:'这是词典吗？',ex:[{j:'明日、学校へ行きます<span class="gm">か</span>。',z:'明天去学校吗？'},{j:'それは誰の傘です<span class="gm">か</span>。',z:'那是谁的伞？'}]},
+
+{id:39,cat:'copula',t:'〜でしょう',hl:'でしょう',d:'★',m:'〜だと思う（推量・確認）',mz:'大概是~吧（推测、确认）',p:'<code>普通形<span class="gram">＋でしょう</span></code>',e:'明日は晴れるでしょう。',eh:'明日は晴れる<span class="hl">でしょう</span>。',ez:'明天大概会晴吧。',ex:[{j:'彼はもう家に着いた<span class="gm">でしょう</span>。',z:'他大概已经到家了吧。'},{j:'これで大丈夫<span class="gm">でしょう</span>。',z:'这样应该没问题吧。'}]},
+
+// ══ 動詞表現 補充 Verb Patterns ══
+{id:40,cat:'verb',t:'〜ましょう',hl:'ましょう',d:'★',m:'一緒に〜する（勧誘・提案）',mz:'我们一起~吧（劝诱、提议）',p:'<code>動詞ます形<span class="gram">＋ましょう</span></code>',e:'一緒に昼ご飯を食べましょう。',eh:'一緒に昼ご飯を食べ<span class="hl">ましょう</span>。',ez:'一起吃午饭吧。',ex:[{j:'そろそろ出発し<span class="gm">ましょう</span>。',z:'差不多该出发了。'},{j:'少し休み<span class="gm">ましょう</span>。',z:'稍微休息一下吧。'}]},
+
+{id:41,cat:'verb',t:'〜ましょうか',hl:'ましょうか',d:'★',m:'〜しましょうか（申し出・提案の確認）',mz:'要不要我~？（提议、主动帮忙）',p:'<code>動詞ます形<span class="gram">＋ましょうか</span></code>',e:'荷物を持ちましょうか。',eh:'荷物を持ち<span class="hl">ましょうか</span>。',ez:'我来帮你拿行李吧？',ex:[{j:'窓を開け<span class="gm">ましょうか</span>。',z:'要不要开窗？'},{j:'タクシーを呼び<span class="gm">ましょうか</span>。',z:'要不要帮你叫辆出租车？'}]},
+
+{id:42,cat:'verb',t:'〜ませんか',hl:'ませんか',d:'★',m:'一緒に〜しませんか（勧誘）',mz:'要不要一起~？（邀请）',p:'<code>動詞ます形<span class="gram">＋ませんか</span></code>',e:'一緒に映画を見ませんか。',eh:'一緒に映画を見<span class="hl">ませんか</span>。',ez:'要不要一起看电影？',ex:[{j:'今度の週末、遊びに来<span class="gm">ませんか</span>。',z:'这个周末要不要来玩？'},{j:'お茶でも飲み<span class="gm">ませんか</span>。',z:'要不要喝杯茶？'}]},
+
+{id:43,cat:'verb',t:'〜たり〜たりします',hl:'たり',d:'★',m:'〜たり〜たりする（動作の列挙・繰り返し）',mz:'又~又~/一会儿~一会儿~（列举、反复动作）',p:'<code>動詞た形<span class="gram">＋り＋動詞た形＋り＋する</span></code>',e:'週末は映画を見たり買い物をしたりします。',eh:'週末は映画を見<span class="hl">たり</span>買い物をしたりします。',ez:'周末看看电影、买买东西。',ex:[{j:'公園で走っ<span class="gm">たり</span>座っ<span class="gm">たり</span>しました。',z:'在公园里又跑又坐。'},{j:'休みの日は掃除し<span class="gm">たり</span>洗濯し<span class="gm">たり</span>します。',z:'休息日打扫打扫、洗洗衣服。'}]},
+
+// ══ 接続表現 補充 Conjunctions ══
+{id:44,cat:'conj',t:'〜ながら',hl:'ながら',d:'★',m:'〜しながら〜する（同時進行の動作）',mz:'一边~一边~（同时进行两个动作）',p:'<code>動詞ます形<span class="gram">＋ながら</span></code>',e:'音楽を聞きながら勉強します。',eh:'音楽を聞き<span class="hl">ながら</span>勉強します。',ez:'一边听音乐一边学习。',ex:[{j:'テレビを見<span class="gm">ながら</span>ご飯を食べます。',z:'一边看电视一边吃饭。'},{j:'歩き<span class="gm">ながら</span>電話しないでください。',z:'请不要边走路边打电话。'}]},
+
+{id:45,cat:'conj',t:'〜てから',hl:'てから',d:'★',m:'〜した後で（動作の順序）',mz:'~之后再~（表示先后顺序）',p:'<code>動詞て形<span class="gram">＋から</span></code>',e:'手を洗ってからご飯を食べます。',eh:'手を洗っ<span class="hl">てから</span>ご飯を食べます。',ez:'洗完手再吃饭。',ex:[{j:'宿題をし<span class="gm">てから</span>遊びに行きます。',z:'做完作业再去玩。'},{j:'会議が終わっ<span class="gm">てから</span>連絡します。',z:'会议结束后再联系你。'}]},
+
+{id:46,cat:'conj',t:'〜まえに',hl:'まえに',d:'★',m:'〜する前に（動作の前後関係）',mz:'在~之前',p:'<code>動詞辞書形／名詞＋の<span class="gram">＋まえに</span></code>',e:'寝る前に歯を磨きます。',eh:'寝る<span class="hl">まえに</span>歯を磨きます。',ez:'睡觉前刷牙。',ex:[{j:'出かける<span class="gm">まえに</span>窓を閉めました。',z:'出门前关了窗户。'},{j:'食事の<span class="gm">まえに</span>手を洗いましょう。',z:'吃饭前洗手吧。'}]},
+
+{id:47,cat:'conj',t:'〜とき',hl:'とき',d:'★',m:'〜する時に（同時・状況を表す）',mz:'~的时候',p:'<code>動詞普通形／い形容詞／な形＋な／名詞＋の<span class="gram">＋とき</span></code>',e:'日本へ行くとき、パスポートを持っていきます。',eh:'日本へ行く<span class="hl">とき</span>、パスポートを持っていきます。',ez:'去日本的时候要带上护照。',ex:[{j:'子どもの<span class="gm">とき</span>、よくここで遊びました。',z:'小时候经常在这里玩。'},{j:'暇な<span class="gm">とき</span>、遊びに来てください。',z:'有空的时候请来玩。'}]},
+
+// ══ 動詞表現2 Verb Patterns 2 ══
+{id:48,cat:'verb',t:'〜たことがあります',hl:'たことがあります',d:'★',m:'過去の経験を表す',mz:'曾经~过（表示经历）',p:'<code>動詞た形<span class="gram">＋ことがあります</span></code>',e:'日本へ行ったことがあります。',eh:'日本へ行っ<span class="hl">たことがあります</span>。',ez:'我去过日本。',ex:[{j:'この映画は前に見<span class="gm">たことがあります</span>。',z:'这部电影以前看过。'},{j:'一度も納豆を食べ<span class="gm">たことがありません</span>。',z:'我一次都没吃过纳豆。'}]},
+
+{id:49,cat:'verb',t:'〜てみます',hl:'てみます',d:'★',m:'試しに〜する',mz:'试着~（尝试）',p:'<code>動詞て形<span class="gram">＋みます</span></code>',e:'このケーキを食べてみてください。',eh:'このケーキを食べ<span class="hl">てみて</span>ください。',ez:'请尝尝这个蛋糕。',ex:[{j:'新しい仕事をし<span class="gm">てみます</span>。',z:'我打算试着做这份新工作。'},{j:'一度自分で作っ<span class="gm">てみました</span>。',z:'我自己试着做了一次。'}]},
+
+{id:50,cat:'verb',t:'〜なさい',hl:'なさい',d:'★',m:'目上の人が目下の人に指示する（軽い命令）',mz:'给我~（长辈对晚辈的轻微命令）',p:'<code>動詞ます形<span class="gram">＋なさい</span></code>',e:'早く寝なさい。',eh:'早く寝<span class="hl">なさい</span>。',ez:'快点睡觉。',ex:[{j:'ちゃんと野菜も食べ<span class="gm">なさい</span>。',z:'蔬菜也要好好吃。'},{j:'静かにし<span class="gm">なさい</span>。',z:'安静点。'}]},
+
+{id:51,cat:'verb',t:'〜なくてもいいです',hl:'なくてもいいです',d:'★',m:'〜する必要がない',mz:'不~也可以/不必~',p:'<code>動詞ない形<span class="gram">（ない→なくて）＋もいいです</span></code>',e:'明日は来なくてもいいです。',eh:'明日は来<span class="hl">なくてもいいです</span>。',ez:'明天不来也可以。',ex:[{j:'今日は残業し<span class="gm">なくてもいいです</span>。',z:'今天不用加班。'},{j:'心配し<span class="gm">なくてもいいですよ</span>。',z:'不用担心哦。'}]},
+
+{id:52,cat:'verb',t:'〜つもりです',hl:'つもりです',d:'★',m:'〜する予定・意志を表す',mz:'打算~',p:'<code>動詞辞書形／ない形<span class="gram">＋つもりです</span></code>',e:'来年、日本へ留学するつもりです。',eh:'来年、日本へ留学する<span class="hl">つもりです</span>。',ez:'我打算明年去日本留学。',ex:[{j:'今度の休みは国へ帰る<span class="gm">つもりです</span>。',z:'这次休假打算回国。'},{j:'もう二度と遅刻しない<span class="gm">つもりです</span>。',z:'我打算再也不迟到了。'}]},
+
+{id:53,cat:'verb',t:'〜と思います',hl:'と思います',d:'★',m:'自分の考え・意見を述べる',mz:'我觉得~/我认为~',p:'<code>普通形<span class="gram">＋と思います</span></code>',e:'明日は雨が降ると思います。',eh:'明日は雨が降る<span class="hl">と思います</span>。',ez:'我觉得明天会下雨。',ex:[{j:'この本はおもしろい<span class="gm">と思います</span>。',z:'我觉得这本书很有意思。'},{j:'彼はもう帰った<span class="gm">と思います</span>。',z:'我想他已经回去了。'}]},
+
+// ══ 授受表現 Giving & Receiving ══
+{id:54,cat:'give',t:'〜てあげます',hl:'てあげます',d:'★',m:'自分または身内が他人に〜してやる（恩恵の授与）',mz:'（为别人）做~（施予恩惠）',p:'<code>動詞て形<span class="gram">＋あげます</span></code>',e:'友だちに本を貸してあげました。',eh:'友だちに本を貸し<span class="hl">てあげました</span>。',ez:'我把书借给朋友了。',ex:[{j:'弟に宿題を教え<span class="gm">てあげました</span>。',z:'我教了弟弟做作业。'},{j:'荷物を持っ<span class="gm">てあげましょうか</span>。',z:'我帮你拿行李吧？'}]},
+
+{id:55,cat:'give',t:'〜てくれます',hl:'てくれます',d:'★',m:'他人が自分（や身内）に〜してくれる（恩恵を受ける）',mz:'（别人为我）做~',p:'<code>動詞て形<span class="gram">＋くれます</span></code>',e:'友だちが日本語を教えてくれました。',eh:'友だちが日本語を教え<span class="hl">てくれました</span>。',ez:'朋友教我日语。',ex:[{j:'母が弁当を作っ<span class="gm">てくれました</span>。',z:'妈妈给我做了便当。'},{j:'先生が丁寧に説明し<span class="gm">てくれました</span>。',z:'老师给我耐心地讲解了。'}]},
+
+{id:56,cat:'give',t:'〜てもらいます',hl:'てもらいます',d:'★',m:'他人に〜してもらう（自分が依頼・恩恵を受ける）',mz:'请（别人为我）做~/得到~的帮助',p:'<code>動詞て形<span class="gram">＋もらいます</span></code>',e:'友だちに手伝ってもらいました。',eh:'友だちに手伝っ<span class="hl">てもらいました</span>。',ez:'请朋友帮了我的忙。',ex:[{j:'先生に作文を直し<span class="gm">てもらいました</span>。',z:'请老师帮我修改了作文。'},{j:'田中さんに道を教え<span class="gm">てもらいました</span>。',z:'田中先生给我指了路。'}]},
+
+// ══ 変化表現 Change of State ══
+{id:57,cat:'change',t:'〜くなります / になります',hl:'くなります',d:'★',m:'状態の変化を表す',mz:'变得~了（状态变化）',p:'<code>い形－い＋く／な形・名詞<span class="gram">＋になります</span></code>',e:'最近、暖かくなりました。',eh:'最近、暖かく<span class="hl">なりました</span>。',ez:'最近变暖和了。',ex:[{j:'彼女は先生<span class="gm">になりました</span>。',z:'她当上老师了。'},{j:'日本語が上手<span class="gm">になりました</span>。',z:'日语变厉害了。'}]},
+
+{id:58,cat:'change',t:'〜にします',hl:'にします',d:'★',m:'選択・決定を表す',mz:'决定要~（选择、决定）',p:'<code>名詞<span class="gram">＋にします</span></code>',e:'飲み物はコーヒーにします。',eh:'飲み物はコーヒー<span class="hl">にします</span>。',ez:'饮料我要咖啡。',ex:[{j:'今日の昼ご飯はラーメン<span class="gm">にします</span>。',z:'今天午饭就吃拉面吧。'},{j:'部屋をきれい<span class="gm">にしてください</span>。',z:'请把房间弄干净。'}]},
+
+// ══ 比較 補充 ══
+{id:59,cat:'compare',t:'〜ほうがいいです',hl:'ほうがいいです',d:'★',m:'〜するほうがよい（助言・提案）',mz:'最好~（建议）',p:'<code>動詞た形／ない形<span class="gram">＋ほうがいいです</span></code>',e:'早く病院へ行ったほうがいいです。',eh:'早く病院へ行っ<span class="hl">たほうがいいです</span>。',ez:'最好早点去医院。',ex:[{j:'今日は傘を持っていっ<span class="gm">たほうがいいです</span>。',z:'今天最好带把伞。'},{j:'お酒は飲まない<span class="gm">ほうがいいです</span>。',z:'最好不要喝酒。'}]},
+
+// ══ 不定代名詞 Indefinite Pronouns ══
+{id:60,cat:'indef',t:'疑問詞＋か（何か / 誰か / どこか）',hl:'か',d:'★',m:'不確かなものを指す',mz:'表示不确定的人、物、地点（某~）',p:'<code>何・誰・どこ<span class="gram">＋か</span></code>',e:'何か飲みたいです。',eh:'何<span class="hl">か</span>飲みたいです。',ez:'想喝点什么。',ex:[{j:'誰<span class="gm">か</span>来ましたか。',z:'有人来了吗？'},{j:'どこ<span class="gm">か</span>で休みましょう。',z:'找个地方休息一下吧。'}]},
+
+{id:61,cat:'indef',t:'疑問詞＋も＋ない（何も / 誰も）',hl:'も',d:'★',m:'全面否定を表す',mz:'什么都不~/谁都不~（全部否定）',p:'<code>何・誰・どこ<span class="gram">＋も＋ない</span></code>',e:'冷蔵庫に何もありません。',eh:'冷蔵庫に何<span class="hl">も</span>ありません。',ez:'冰箱里什么都没有。',ex:[{j:'教室に誰<span class="gm">も</span>いません。',z:'教室里谁都没有。'},{j:'今日はどこ<span class="gm">も</span>行きません。',z:'今天哪儿都不去。'}]},
+
+// ══ 限定表現 Limiting Expressions ══
+{id:62,cat:'limit',t:'〜だけ',hl:'だけ',d:'★',m:'範囲を限定する（それ以上ない）',mz:'只~（限定范围）',p:'<code>名詞<span class="gram">＋だけ</span></code>',e:'教室に学生が一人だけいます。',eh:'教室に学生が一人<span class="hl">だけ</span>います。',ez:'教室里只有一个学生。',ex:[{j:'今日は少し<span class="gm">だけ</span>食べました。',z:'今天只吃了一点点。'},{j:'これ<span class="gm">だけ</span>覚えてください。',z:'请只记住这个就好。'}]},
+
+{id:63,cat:'limit',t:'〜しか〜ません',hl:'しか',d:'★',m:'それ以外にないことを強調する否定表現',mz:'只~（后接否定，强调仅此而已）',p:'<code>名詞<span class="gram">＋しか＋動詞ない形</span></code>',e:'財布に千円しかありません。',eh:'財布に千円<span class="hl">しか</span>ありません。',ez:'钱包里只有一千日元。',ex:[{j:'この店は日本語<span class="gm">しか</span>通じません。',z:'这家店只能说日语。'},{j:'あと少し<span class="gm">しか</span>時間がありません。',z:'只剩下一点时间了。'}]},
+
+{id:64,cat:'limit',t:'〜くらい / ぐらい',hl:'くらい',d:'★',m:'大体の程度・数量を表す',mz:'大约~/大概~（程度、数量）',p:'<code>数量詞<span class="gram">＋くらい／ぐらい</span></code>',e:'駅まで十分くらいかかります。',eh:'駅まで十分<span class="hl">くらい</span>かかります。',ez:'到车站大约要十分钟。',ex:[{j:'この本は五百円<span class="gm">くらい</span>です。',z:'这本书大约五百日元。'},{j:'一時間<span class="gm">ぐらい</span>寝ました。',z:'睡了大约一个小时。'}]},
+
+
 ];
 
 const app = new GrammarApp({
@@ -1163,6 +1231,10 @@ const app = new GrammarApp({
     {key:'compare',  label:'比較', color:'#fce4ec', fg:'#c62828'},
     {key:'conj',     label:'接続', color:'#e0f7fa', fg:'#00695c'},
     {key:'exist',    label:'存在', color:'#f9fbe7', fg:'#558b2f'},
+    {key:'give',     label:'授受', color:'#fff8e1', fg:'#f57f17'},
+    {key:'change',   label:'変化', color:'#e8eaf6', fg:'#283593'},
+    {key:'indef',    label:'不定', color:'#efebe9', fg:'#4e342e'},
+    {key:'limit',    label:'限定', color:'#e1f5fe', fg:'#01579b'},
   ]
 });
 
