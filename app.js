@@ -857,9 +857,19 @@ const QuizMode = {
     this._promoted = 0;
     this._onComplete = onComplete;
     this._title = title || '复习';
+    this._color = CardView.randomColor();
     this.active = true;
     document.body.classList.add('quiz-on');
     this._renderCurrent();
+  },
+  _renderTopbar(progressText) {
+    const topbar = document.querySelector('#topbar');
+    topbar.innerHTML = `
+      <button class="quiz-exit" id="quiz-exit">← 退出</button>
+      <div class="topbar-center">${this._title}</div>
+      <span class="quiz-progress">${progressText}</span>
+    `;
+    topbar.querySelector('#quiz-exit').addEventListener('click', () => this.exit());
   },
   exit() {
     this.active = false;
@@ -901,24 +911,21 @@ const QuizMode = {
       [options[i], options[j]] = [options[j], options[i]];
     }
 
+    this._renderTopbar(`${this._idx + 1} / ${this._queue.length} · 正确 ${this._correct}`);
+
     const stage = document.querySelector('#cardstage');
     const promptHtml = meaningMode
       ? `<div class="quiz-word">${card.kana}</div>`
       : `<div class="quiz-word">${card.word}</div>
          <div class="quiz-meaning">${(card.meanings && card.meanings[0]) || ''}</div>`;
     stage.innerHTML = `
-      <div class="quiz-card">
-        <div class="quiz-topbar">
-          <button class="quiz-exit" id="quiz-exit">← 退出</button>
-          <span class="quiz-progress">${this._idx + 1} / ${this._queue.length} · 正确 ${this._correct}</span>
-        </div>
+      <div class="quiz-card color-${this._color}">
         ${promptHtml}
         <div class="quiz-options">
           ${options.map(o => `<button class="${optionClass}" data-val="${o.replace(/"/g, '&quot;')}">${o}</button>`).join('')}
         </div>
       </div>
     `;
-    stage.querySelector('#quiz-exit').addEventListener('click', () => this.exit());
     stage.querySelectorAll('.quiz-opt').forEach(btn => {
       btn.addEventListener('click', () => this._handleAnswer(btn, card, answer));
     });
@@ -949,9 +956,10 @@ const QuizMode = {
 
   _renderSummary() {
     const total = this._queue.length;
+    this._renderTopbar(`${total} / ${total} · 正确 ${this._correct}`);
     const stage = document.querySelector('#cardstage');
     stage.innerHTML = `
-      <div class="quiz-summary">
+      <div class="quiz-summary color-${this._color}">
         <div class="qs-title">${this._title} 完成</div>
         <div class="qs-line">答对 ${this._correct} / ${total}</div>
         <div class="qs-line">新升掌握 ${this._promoted} 词</div>

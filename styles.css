@@ -119,7 +119,7 @@ body.brainwash-on #cardstage { background: rgba(0,0,0,0.3); }
 }
 
 /* QuizMode + LearnListMode */
-body.quiz-on #topbar, body.learnlist-on #topbar,
+body.learnlist-on #topbar,
 body.choice-on #topbar, body.hardreview-on #topbar, body.timelock-on #topbar { display: none; }
 body.brainwash-on .topbar-right select { display: none; }
 body.learnlist-on, body.learnlist-on html { height: auto; min-height: 100%; }
@@ -167,38 +167,60 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
   .ll-meaning { font-size: 12px; }
 }
 
+/* 退出/进度这一行现在直接渲染进 #topbar，跟正常刷卡时的顶栏是同一个元素、
+   同样的位置和留白，不再是卡片自己顶着一行、被地址栏挤得很紧 */
+.quiz-exit { background: none; border: 0; color: #eee; font-size: 14px; cursor: pointer; padding: 4px 8px; font-weight: 500; white-space: nowrap; flex-shrink: 0; font-family: inherit; }
+.quiz-progress { font-size: 13px; opacity: 0.85; white-space: nowrap; flex-shrink: 0; }
+
 .quiz-card {
   width: min(92vw, 420px);
-  padding: 20px;
+  padding: 32px 24px;
   color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   display: flex; flex-direction: column; gap: 16px;
 }
-.quiz-topbar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; opacity: 0.8; }
-.quiz-exit { background: none; border: 0; color: #ccc; font-size: 14px; cursor: pointer; padding: 6px 10px; }
+.quiz-card.color-blue   { background: #5A9AD4; }
+.quiz-card.color-green  { background: #4FA896; }
+.quiz-card.color-purple { background: #8A6FB8; }
+.quiz-card.color-coral  { background: #D97B5F; }
+.quiz-card.color-teal   { background: #3E8A9E; }
+.quiz-card.color-pink   { background: #C75F87; }
 .quiz-word { font-size: clamp(48px, 12vw, 80px); font-weight: 600; text-align: center; margin: 12px 0 4px; letter-spacing: 3px; }
-.quiz-meaning { font-size: 16px; opacity: 0.85; text-align: center; margin-bottom: 20px; }
+.quiz-meaning { font-size: 16px; opacity: 0.9; text-align: center; margin-bottom: 20px; }
 .quiz-options { display: flex; flex-direction: column; gap: 10px; }
 .quiz-opt {
   padding: 16px;
-  border: 1px solid #444;
-  background: #1d1d1d; color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.18); color: #fff;
   font-size: 20px; border-radius: 10px; cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   font-family: inherit;
 }
-.quiz-opt:hover:not(:disabled) { background: #2a2a2a; }
-.quiz-opt.quiz-correct { background: #2a5d3a; border-color: #4caf50; }
-.quiz-opt.quiz-wrong { background: #5d2a2a; border-color: #e57373; }
+.quiz-opt:hover:not(:disabled) { background: rgba(0,0,0,0.32); }
+.quiz-opt.quiz-correct { background: rgba(76,175,80,0.85); border-color: #4caf50; }
+.quiz-opt.quiz-wrong { background: rgba(229,115,115,0.85); border-color: #e57373; }
 .quiz-opt-meaning { font-size: 14px; line-height: 1.5; text-align: left; white-space: normal; }
 
-.quiz-summary { text-align: center; color: #fff; }
+.quiz-summary {
+  width: min(92vw, 420px);
+  padding: 32px 24px; text-align: center; color: #fff;
+  border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.quiz-summary.color-blue   { background: #5A9AD4; }
+.quiz-summary.color-green  { background: #4FA896; }
+.quiz-summary.color-purple { background: #8A6FB8; }
+.quiz-summary.color-coral  { background: #D97B5F; }
+.quiz-summary.color-teal   { background: #3E8A9E; }
+.quiz-summary.color-pink   { background: #C75F87; }
 .qs-title { font-size: 22px; margin-bottom: 16px; }
-.qs-line { font-size: 17px; opacity: 0.9; margin: 6px 0; }
+.qs-line { font-size: 17px; opacity: 0.95; margin: 6px 0; }
 .qs-done {
   margin-top: 24px; padding: 10px 32px;
-  background: #4FA896; color: #fff; border: 0; border-radius: 10px;
+  background: rgba(0,0,0,0.25); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;
   font-size: 16px; cursor: pointer; font-family: inherit;
 }
+.qs-done:hover { background: rgba(0,0,0,0.4); }
 
 /* DayView + RetrospectView */
 #day-view, #retro-view {
