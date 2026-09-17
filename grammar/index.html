@@ -77,7 +77,11 @@
     padding: 5px 10px;
     border-radius: 4px;
     text-transform: uppercase;
+    text-decoration: none;
+    display: inline-block;
+    transition: color 0.2s, border-color 0.2s;
   }
+  .badge-jlpt:hover { color: var(--tx); border-color: rgba(255,255,255,0.2); }
 
   /* ── HERO ── */
   .hero {
@@ -344,7 +348,7 @@
 <div class="wrap">
 
   <header>
-    <div class="badge-jlpt">JLPT · 日本語能力試験</div>
+    <a class="badge-jlpt" href="/">JLPT · 日本語能力試験</a>
   </header>
 
   <!-- HERO -->
