@@ -360,6 +360,12 @@ const TTSEngine = {
   _errorCount: 0,
   muted: false,
   _audioEl: null,
+  // 每次 speak() 都会 +1，让上一次还没播完的请求(不管是音频文件还是浏览器朗读)
+  // 作废——之前没有这个机制时，快速连续点击(比如手滑碰两下)会让后一次请求
+  // 打断前一次还在加载的 <audio>，浏览器给前一次触发 error 事件，被误判成
+  // "播放失败"进而退回系统朗读，跟后一次的真人声音叠在一起，听起来就是
+  // 冒出了"另一个版本"的声音。
+  _playToken: 0,
 
   init() {
     this._audioEl = new Audio();
@@ -380,7 +386,8 @@ const TTSEngine = {
   },
 
   _playAudioFile(src, rate) {
-    return new Promise((resolve, reject) => {
+    const token = this._playToken;
+    return new Promise((resolve) => {
       const el = this._audioEl;
       let done = false;
       const finish = (ok) => {
@@ -389,7 +396,9 @@ const TTSEngine = {
         el.removeEventListener('ended', onEnd);
         el.removeEventListener('error', onError);
         clearTimeout(timer);
-        ok ? resolve() : reject(new Error('audio play failed'));
+        // 期间已经有更新的 speak() 把 token 顶掉了，说明这是被打断而不是真的
+        // 播放失败——安静地当成功处理，绝不能冒充失败去触发系统朗读兜底
+        resolve(token !== this._playToken ? true : ok);
       };
       const onEnd = () => finish(true);
       const onError = () => finish(false);
@@ -403,38 +412,45 @@ const TTSEngine = {
     });
   },
 
-  // audioSrc 有值就优先播预生成的真人录音，播放失败(文件缺失/加载出错)才退回浏览器朗读
+  // audioSrc 有值就优先播预生成的真人录音，播放失败(文件缺失/加载出错)才退回浏览器朗读。
+  // 每次调用都让上一次还没播完的请求作废，保证同一时刻只有一路声音在响。
   speak(text, { rate = 0.9, onEnd = null, onStart = null, lang = 'ja-JP', audioSrc = null } = {}) {
     if (this.muted) { onEnd?.(); return Promise.resolve(); }
+    this._playToken++;
+    if (this._supported) speechSynthesis.cancel();
     if (audioSrc && lang === 'ja-JP') {
       onStart?.();
-      return this._playAudioFile(audioSrc, rate)
-        .then(() => { onEnd?.(); })
-        .catch(() => this._speakTTS(text, rate, lang, onEnd, null));
+      return this._playAudioFile(audioSrc, rate).then((ok) => {
+        if (ok) { onEnd?.(); }
+        else { return this._speakTTS(text, rate, lang, onEnd, null); }
+      });
     }
     return this._speakTTS(text, rate, lang, onEnd, onStart);
   },
   _speakTTS(text, rate, lang, onEnd, onStart) {
     if (!this._supported) { onEnd?.(); return Promise.resolve(); }
+    const token = this._playToken;
     return new Promise((resolve) => {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
       if (lang === 'ja-JP' && this._jaVoice) u.voice = this._jaVoice;
       u.rate = rate;
       u.onstart = () => onStart?.();
-      u.onend = () => { onEnd?.(); resolve(); };
+      u.onend = () => { if (token === this._playToken) onEnd?.(); resolve(); };
       u.onerror = () => {
         this._errorCount++;
         if (this._errorCount === 3) {
           TopBar.addWarning('TTS 多次失败');
           TopBar.render();
         }
-        onEnd?.(); resolve();
+        if (token === this._playToken) onEnd?.();
+        resolve();
       };
       speechSynthesis.speak(u);
     });
   },
   cancel() {
+    this._playToken++;
     if (this._supported) speechSynthesis.cancel();
     if (this._audioEl) { try { this._audioEl.pause(); } catch {} }
   }
