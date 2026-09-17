@@ -206,6 +206,65 @@
   .random-play button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
   .random-play button.playing { background: #3a3a42; box-shadow: none; }
 
+  .rp-full-btn {
+    flex: 0 0 auto !important;
+    width: 44px; padding: 0 !important;
+    background: var(--bg) !important; box-shadow: none !important;
+    border: 1px solid var(--border) !important;
+    color: var(--tx) !important; font-size: 18px !important;
+  }
+  .rp-full-btn:hover { background: rgba(255,255,255,0.06) !important; opacity: 1 !important; }
+
+  /* ── FULLSCREEN CAPTION (第二屏投放用) ── */
+  .fs-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 32%, #16161f 0%, #08080b 100%);
+    padding: 6vh 8vw; text-align: center;
+  }
+  .fs-overlay.active { display: flex; }
+  .fs-exit {
+    position: absolute; top: 28px; right: 32px;
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    color: var(--muted); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .fs-exit:hover { background: rgba(255,255,255,0.14); color: var(--tx); }
+  .fs-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(12px, 1.3vw, 17px);
+    letter-spacing: 5px; color: var(--muted); text-transform: uppercase;
+    margin-bottom: 4.5vh;
+  }
+  .fs-pattern {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(26px, 3vw, 44px);
+    color: #6fd6b8; letter-spacing: 1px; margin-bottom: 3vh;
+    transition: opacity 0.25s ease;
+  }
+  .fs-sentence {
+    font-size: clamp(34px, 5.6vw, 84px);
+    font-weight: 700; line-height: 1.45; max-width: 92vw;
+    margin-bottom: 4vh; transition: opacity 0.25s ease;
+  }
+  .fs-sentence .hl, .fs-sentence .gm {
+    background: linear-gradient(90deg, #10ac84, #54a0ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .fs-zh {
+    font-size: clamp(19px, 2.4vw, 34px);
+    color: var(--tx); opacity: 0.82; max-width: 86vw;
+    margin-bottom: 5vh; line-height: 1.55; transition: opacity 0.25s ease;
+  }
+  .fs-meaning {
+    font-size: clamp(14px, 1.2vw, 18px);
+    color: var(--muted); max-width: 68vw; line-height: 1.7;
+    padding-top: 3vh; border-top: 1px solid var(--border);
+    transition: opacity 0.25s ease;
+  }
+
   .rp-caption {
     display: none;
     padding: 4px 4px 18px;
@@ -331,12 +390,22 @@
       <option value="n1" selected>N1</option>
     </select>
     <button id="rp-btn">随机播放例句</button>
+    <button id="rp-full" class="rp-full-btn" title="全屏播放（投到副屏用）">⛶</button>
   </div>
 
   <div class="rp-caption" id="rp-caption">
     <div class="rp-tag" id="rp-tag"></div>
     <div class="rp-jp" id="rp-jp"></div>
     <div class="rp-zh" id="rp-zh"></div>
+  </div>
+
+  <div class="fs-overlay" id="fsOverlay">
+    <button class="fs-exit" id="fsExit" title="退出全屏 (Esc)">✕</button>
+    <div class="fs-eyebrow" id="fsEyebrow">随机文法</div>
+    <div class="fs-pattern" id="fsPattern"></div>
+    <div class="fs-sentence" id="fsSentence"></div>
+    <div class="fs-zh" id="fsZh"></div>
+    <div class="fs-meaning" id="fsMeaning"></div>
   </div>
 
   <a class="companion-link" href="/">
@@ -481,6 +550,14 @@
   const captionTag = document.getElementById('rp-tag');
   const captionJp = document.getElementById('rp-jp');
   const captionZh = document.getElementById('rp-zh');
+  const fullBtn = document.getElementById('rp-full');
+  const fsOverlay = document.getElementById('fsOverlay');
+  const fsExit = document.getElementById('fsExit');
+  const fsEyebrow = document.getElementById('fsEyebrow');
+  const fsPattern = document.getElementById('fsPattern');
+  const fsSentence = document.getElementById('fsSentence');
+  const fsZh = document.getElementById('fsZh');
+  const fsMeaning = document.getElementById('fsMeaning');
   const cache = {};
   let playing = false;
   let stopRequested = false;
@@ -524,8 +601,8 @@
       const item = queue[idx++];
       captionTag.textContent = item.t;
       const sentences = [
-        { text: item.e, z: item.z },
-        ...(item.ex || []).map(x => ({ text: x.j, z: x.z })),
+        { text: item.e, html: item.eh, z: item.z },
+        ...(item.ex || []).map(x => ({ text: x.j, html: x.jh, z: x.z })),
       ];
       for (let i = 0; i < sentences.length; i++) {
         if (stopRequested) break;
@@ -533,6 +610,11 @@
         captionJp.textContent = s.text;
         captionZh.textContent = s.z;
         updateNowPlaying(s.text, item.t, s.z);
+        fsEyebrow.textContent = `${lvl.toUpperCase()} · 随机文法`;
+        fsPattern.textContent = item.t;
+        fsSentence.innerHTML = s.html || s.text;
+        fsZh.textContent = s.z;
+        fsMeaning.textContent = item.mz || '';
         try {
           await AudioPlayer.play(`audio/${lvl}/${item.id}-${i}.mp3`);
         } catch {
@@ -577,6 +659,28 @@
       btn.textContent = '随机播放例句';
       btn.classList.remove('playing');
     }
+  });
+
+  // 全屏投放：给第二块屏幕看的大字幕模式。优先申请浏览器原生全屏(桌面端支持好)，
+  // 拿不到就退回一个铺满视口的固定层，视觉效果一样；两种情况都用 .active 这个
+  // class 控制显示，不依赖 :fullscreen 伪类，避免不支持原生全屏的环境下什么都看不到。
+  function exitFullscreenMode() {
+    fsOverlay.classList.remove('active');
+    if (document.fullscreenElement) { try { document.exitFullscreen(); } catch {} }
+  }
+  fullBtn.addEventListener('click', () => {
+    if (fsOverlay.classList.contains('active')) { exitFullscreenMode(); return; }
+    // requestFullscreen 必须在点击的调用栈内同步发起才会被浏览器允许，不能等 btn.click() 里的 await 之后再调用
+    fsOverlay.classList.add('active');
+    try { fsOverlay.requestFullscreen?.(); } catch {}
+    if (!playing) btn.click();
+  });
+  fsExit.addEventListener('click', exitFullscreenMode);
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) fsOverlay.classList.remove('active');
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && fsOverlay.classList.contains('active')) exitFullscreenMode();
   });
 })();
 </script>
