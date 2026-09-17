@@ -225,6 +225,7 @@
     display: none; flex-direction: column; align-items: center; justify-content: center;
     background: radial-gradient(circle at 50% 32%, #16161f 0%, #08080b 100%);
     padding: 6vh 8vw; text-align: center;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   .fs-overlay.active { display: flex; }
   .fs-exit {
@@ -337,6 +338,16 @@
     .lv-badge { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; }
     .lv-count strong { font-size: 13px; }
     .lv-count { font-size: 10px; }
+
+    /* 手机屏幕竖着的时候空间紧张，全屏朗读的间距和字号都收紧一些，
+       尽量让一屏能看全，不够再靠 .fs-overlay 的 overflow-y 滚动兜底 */
+    .fs-overlay { padding: 5vh 6vw 4vh; }
+    .fs-exit { top: 16px; right: 16px; width: 40px; height: 40px; font-size: 16px; }
+    .fs-eyebrow { margin-bottom: 2.5vh; }
+    .fs-pattern { font-size: clamp(20px, 6vw, 30px); margin-bottom: 2vh; }
+    .fs-sentence { font-size: clamp(26px, 8vw, 44px); line-height: 1.4; margin-bottom: 2.5vh; }
+    .fs-zh { font-size: clamp(15px, 4.5vw, 20px); margin-bottom: 3vh; }
+    .fs-meaning { font-size: clamp(16px, 5vw, 24px); padding-top: 2vh; }
   }
 </style>
 </head>
