@@ -545,7 +545,7 @@ const TopBar = {
     } else {
       const total = DataStore.allCards().length;
       const idx = Router.currentIndex + 1;
-      leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">📚 ${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
+      leftHtml = `<a class="topbar-left" href="index.html" style="color: inherit; text-decoration: none;">${LEVEL} · ${idx}/${total}${streakHtml}${warn}</a>`;
     }
 
     // 学新、洗脑模式下不显示筛选下拉（pool 已固定）
@@ -557,14 +557,13 @@ const TopBar = {
           <option value="unseen_only">只看未学过</option>
           <option value="random">随机乱序</option>
         </select>` : '';
-    const quizEntryHtml = (window.SIMPLE_MODE && !BrainwashMode.active) ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">🎯 测验</button>` : '';
-    const brainwashBtnHtml = `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">🧠<span class="brainwash-label"> 洗脑</span></button>`;
+    const quizEntryHtml = !BrainwashMode.active ? `<button class="brainwash-btn" id="quiz-entry-btn" title="测验">测验</button>` : '';
+    const brainwashBtnHtml = `<button class="brainwash-btn" id="brainwash-btn" title="洗脑模式">洗脑</button>`;
     topbar.innerHTML = `
       ${leftHtml}
       <div class="topbar-center">已掌握 ${stats.known} · 待巩固 ${stats.unknown}</div>
       <div class="topbar-right">
         ${filterHtml}
-        <a class="settings-btn" href="/grammar/" style="text-decoration: none;" title="切换到文法">📖</a>
         <button class="settings-btn" id="mute-btn" title="静音">${TTSEngine.muted ? '🔇' : '🔊'}</button>
         <button class="settings-btn" id="settings-btn">⚙</button>
         ${brainwashBtnHtml}
@@ -585,7 +584,7 @@ const TopBar = {
     topbar.querySelector('#brainwash-btn').addEventListener('click', () => {
       if (typeof BrainwashMode !== 'undefined') BrainwashMode.toggle?.();
     });
-    if (window.SIMPLE_MODE && !BrainwashMode.active) {
+    if (!BrainwashMode.active) {
       topbar.querySelector('#quiz-entry-btn').addEventListener('click', () => {
         QuizMode.start({
           queue: Router.visibleCards,
