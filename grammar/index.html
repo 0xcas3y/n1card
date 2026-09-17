@@ -221,13 +221,21 @@
 
   /* ── FULLSCREEN CAPTION (第二屏投放用) ── */
   .fs-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
+    position: fixed; inset: 0; height: 100vh; height: 100dvh; z-index: 9999;
+    display: none;
     background: radial-gradient(circle at 50% 32%, #16161f 0%, #08080b 100%);
+    overflow: hidden;
+  }
+  .fs-overlay.active { display: flex; }
+  /* 内层单独滚动、外层高度用 100dvh 钉死不随地址栏收起/展开变化——
+     外层如果也跟着滚动，iOS Safari 会把这当成"页面在滚"，反复触发
+     状态栏/地址栏的隐藏动画，又耗电又一直闪烁 */
+  .fs-inner {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 6vh 8vw; text-align: center;
     overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
-  .fs-overlay.active { display: flex; }
   .fs-exit {
     position: absolute; top: 28px; right: 32px;
     width: 46px; height: 46px; border-radius: 50%;
@@ -340,8 +348,8 @@
     .lv-count { font-size: 10px; }
 
     /* 手机屏幕竖着的时候空间紧张，全屏朗读的间距和字号都收紧一些，
-       尽量让一屏能看全，不够再靠 .fs-overlay 的 overflow-y 滚动兜底 */
-    .fs-overlay { padding: 5vh 6vw 4vh; }
+       尽量让一屏能看全，不够再靠 .fs-inner 的 overflow-y 滚动兜底 */
+    .fs-inner { padding: 5vh 6vw 4vh; }
     .fs-exit { top: 16px; right: 16px; width: 40px; height: 40px; font-size: 16px; }
     .fs-eyebrow { margin-bottom: 2.5vh; }
     .fs-pattern { font-size: clamp(20px, 6vw, 30px); margin-bottom: 2vh; }
@@ -417,11 +425,13 @@
 
   <div class="fs-overlay" id="fsOverlay">
     <button class="fs-exit" id="fsExit" title="退出全屏 (Esc)">✕</button>
-    <div class="fs-eyebrow" id="fsEyebrow">随机文法</div>
-    <div class="fs-pattern" id="fsPattern"></div>
-    <div class="fs-sentence" id="fsSentence"></div>
-    <div class="fs-zh" id="fsZh"></div>
-    <div class="fs-meaning" id="fsMeaning"></div>
+    <div class="fs-inner">
+      <div class="fs-eyebrow" id="fsEyebrow">随机文法</div>
+      <div class="fs-pattern" id="fsPattern"></div>
+      <div class="fs-sentence" id="fsSentence"></div>
+      <div class="fs-zh" id="fsZh"></div>
+      <div class="fs-meaning" id="fsMeaning"></div>
+    </div>
   </div>
 
   <a class="companion-link" href="/">
