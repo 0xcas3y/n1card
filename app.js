@@ -47,6 +47,20 @@ const DataStore = {
     if (!res.ok) throw new Error(`${CARD_DATA_URL} fetch failed: ${res.status}`);
     const data = await res.json();
     this.cards = data.cards;
+    // 给每张卡片补上 compositeId(level:category:id)——真人语音音频文件是按这个命名的。
+    // 统一会话模式(today.html)走 CardPool/mergeLevelPool 本来就会带上它；这条传统单文件
+    // 页面路径(n1.html/n1-noun.html等)之前没补，vocabAudioSrc()拿到undefined直接返回null，
+    // 导致这些页面的朗读一直在默默退回旧的浏览器系统发音，听起来就是"没换成真人声音"。
+    let level = null, category = null;
+    outer:
+    for (const [lv, cats] of Object.entries(LEVEL_CATEGORY_FILES)) {
+      for (const [cat, url] of Object.entries(cats)) {
+        if (url === CARD_DATA_URL) { level = lv; category = cat; break outer; }
+      }
+    }
+    if (level && category) {
+      this.cards = this.cards.map(c => ({ ...c, category, compositeId: `${level}:${category}:${c.id}` }));
+    }
     this.loadOverrides();
     for (const id in this.overrides) {
       const i = this.cards.findIndex(c => c.id === parseInt(id, 10));
