@@ -396,8 +396,8 @@ body{font-family:'M PLUS Rounded 1c','Noto Sans JP',sans-serif;min-height:100%;o
 
 /* ═══════════════════════════════════════════════
    卡片例句真人语音播放
-   跟卡片点击朗读相关的三处代码(_playExample / speakExample /
-   restoreSentenceTTS 补丁)共用这一个 <audio> 元素和这个函数：
+   跟卡片点击朗读相关的两处代码(_playExample / speakExample)
+   共用这一个 <audio> 元素和这个函数：
    优先播 grammar/audio/{level}/{id}-{index}.mp3 这个预生成的真人录音，
    文件缺失/加载失败(比如新加的条目还没来得及生成)才退回浏览器朗读。
    ═══════════════════════════════════════════════ */
@@ -3388,66 +3388,6 @@ const app = new GrammarApp({
 </script>
    
    <script>
-(function restoreSentenceTTS(){
-  function wait(){
-    if (typeof app === 'undefined') return setTimeout(wait, 80);
-
-    // 防止重复绑定
-    if (app.__ttsPatched) return;
-    app.__ttsPatched = true;
-
-    function bind(){
-      document.querySelectorAll('.exb').forEach(el => {
-        if (el.__ttsBound) return;
-        el.__ttsBound = true;
-
-        el.addEventListener('click', (e) => {
-
-          // 👉 如果点到词（查词用），就不要朗读
-          if (e.target.closest('.kword') || e.target.closest('.fw')) return;
-
-          // 清掉之前高亮
-          document.querySelectorAll('.exb.playing').forEach(x=>{
-            x.classList.remove('playing');
-          });
-
-          el.classList.add('playing');
-
-          const text = el.innerText.trim();
-          const clear = () => el.classList.remove('playing');
-          cancelCardAudio();
-          speechSynthesis.cancel();
-
-          const speakFallback = () => {
-            if (!text) { clear(); return; }
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'ja-JP';
-            u.onend = clear;
-            u.onerror = clear;
-            speechSynthesis.speak(u);
-          };
-
-          if (el.dataset.audio) {
-            playCardAudio(el.dataset.audio).then(clear).catch(speakFallback);
-          } else {
-            speakFallback();
-          }
-        });
-      });
-    }
-
-    // 首次绑定
-    bind();
-
-    // 如果页面有翻页/切换，需要重新绑定
-    const observer = new MutationObserver(bind);
-    observer.observe(document.body, { childList: true, subtree: true });
-
-  }
-
-  wait();
-})();
-
 // 练习题点击处理
 window._quizClick = function(btn) {
   const qi = btn.dataset.qi;

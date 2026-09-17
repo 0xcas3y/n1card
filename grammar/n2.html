@@ -3850,35 +3850,6 @@ const app = new GrammarApp({
     speechSynthesis.speak(u);
   }
 
-  function bindSentenceTTS() {
-    document.querySelectorAll('.exb').forEach(el => {
-      if (el.__sentenceTTSBound) return;
-      el.__sentenceTTSBound = true;
-
-      el.style.cursor = 'pointer';
-
-      el.addEventListener('click', function (e) {
-        // 点到词本身时，不触发整句朗读
-        if (e.target.closest('.kword') || e.target.closest('.fw')) return;
-
-        document.querySelectorAll('.exb.playing').forEach(x => {
-          x.classList.remove('playing');
-        });
-
-        el.classList.add('playing');
-
-        // 优先取日文句子
-        const ft = el.querySelector('.ft');
-        const plain = el.querySelector('.plain-ex');
-        const text = (ft ? ft.textContent : (plain ? plain.textContent : el.innerText)).trim();
-
-        speakJa(text, () => {
-          el.classList.remove('playing');
-        });
-      });
-    });
-  }
-
   function bindPopupSpeak() {
     const btn = document.getElementById('kspeak');
     if (!btn || btn.__popupSpeakBound) return;
@@ -3946,7 +3917,6 @@ const app = new GrammarApp({
 
   function boot() {
     injectPlayingStyle();
-    bindSentenceTTS();
     bindPopupSpeak();
     patchLookupWord();
 
@@ -3954,7 +3924,6 @@ const app = new GrammarApp({
     if (!window.__ttsObserverAdded) {
       window.__ttsObserverAdded = true;
       const observer = new MutationObserver(() => {
-        bindSentenceTTS();
         bindPopupSpeak();
       });
       observer.observe(document.body, { childList: true, subtree: true });

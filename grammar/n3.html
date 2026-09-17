@@ -509,13 +509,6 @@ class GrammarApp {
     // modal
     document.getElementById('mClose').addEventListener('click', () => this._closeMod());
     document.getElementById('mov').addEventListener('click', e => { if(e.target===document.getElementById('mov'))this._closeMod(); });
-    // 整句点击播放
-    document.addEventListener('click', e => {
-      const ex = e.target.closest('.exb[data-speak]');
-      if (!ex) return;
-      if (e.target.closest('.fw,.kword,button,input')) return;
-      this._playExample(ex, ex.dataset.speak || '');
-    });
     document.getElementById('mSpk1').addEventListener('click', () => this._spkMod(1.0));
     document.getElementById('mSpk2').addEventListener('click', () => this._spkMod(0.65));
   }
