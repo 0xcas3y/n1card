@@ -19,14 +19,13 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 20px 24px; border-radius: 14px;
       text-decoration: none; color: #fff;
-      background: #2a2a2a; border: 1px solid #444;
       box-shadow: 0 4px 12px rgba(0,0,0,0.25);
       transition: transform 0.1s, box-shadow 0.15s;
     }
     .level-btn:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-    .level-btn .lv { font-size: 20px; font-weight: 700; }
-    .level-btn .meta { font-size: 13px; opacity: 0.75; text-align: right; flex: 1; margin: 0 12px; }
-    .level-btn .arrow { font-size: 22px; opacity: 0.7; }
+    .level-btn .lv { font-size: 20px; font-weight: 700; flex: 0 0 auto; }
+    .level-btn .meta { font-size: 13px; opacity: 0.85; text-align: center; flex: 1; margin: 0 12px; }
+    .level-btn .arrow { font-size: 22px; opacity: 0.7; flex: 0 0 auto; }
   </style>
 </head>
 <body>
@@ -40,28 +39,29 @@
     const rawLevel = (params.get('level') || 'n1').toLowerCase();
     const level = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(rawLevel) ? rawLevel : 'n1';
     const LEVEL_LABEL = level.toUpperCase();
-    document.getElementById('picker-title').textContent = `📚 ${LEVEL_LABEL} 选择词性`;
+    document.getElementById('picker-title').textContent = `${LEVEL_LABEL} 选择词性`;
     // 各词性子库目前的数据覆盖情况：N1/N2/N3/N4/N5 全部都有形容词/副词/拟声词/名词；
     // N2 额外多一个复合动词
     const HAS_ADVERB = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(level);
     const HAS_NOUN = ['n1', 'n2', 'n3', 'n4', 'n5'].includes(level);
     const HAS_COMPOUND = ['n2'].includes(level);
+    // 跟首页同一套配色，每个词性固定一个颜色，保持视觉上的一致性
     const OPTIONS = [
-      { label: '🈁 动词', href: `${level}.html`, desc: '自由刷卡' },
-      { label: '🎨 形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验' },
+      { label: '动词', href: `${level}.html`, desc: '自由刷卡', bg: '#4FA896' },
+      { label: '形容词', href: `${level}-adj.html`, desc: '自由刷卡 + 测验', bg: '#8A6FB8' },
     ];
     if (HAS_ADVERB) {
-      OPTIONS.push({ label: '💬 副词', href: `${level}-adverb.html`, desc: '自由刷卡 + 测验' });
+      OPTIONS.push({ label: '副词', href: `${level}-adverb.html`, desc: '自由刷卡 + 测验', bg: '#5A9AD4' });
     }
-    OPTIONS.push({ label: '🔊 拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验' });
+    OPTIONS.push({ label: '拟声词', href: `${level}-onomatope.html`, desc: '自由刷卡 + 测验', bg: '#C75F87' });
     if (HAS_NOUN) {
-      OPTIONS.push({ label: '📦 名词', href: `${level}-noun.html`, desc: '自由刷卡 + 测验' });
+      OPTIONS.push({ label: '名词', href: `${level}-noun.html`, desc: '自由刷卡 + 测验', bg: '#D97B5F' });
     }
     if (HAS_COMPOUND) {
-      OPTIONS.push({ label: '🔀 复合动词', href: `${level}-compound.html`, desc: '自由刷卡 + 测验' });
+      OPTIONS.push({ label: '复合动词', href: `${level}-compound.html`, desc: '自由刷卡 + 测验', bg: '#3E8A9E' });
     }
     document.getElementById('picker-list').innerHTML = OPTIONS.map(o => `
-      <a class="level-btn" href="${o.href}">
+      <a class="level-btn" href="${o.href}" style="background:${o.bg}">
         <span class="lv">${o.label}</span>
         <span class="meta">${o.desc}</span>
         <span class="arrow">›</span>

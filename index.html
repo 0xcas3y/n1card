@@ -22,10 +22,11 @@
       transition: transform 0.1s, box-shadow 0.15s;
     }
     .level-btn:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-    .level-btn .lv { font-size: 28px; font-weight: 700; letter-spacing: 2px; }
-    .level-btn .meta { font-size: 14px; opacity: 0.9; text-align: right; }
-    .level-btn .count { font-size: 18px; font-weight: 500; display: block; }
-    .level-btn .arrow { font-size: 22px; margin-left: 16px; opacity: 0.7; }
+    .level-btn .lv { font-size: 28px; font-weight: 700; letter-spacing: 2px; flex: 0 0 auto; }
+    .level-btn .meta { flex: 1; display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; }
+    .level-btn .count { font-size: 18px; font-weight: 500; }
+    .level-btn .desc { font-size: 13px; opacity: 0.85; }
+    .level-btn .arrow { font-size: 22px; margin-left: 16px; opacity: 0.7; flex: 0 0 auto; }
     .lv-n5 { background: #4FA896; }
     .lv-n4 { background: #3E8A9E; }
     .lv-n3 { background: #5A9AD4; }
@@ -79,7 +80,7 @@
 <body>
   <div class="hub">
     <div id="hub-main">
-    <h1>📚 日语动词速记</h1>
+    <h1>日语动词速记</h1>
     <p class="subtitle"><strong>点今日日历</strong>进入今日滑卡：新词+到期复习混在一起滑，滑完当天打卡。随时可用「回忆模式」听读巩固，不影响进度。</p>
 
     <div id="streak-box" class="streak-box" style="display:none;"></div>
@@ -98,27 +99,27 @@
     <div class="level-list">
       <a class="level-btn lv-n5" href="word-type-picker.html?level=n5">
         <span class="lv">N5</span>
-        <span class="meta"><span class="count">612 词</span>入门基础</span>
+        <span class="meta"><span class="count">612 词</span><span class="desc">入门基础</span></span>
         <span class="arrow">›</span>
       </a>
       <a class="level-btn lv-n4" href="word-type-picker.html?level=n4">
         <span class="lv">N4</span>
-        <span class="meta"><span class="count">616 词</span>初级日常</span>
+        <span class="meta"><span class="count">616 词</span><span class="desc">初级日常</span></span>
         <span class="arrow">›</span>
       </a>
       <a class="level-btn lv-n3" href="word-type-picker.html?level=n3">
         <span class="lv">N3</span>
-        <span class="meta"><span class="count">1352 词</span>中级过渡</span>
+        <span class="meta"><span class="count">1352 词</span><span class="desc">中级过渡</span></span>
         <span class="arrow">›</span>
       </a>
       <a class="level-btn lv-n2" href="word-type-picker.html?level=n2">
         <span class="lv">N2</span>
-        <span class="meta"><span class="count">2437 词</span>中高级</span>
+        <span class="meta"><span class="count">2437 词</span><span class="desc">中高级</span></span>
         <span class="arrow">›</span>
       </a>
       <a class="level-btn lv-n1" href="word-type-picker.html?level=n1">
         <span class="lv">N1</span>
-        <span class="meta"><span class="count">2267 词</span>高级精通</span>
+        <span class="meta"><span class="count">2267 词</span><span class="desc">高级精通</span></span>
         <span class="arrow">›</span>
       </a>
     </div>
@@ -127,8 +128,8 @@
 
     <div class="level-list">
       <a class="level-btn external" href="/grammar/">
-        <span class="lv" style="font-size: 22px;">📖 文法</span>
-        <span class="meta"><span class="count">N5 → N1</span>日语语法卡片</span>
+        <span class="lv" style="font-size: 22px;">文法</span>
+        <span class="meta"><span class="count">N5 → N1</span><span class="desc">日语语法卡片</span></span>
         <span class="arrow">›</span>
       </a>
     </div>
@@ -137,8 +138,8 @@
 
     <div class="level-list">
       <a class="level-btn external" href="/onomatope/" style="background: linear-gradient(135deg, #C75F87, #A84571); border: 0;">
-        <span class="lv" style="font-size: 22px;">🌸 オノマトペ</span>
-        <span class="meta"><span class="count">292 词</span>拟声拟态词 · 带动漫实例</span>
+        <span class="lv" style="font-size: 22px;">オノマトペ</span>
+        <span class="meta"><span class="count">292 词</span><span class="desc">拟声拟态词 · 带动漫实例</span></span>
         <span class="arrow">›</span>
       </a>
     </div>
@@ -146,15 +147,15 @@
     <div class="section-divider">· 巩固 ·</div>
     <div class="level-list">
       <a class="level-btn external" href="/recall.html" style="background: linear-gradient(135deg, #4FA896, #3E8A9E); border: 0;">
-        <span class="lv" style="font-size: 22px;">🧠 回忆模式</span>
-        <span class="meta"><span class="count">随时可用</span>看着复习 · 听力通勤复习</span>
+        <span class="lv" style="font-size: 22px;">回忆模式</span>
+        <span class="meta"><span class="count">随时可用</span><span class="desc">看着复习 · 听力通勤复习</span></span>
         <span class="arrow">›</span>
       </a>
     </div>
 
     <p class="footer">
-      单击卡片发音 · 双击翻面 · 左划不熟 · 右划已掌握 · 🧠 洗脑模式<br>
-      <a href="support.html">🌹 支持一下</a> · jlptcards.app
+      单击卡片发音 · 双击翻面 · 左划不熟 · 右划已掌握 · 洗脑模式<br>
+      <a href="support.html">支持一下</a> · jlptcards.app
     </p>
     </div><!-- #hub-main -->
     <div id="day-view" style="display:none;"></div>
