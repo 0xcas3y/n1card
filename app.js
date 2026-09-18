@@ -696,10 +696,10 @@ const BrainwashMode = {
   },
 
   async _playCard(card) {
-    // 正面阶段：10 × word，每次 pulse
+    // 正面阶段：5 × word，每次 pulse
     Router.flipped = false;
     Router.showCurrent();
-    for (let i = 0; i < 10 && !this._aborted; i++) {
+    for (let i = 0; i < 5 && !this._aborted; i++) {
       await this._waitIfPaused();
       this._pulseWord();
       await TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
