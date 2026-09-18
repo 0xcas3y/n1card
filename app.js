@@ -704,7 +704,7 @@ const BrainwashMode = {
       this._pulseWord();
       await TTSEngine.speak(card.kana, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, 'w') });
       if (this._aborted) return;
-      await this._sleep(300);
+      await this._sleep(120);
     }
     if (this._aborted) return;
     await this._ding();
@@ -722,12 +722,12 @@ const BrainwashMode = {
         this._highlightExampleRow(exIdx);
         await TTSEngine.speak(ex.jp, { rate: Progress.getTTSRate(), audioSrc: vocabAudioSrc(card.compositeId, `e${exIdx}`) });
         if (this._aborted) return;
-        await this._sleep(300);
+        await this._sleep(120);
       }
       if (this._aborted) return;
       if (exIdx < card.examples.length - 1) await this._ding();
     }
-    await this._sleep(800);
+    await this._sleep(350);
   },
 
   _pulseWord() {
