@@ -377,9 +377,131 @@ const RetrospectView = {
   }
 };
 
+// 全站词汇搜索：不分等级/词性，一次性拉取 plan.js 里登记的全部26个词汇文件，
+// 在内存里做子串匹配。懒加载——用户第一次跟搜索框交互才去 fetch，
+// 建好之后缓存在内存里，同一次页面停留内不用重新拉取。
+const CATEGORY_LABELS = { verb: '动词', noun: '名词', adj: '形容词', adverb: '副词', onomatope: '拟声词', compound: '复合动词' };
+const CATEGORY_TAG_COLOR = { verb: '#4FA896', noun: '#D97B5F', adj: '#8A6FB8', adverb: '#5A9AD4', onomatope: '#C75F87', compound: '#3E8A9E' };
+// 词性 -> 对应单词页面的文件名后缀，跟 word-type-picker.html 里的映射保持一致
+function categoryPageUrl(level, category) {
+  const suffix = category === 'verb' ? '' : `-${category}`;
+  return `${level}${suffix}.html`;
+}
+
+const WordSearch = {
+  _index: null,       // 建好后缓存：[{level, category, id, word, kana, meaning, pageUrl}, ...]
+  _building: null,    // 建索引的 promise，防止用户多次触发重复拉取
+
+  async ensureIndex() {
+    if (this._index) return this._index;
+    if (this._building) return this._building;
+    this._building = (async () => {
+      const jobs = [];
+      for (const [level, registry] of Object.entries(LEVEL_CATEGORY_FILES)) {
+        for (const [category, url] of Object.entries(registry)) {
+          jobs.push(
+            fetch(url).then(res => res.json()).then(data => ({ level, category, cards: data.cards || [] }))
+          );
+        }
+      }
+      const results = await Promise.all(jobs);
+      const index = [];
+      for (const { level, category, cards } of results) {
+        const pageUrl = categoryPageUrl(level, category);
+        for (const c of cards) {
+          index.push({
+            level, category, id: c.id, word: c.word, kana: c.kana,
+            meaning: (c.meanings && c.meanings[0]) || '',
+            pageUrl
+          });
+        }
+      }
+      this._index = index;
+      return index;
+    })();
+    return this._building;
+  },
+
+  search(query) {
+    if (!this._index) return [];
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    const hits = [];
+    for (const item of this._index) {
+      if (
+        item.word.toLowerCase().includes(q) ||
+        item.kana.toLowerCase().includes(q) ||
+        item.meaning.toLowerCase().includes(q)
+      ) {
+        hits.push(item);
+        if (hits.length >= 50) break;
+      }
+    }
+    return hits;
+  }
+};
+
+function initWordSearch() {
+  const input = document.getElementById('word-search');
+  const clearBtn = document.getElementById('word-search-clear');
+  const statusEl = document.getElementById('word-search-status');
+  const resultsEl = document.getElementById('word-search-results');
+  if (!input) return;
+
+  let debounceTimer = null;
+  let indexReady = false;
+
+  const renderResults = (query) => {
+    const q = query.trim();
+    clearBtn.style.display = q ? 'block' : 'none';
+    if (!q) { statusEl.textContent = ''; resultsEl.innerHTML = ''; return; }
+    if (!indexReady) { statusEl.textContent = '正在加载词库…'; resultsEl.innerHTML = ''; return; }
+    const hits = WordSearch.search(q);
+    if (hits.length === 0) {
+      statusEl.textContent = '没有找到相关单词';
+      resultsEl.innerHTML = '';
+      return;
+    }
+    statusEl.textContent = `共 ${hits.length}${hits.length >= 50 ? '+' : ''} 个结果${hits.length >= 50 ? '（仅显示前50条，试试更精确的关键词）' : ''}`;
+    resultsEl.innerHTML = hits.map(h => {
+      const tagColor = CATEGORY_TAG_COLOR[h.category] || '#555';
+      const tagLabel = `${h.level.toUpperCase()} · ${CATEGORY_LABELS[h.category] || h.category}`;
+      const url = `${h.pageUrl}?session=general-review&ids=${h.id}&mode=swipe`;
+      return `
+        <a class="search-result" href="${url}">
+          <span class="sr-tag" style="background:${tagColor}">${tagLabel}</span>
+          <span class="sr-word">${h.word}</span>
+          <span class="sr-kana">${h.word !== h.kana ? h.kana : ''}</span>
+          <span class="sr-meaning">${h.meaning}</span>
+        </a>
+      `;
+    }).join('');
+  };
+
+  input.addEventListener('focus', async () => {
+    if (indexReady) return;
+    statusEl.textContent = input.value.trim() ? '正在加载词库…' : '';
+    await WordSearch.ensureIndex();
+    indexReady = true;
+    renderResults(input.value);
+  }, { once: true });
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => renderResults(input.value), 150);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    renderResults('');
+    input.focus();
+  });
+}
+
 // 启动：页面加载时渲染首页
 document.addEventListener('DOMContentLoaded', () => {
   renderHubBody();
+  initWordSearch();
 
   const params = new URLSearchParams(location.search);
   if (params.get('today_completed') === '1') {
