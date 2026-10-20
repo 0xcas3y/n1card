@@ -39,16 +39,16 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .front-word[data-len="7"] { font-size: clamp(28px, 8vw, 48px); letter-spacing: 0; }
 .front-word[data-len="8"] { font-size: clamp(24px, 7vw, 42px); letter-spacing: 0; }
 .hint-bottom { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: 0.5; letter-spacing: 1px; }
-.back-head { font-size: 34px; font-weight: 600; margin-right: 50px; }
-.back-kana { font-size: 14px; opacity: 0.85; margin-bottom: 14px; }
-.section-title { font-size: 18px; font-weight: 500; margin: 12px 0 6px; opacity: 0.95; }
-.section-body { font-size: 17px; line-height: 1.7; opacity: 0.95; }
+.back-head { font-size: 37px; font-weight: 600; margin-right: 50px; }
+.back-kana { font-size: 15px; opacity: 0.85; margin-bottom: 14px; }
+.section-title { font-size: 19px; font-weight: 500; margin: 12px 0 6px; opacity: 0.95; }
+.section-body { font-size: 18px; line-height: 1.7; opacity: 0.95; }
 .section-body-pre { white-space: pre-wrap; }
 .sentence-row { padding: 8px 10px; border-radius: 8px; margin: 4px -10px; cursor: pointer; transition: background 0.15s; }
 .sentence-row:hover, .sentence-row:active { background: rgba(255,255,255,0.14); }
 .sentence-row.brainwash-playing { background: rgba(255,255,255,0.28); box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
-.sentence-row .jp { font-size: 16px; line-height: 1.5; }
-.sentence-row .cn { font-size: 13px; opacity: 0.75; margin-top: 2px; }
+.sentence-row .jp { font-size: 17px; line-height: 1.5; }
+.sentence-row .cn { font-size: 14px; opacity: 0.75; margin-top: 2px; }
 .flash-card.back { padding-top: 24px; padding-bottom: 36px; overflow-y: auto; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 /* 正面也允许垂直滚动（少数情况用）→ 用 pan-y，水平划由 JS 检测 */
 .flash-card { touch-action: pan-y; }
