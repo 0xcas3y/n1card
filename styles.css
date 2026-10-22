@@ -5,9 +5,14 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 #cardstage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: manipulation; }
 .flash-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
 .flash-card {
-  width: min(90vw, 360px);
+  /* 宽度/高度的上限之前是写死的360px/75vh——这个数字是按偏小的手机屏幕定的，
+     在iPhone Pro Max这类高宽比更极端、屏幕更大的手机上，90vw/90vh都还没碰到
+     真正的视口边界就先被这两个硬上限卡住了，卡片上下留白变得特别夸张。
+     跟.quiz-card统一用420px这个上限(已经在测验卡片那边验证过效果)，
+     max-height也放宽一些，让卡片能跟着大屏手机的可用空间一起变大。 */
+  width: min(90vw, 420px);
   aspect-ratio: 9 / 16;
-  max-height: 75vh;
+  max-height: 82vh;
   border-radius: 18px;
   padding: 32px 28px;
   color: #fff;
