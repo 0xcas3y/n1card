@@ -6,48 +6,90 @@
   <title>回忆模式</title>
   <link rel="stylesheet" href="styles.css?v=53">
   <style>
-    .recall-wrap { max-width: 480px; margin: 0 auto; padding: 24px 20px; }
-    .recall-picker { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-    .recall-picker select { padding: 10px; border-radius: 10px; font-size: 15px; }
-    .recall-mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-    .recall-mode-tab { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #1a1a1a; color: #ccc; text-align: center; cursor: pointer; }
+    .recall-wrap { max-width: 480px; margin: 0 auto; padding: 32px 20px 60px; }
+    .recall-back { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; }
+    .recall-back:hover { color: #fff; }
+    .recall-wrap h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+    .recall-subtitle { font-size: 13px; opacity: 0.6; line-height: 1.6; margin-bottom: 28px; }
+
+    .recall-section { margin-bottom: 20px; }
+    .recall-label {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      opacity: 0.5; margin-bottom: 8px; display: block;
+    }
+    .recall-picker select,
+    .recall-gap-setting select {
+      background: #1a1a1a; color: #fff; border: 1px solid #333;
+      padding: 10px 12px; border-radius: 10px; font-size: 14px; font-family: inherit;
+      width: 100%;
+    }
+    .recall-custom-picker { display: flex; gap: 8px; margin-top: 8px; }
+    .recall-custom-picker select { flex: 1; }
+
+    .recall-mode-tabs { display: flex; gap: 8px; }
+    .recall-mode-tab {
+      flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #2a2a2a;
+      background: #1a1a1a; color: #999; text-align: center; cursor: pointer;
+      font-size: 14px; transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
     .recall-mode-tab.active { background: #4FA896; color: #fff; border-color: #4FA896; }
-    .recall-stage { text-align: center; padding: 60px 20px; min-height: 200px; }
-    .recall-word { font-size: 32px; font-weight: 600; margin-bottom: 12px; }
-    .recall-kana { font-size: 18px; opacity: 0.7; margin-bottom: 20px; }
-    .recall-meaning { font-size: 20px; color: #4FA896; min-height: 28px; }
-    .recall-progress { font-size: 13px; opacity: 0.5; margin-top: 20px; }
-    .recall-gap-setting { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 16px; }
+
+    .recall-gap-setting {
+      display: flex; align-items: center; gap: 10px; justify-content: space-between;
+    }
+    .recall-gap-setting .recall-label { margin-bottom: 0; white-space: nowrap; }
+    .recall-gap-setting select { width: auto; flex: 0 0 auto; }
+
+    .recall-start-btn {
+      width: 100%; margin-top: 8px; padding: 14px;
+      background: #4FA896; color: #fff; border: 0; border-radius: 12px;
+      font-size: 16px; font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .recall-start-btn:hover { opacity: 0.88; }
+
+    .recall-stage { text-align: center; padding: 48px 20px; min-height: 220px; }
+    .recall-word { font-size: 34px; font-weight: 600; margin-bottom: 10px; }
+    .recall-kana { font-size: 17px; opacity: 0.7; margin-bottom: 18px; min-height: 22px; }
+    .recall-meaning { font-size: 19px; color: #4FA896; min-height: 26px; }
+    .recall-progress { font-size: 13px; opacity: 0.5; margin-top: 24px; }
   </style>
 </head>
 <body>
   <div class="recall-wrap">
-    <a href="/" style="opacity:0.6;font-size:13px;">← 返回</a>
-    <h2>🧠 回忆模式</h2>
-    <div class="recall-picker">
-      <label>取词范围：
-        <select id="recall-scope">
-          <option value="current">当前主攻</option>
-          <option value="overall">综合（跨等级跨词性）</option>
-          <option value="custom">自由指定</option>
-        </select>
-      </label>
-      <div id="recall-custom-picker" style="display:none;">
+    <a class="recall-back" href="/">‹ 返回</a>
+    <h1>回忆模式</h1>
+    <p class="recall-subtitle">只朗读/巩固已学过的词，不影响学习进度，随时可以暂停继续。</p>
+
+    <div class="recall-section recall-picker">
+      <label class="recall-label">取词范围</label>
+      <select id="recall-scope">
+        <option value="current">当前主攻</option>
+        <option value="overall">综合（跨等级跨词性）</option>
+        <option value="custom">自由指定</option>
+      </select>
+      <div id="recall-custom-picker" class="recall-custom-picker" style="display:none;">
         <select id="recall-level"><option value="n1">N1</option><option value="n2">N2</option><option value="n3">N3</option><option value="n4">N4</option><option value="n5">N5</option></select>
         <select id="recall-category"><option value="verb">动词</option><option value="noun">名词</option><option value="adj">形容词</option><option value="adverb">副词</option><option value="onomatope">拟声词</option><option value="compound">复合动词(仅N2)</option></select>
       </div>
     </div>
-    <div class="recall-mode-tabs">
-      <div class="recall-mode-tab active" data-mode="visual">👀 看着复习</div>
-      <div class="recall-mode-tab" data-mode="audio">🎧 听力/通勤复习</div>
+
+    <div class="recall-section">
+      <label class="recall-label">复习方式</label>
+      <div class="recall-mode-tabs">
+        <div class="recall-mode-tab active" data-mode="visual">看着复习</div>
+        <div class="recall-mode-tab" data-mode="audio">听力 / 通勤复习</div>
+      </div>
     </div>
-    <div class="recall-gap-setting" id="recall-gap-setting">
-      间隔（回忆时间）：
+
+    <div class="recall-section recall-gap-setting" id="recall-gap-setting">
+      <label class="recall-label">间隔（回忆时间）</label>
       <select id="recall-gap"><option value="0.5">0.5秒</option><option value="1" selected>1秒</option><option value="1.5">1.5秒</option></select>
     </div>
-    <button class="ds-btn" id="recall-start" style="width:100%;margin-top:20px;">开始</button>
+
+    <button class="recall-start-btn" id="recall-start">开始</button>
     <div id="recall-stage" class="recall-stage" style="display:none;"></div>
   </div>
-  <script type="module" src="recall.js?v=56"></script>
+  <script type="module" src="recall.js?v=57"></script>
 </body>
 </html>

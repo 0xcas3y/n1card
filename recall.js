@@ -47,6 +47,7 @@ const RecallTTS = {
   _zhVoice: null,
   _pendingDone: null,
   _pendingTimer: null,
+  _pendingAudioDone: null,
   _keepAliveTimer: null,
   _audioEl: null,
   init() {
@@ -104,16 +105,33 @@ const RecallTTS = {
     }
     return this._speakTTS(text, lang);
   },
+  // 注意：cancel() 暂停时调用 this._audioEl.pause() 并不会触发 onended/onerror，
+  // 之前这里没有登记 _pendingAudioDone，导致暂停时这个 Promise 永远不 resolve/reject——
+  // 外层 await RecallTTS.speak(...) 卡死，后续的 checkpoint() 再也不会被执行到，
+  // 暂停按钮就卡在"暂停"状态点不动了。现在仿照 _speakTTS 的 _pendingDone 模式，
+  // 让 cancel() 能主动把这个 Promise 结束掉。
   _playAudioFile(src) {
     return new Promise((resolve, reject) => {
       if (!this._audioEl) this._audioEl = new Audio();
       const audio = this._audioEl;
-      const cleanup = () => { audio.onended = null; audio.onerror = null; };
-      audio.onended = () => { cleanup(); resolve(); };
-      audio.onerror = () => { cleanup(); reject(new Error('audio load failed')); };
+      let done = false;
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        audio.onended = null;
+        audio.onerror = null;
+        clearTimeout(timer);
+        if (this._pendingAudioDone === finish) this._pendingAudioDone = null;
+        ok ? resolve() : reject(new Error('audio load failed'));
+      };
+      this._pendingAudioDone = finish;
+      audio.onended = () => finish(true);
+      audio.onerror = () => finish(false);
       audio.src = src;
       const p = audio.play();
-      if (p && p.catch) p.catch(err => { cleanup(); reject(err); });
+      if (p && p.catch) p.catch(() => finish(false));
+      // 保险超时，跟 _speakTTS 的兜底是同一个道理
+      const timer = setTimeout(() => finish(true), 8000);
     });
   },
   _speakTTS(text, lang) {
@@ -141,6 +159,8 @@ const RecallTTS = {
     if (this._supported) speechSynthesis.cancel();
     if (this._audioEl) { try { this._audioEl.pause(); } catch {} }
     if (this._pendingDone) this._pendingDone();
+    // 当成"播完"而不是失败处理：暂停时不该再触发 TTS 兜底重新念一遍
+    if (this._pendingAudioDone) this._pendingAudioDone(true);
     this._stopKeepAlive();
   }
 };
@@ -267,16 +287,26 @@ async function startSession() {
 
       stage.innerHTML = `
         <div class="recall-word">${card.word}</div>
-        <div class="recall-kana">${card.word !== card.kana ? card.kana : ''}</div>
+        <div class="recall-kana" id="recall-kana"></div>
         <div class="recall-meaning" id="recall-meaning"></div>
         <div class="recall-progress">${i + 1} / ${pool.length}</div>
       `;
-      // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文；
-      // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认
+      // 有汉字的词，假名读法先不显示——先让自己回忆怎么读，等解释(释义)出现
+      // 的那一刻再跟着一起显示，不要提前"剧透"。word===kana(比如拟声词)本来
+      // 就没有假名可藏，不受这个逻辑影响。
+      const revealKana = () => {
+        if (card.word !== card.kana) {
+          const el = document.getElementById('recall-kana');
+          if (el) el.textContent = card.kana;
+        }
+      };
+      // 不管看着复习还是听力复习，日语都读满3遍；看着复习在第3遍开始时同步显示中文+假名；
+      // 听力复习读完3遍日语后，再额外读一遍中文释义作为收尾确认，假名也在这时才显示
       for (let rep = 0; rep < 3; rep++) {
         await checkpoint();
         if (rep === 2 && selectedMode === 'visual') {
           document.getElementById('recall-meaning').textContent = (card.meanings && card.meanings[0]) || '';
+          revealKana();
         }
         await RecallTTS.speak(card.kana, 'ja-JP', vocabAudioSrc(card.compositeId));
         await checkpoint();
@@ -286,13 +316,14 @@ async function startSession() {
       if (selectedMode === 'audio') {
         await sleep(gapSec * 1000);
         await checkpoint();
+        revealKana();
         const meaning = (card.meanings && card.meanings[0]) || '';
         await RecallTTS.speak(meaning, 'zh-CN');
       }
       await checkpoint();
       await sleep(400);
     }
-    stage.innerHTML = `<div class="recall-word">🎉 本轮完成</div>`;
+    stage.innerHTML = `<div class="recall-word">本轮完成</div>`;
   } catch (err) {
     console.error('回忆模式出错', err);
     stage.style.display = 'block';
