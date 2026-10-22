@@ -239,11 +239,21 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
 }
 .qs-done:hover { background: rgba(0,0,0,0.4); }
 
-/* DayView + RetrospectView（撑满视口高度+纵向居中的逻辑统一放在外层 .hub 上，
-   见 index.html；这里只负责内容本身的宽度和内边距） */
+/* DayView + RetrospectView（整体撑满视口高度的逻辑在外层 .hub 上，见 index.html）。
+   DayView内容是6个独立小节(标题行/打卡状态/规则/当前等级/今日滑卡卡片/切换等级)，
+   之前只是纵向居中——大屏手机上还是会变成"一坨内容飘在屏幕中间、上下各一大块黑"，
+   没有真正铺满。改成自己也撑满可用高度(flex:1)，内部小节用space-between摊开，
+   标题贴顶、切换等级贴底，内容实际占满从顶到底的空间，而不只是被居中。
+   RetrospectView内容很少(标题行+一行结果)，摊开会显得更空，维持在.hub里居中就好。 */
 #day-view, #retro-view {
   width: 100%;
   max-width: 600px; margin: 0 auto; padding: 20px 16px;
+}
+#day-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .day-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .day-back { background: none; border: 0; color: #888; font-size: 14px; cursor: pointer; padding: 4px 8px; }
