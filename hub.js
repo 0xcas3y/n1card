@@ -190,7 +190,11 @@ const DayView = {
     document.querySelector('#hub-main').style.display = 'none';
     document.querySelector('#retro-view').style.display = 'none';
     const el = document.querySelector('#day-view');
-    el.style.display = 'block';
+    // 这里必须设成flex，不能是block——CSS里#day-view自己要用
+    // display:flex做内部小节的space-between摊开布局，内联style的
+    // 优先级比样式表规则高，设成block会把flex直接覆盖掉，内部还是
+    // 普通堆叠，铺满视口的效果就白做了。
+    el.style.display = 'flex';
 
     const level = CurrentLevel.get();
     const streakCurrent = Streak.load().current || 0;
