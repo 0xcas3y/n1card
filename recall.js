@@ -321,7 +321,10 @@ async function startSession() {
         await RecallTTS.speak(meaning, 'zh-CN');
       }
       await checkpoint();
-      await sleep(400);
+      // 之前固定停400ms才切下一张，不受"间隔"下拉控制——间隔调到0秒后
+      // 这一下反而成了全场唯一还卡着的停顿，节奏显得不紧凑。缩到150ms，
+      // 够区分"这张结束了/下一张开始"，又不会拖节奏。
+      await sleep(150);
     }
     stage.innerHTML = `<div class="recall-word">本轮完成</div>`;
   } catch (err) {
