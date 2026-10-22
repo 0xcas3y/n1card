@@ -3,6 +3,7 @@ import {
   computeBatchesAllowed, pruneOldCohorts,
   LEVEL_CATEGORY_FILES, pickRecommendedCategory, computeNewWordQueue, computeDueIds
 } from './plan.js';
+import { CATEGORY_LABELS, CATEGORY_TAG_COLOR, WordSearch } from './wordIndex.js';
 
 const LEVELS = ['n1', 'n2', 'n3', 'n4', 'n5', 'ono'];
 const CARD_URLS = {
@@ -377,69 +378,8 @@ const RetrospectView = {
   }
 };
 
-// 全站词汇搜索：不分等级/词性，一次性拉取 plan.js 里登记的全部26个词汇文件，
-// 在内存里做子串匹配。懒加载——用户第一次跟搜索框交互才去 fetch，
-// 建好之后缓存在内存里，同一次页面停留内不用重新拉取。
-const CATEGORY_LABELS = { verb: '动词', noun: '名词', adj: '形容词', adverb: '副词', onomatope: '拟声词', compound: '复合动词' };
-const CATEGORY_TAG_COLOR = { verb: '#4FA896', noun: '#D97B5F', adj: '#8A6FB8', adverb: '#5A9AD4', onomatope: '#C75F87', compound: '#3E8A9E' };
-// 词性 -> 对应单词页面的文件名后缀，跟 word-type-picker.html 里的映射保持一致
-function categoryPageUrl(level, category) {
-  const suffix = category === 'verb' ? '' : `-${category}`;
-  return `${level}${suffix}.html`;
-}
-
-const WordSearch = {
-  _index: null,       // 建好后缓存：[{level, category, id, word, kana, meaning, pageUrl}, ...]
-  _building: null,    // 建索引的 promise，防止用户多次触发重复拉取
-
-  async ensureIndex() {
-    if (this._index) return this._index;
-    if (this._building) return this._building;
-    this._building = (async () => {
-      const jobs = [];
-      for (const [level, registry] of Object.entries(LEVEL_CATEGORY_FILES)) {
-        for (const [category, url] of Object.entries(registry)) {
-          jobs.push(
-            fetch(url).then(res => res.json()).then(data => ({ level, category, cards: data.cards || [] }))
-          );
-        }
-      }
-      const results = await Promise.all(jobs);
-      const index = [];
-      for (const { level, category, cards } of results) {
-        const pageUrl = categoryPageUrl(level, category);
-        for (const c of cards) {
-          index.push({
-            level, category, id: c.id, word: c.word, kana: c.kana,
-            meaning: (c.meanings && c.meanings[0]) || '',
-            pageUrl
-          });
-        }
-      }
-      this._index = index;
-      return index;
-    })();
-    return this._building;
-  },
-
-  search(query) {
-    if (!this._index) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    const hits = [];
-    for (const item of this._index) {
-      if (
-        item.word.toLowerCase().includes(q) ||
-        item.kana.toLowerCase().includes(q) ||
-        item.meaning.toLowerCase().includes(q)
-      ) {
-        hits.push(item);
-        if (hits.length >= 50) break;
-      }
-    }
-    return hits;
-  }
-};
+// 全站词汇搜索相关的 CATEGORY_LABELS/CATEGORY_TAG_COLOR/categoryPageUrl/WordSearch
+// 已经抽到 wordIndex.js，这里只保留跟首页搜索框DOM绑定相关的 initWordSearch()
 
 function initWordSearch() {
   const input = document.getElementById('word-search');
