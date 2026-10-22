@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>单词本 · JLPT 語彙</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #111; color: #fff; font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif; }
+    .wrap { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .back { display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; font-size: 14px; }
+    .back:hover { color: #fff; }
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+    .subtitle { opacity: 0.7; font-size: 13px; margin-bottom: 24px; }
+    .nb-list { display: flex; flex-direction: column; gap: 10px; }
+    .nb-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 12px;
+      background: #1c1c1c; border: 1px solid #2a2a2a;
+      cursor: pointer;
+    }
+    .nb-row:hover { background: #242424; }
+    .nb-tag {
+      flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+      padding: 3px 7px; border-radius: 5px; color: #fff; white-space: nowrap;
+    }
+    .nb-word { flex-shrink: 0; font-size: 17px; font-weight: 600; }
+    .nb-kana { flex-shrink: 0; font-size: 12px; opacity: 0.6; }
+    .nb-meaning {
+      flex: 1; min-width: 0; font-size: 13px; opacity: 0.8;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .nb-date { flex-shrink: 0; font-size: 11px; opacity: 0.5; font-family: monospace; }
+    .nb-remove {
+      flex-shrink: 0; background: none; border: 0; color: #888;
+      font-size: 16px; cursor: pointer; padding: 4px 6px; line-height: 1;
+    }
+    .nb-remove:hover { color: #ff4d6d; }
+    .nb-empty { text-align: center; opacity: 0.5; font-size: 14px; padding: 60px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">‹ 返回</a>
+    <h1>单词本</h1>
+    <p class="subtitle">收藏的词，不分等级词性，按收藏时间排序</p>
+    <div class="nb-list" id="nb-list"></div>
+  </div>
+  <script type="module" src="notebook.js?v=1"></script>
+</body>
+</html>
