@@ -2,18 +2,18 @@
 html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino Sans", "Yu Gothic", "PingFang SC", -apple-system, sans-serif; overscroll-behavior: none; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 #app { height: 100%; display: flex; flex-direction: column; touch-action: manipulation; }
 #topbar { padding: 12px 16px; background: #1a1a1a; font-size: 14px; }
-#cardstage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; touch-action: manipulation; }
+#cardstage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0; touch-action: manipulation; }
 .flash-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
 .flash-card {
-  /* 宽度/高度的上限之前是写死的360px/75vh——这个数字是按偏小的手机屏幕定的，
-     在iPhone Pro Max这类高宽比更极端、屏幕更大的手机上，90vw/90vh都还没碰到
-     真正的视口边界就先被这两个硬上限卡住了，卡片上下留白变得特别夸张。
-     跟.quiz-card统一用420px这个上限(已经在测验卡片那边验证过效果)，
-     max-height也放宽一些，让卡片能跟着大屏手机的可用空间一起变大。 */
-  width: min(90vw, 420px);
-  aspect-ratio: 9 / 16;
-  max-height: 82vh;
-  border-radius: 18px;
+  /* 之前靠90vw/420px宽度算出卡片高度(9:16比例)，手机屏幕越高、留白就越大——
+     iPhone Pro Max这类机型顶栏下面能有一大片黑边。改成直接撑满#cardstage
+     的宽高(它已经是topbar下面剩下的全部空间)，卡片就是那块区域本身，
+     不再按固定比例反推尺寸；max-width给桌面/平板宽屏兜底，不让卡片在
+     很宽的视口里被拉成又矮又扁的长条。 */
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  border-radius: 0;
   padding: 32px 28px;
   color: #fff;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
