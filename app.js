@@ -118,6 +118,7 @@ const Progress = {
     // 滑动：终态覆盖
     const now = Date.now();
     const entry = this._progress[id] || {};
+    entry.seenCount = (entry.seenCount || 0) + 1;
     entry.status = status;
     entry.lastSeen = now;
     entry.correctStreak = 0;  // 滑动清零 quiz streak
@@ -199,7 +200,10 @@ const Progress2 = {
   mark(compositeId, correct) {
     this.load();
     const now = Date.now();
-    this._data[compositeId] = applySwipeResult(this._data[compositeId], correct, now);
+    const prevCount = this._data[compositeId]?.seenCount || 0;
+    const updated = applySwipeResult(this._data[compositeId], correct, now);
+    updated.seenCount = prevCount + 1;
+    this._data[compositeId] = updated;
     this._save();
   },
   getEntry(compositeId) { this.load(); return this._data[compositeId]; },
