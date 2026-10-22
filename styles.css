@@ -29,7 +29,7 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
   border: 2px solid rgba(255,255,255,0.85);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 500;
+  font-size: 13px; font-weight: 500;
 }
 .front-center { flex: 1; display: flex; align-items: center; justify-content: center; }
 .front-word { font-size: clamp(64px, 18vw, 110px); font-weight: 600; letter-spacing: 4px; white-space: nowrap; }

@@ -504,13 +504,19 @@ const Gestures = {
   }
 };
 
+function getSeenCount(card) {
+  return window.UNIFIED_MODE
+    ? (Progress2.getEntry(card.compositeId)?.seenCount || 0)
+    : (Progress.getEntry(card.id)?.seenCount || 0);
+}
+
 const CardView = {
   randomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; },
   renderFront(card, color) {
     const el = document.createElement('div');
     el.className = `flash-card color-${color}`;
     el.innerHTML = `
-      <div class="card-id">${card.origId ?? card.id}</div>
+      <div class="card-id">${getSeenCount(card)}</div>
       <div class="front-center"><div class="front-word" data-len="${[...card.word].length}">${card.word}</div></div>
       <div class="hint-bottom">单击发音 · 双击翻面 · ←难 →易</div>
     `;
@@ -521,7 +527,7 @@ const CardView = {
     el.className = `flash-card back color-${color}`;
     const meanings = card.meanings.map((m, i) => `${['①','②','③','④'][i]} ${m}`).join('<br>');
     el.innerHTML = `
-      <div class="card-id">${card.origId ?? card.id}</div>
+      <div class="card-id">${getSeenCount(card)}</div>
       <div class="back-head">${card.word}</div>
       <div class="back-kana">${card.kana} ${card.accent ? '['+card.accent+']' : ''} ${card.type ? '· '+card.type : ''} ${card.transitivity ? '· '+_normTrans(card.transitivity) : ''}</div>
       <div class="section-title">注释</div>
