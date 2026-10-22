@@ -1,7 +1,7 @@
 import {
   aggregateCheckIns, pickDistractors, computeQuota, isLearnWindowOpen,
   LEVEL_CATEGORY_FILES, mergeLevelPool, applySwipeResult, migrateOldStatus,
-  pickRecommendedCategory, computeNewWordQueue, computeDueIds
+  pickRecommendedCategory, computeNewWordQueue, computeDueIds, computeBatchesAllowed
 } from './plan.js';
 import { Favorites } from './favorites.js';
 
@@ -1519,7 +1519,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           .filter(c => c && !progress2[c.compositeId]);
       } else {
         category = params.get('category') || pickRecommendedCategory(pool, progress2) || 'verb';
-        const quota = parseInt(params.get('quota') || '60', 10);
+        // 配额默认值要跟首页day卡片预览(hub.js _todaySummary)算法一致：
+        // 按累计打卡天数算批数(每满10天+1批，封顶3批)，每批60个新词——
+        // 之前这里写死60，首页却按批数算，批数>1时首页显示的新词数会比
+        // 实际进入session拿到的多，两边对不上。
+        const defaultQuota = computeBatchesAllowed(Streak.getTotal()) * 60;
+        const quota = parseInt(params.get('quota') || String(defaultQuota), 10);
         newCards = computeNewWordQueue(pool, progress2, quota, category);
         try {
           localStorage.setItem(batchKey, JSON.stringify({
