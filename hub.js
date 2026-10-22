@@ -204,8 +204,8 @@ const DayView = {
     el.innerHTML = `
       <div class="day-head">
         <button class="day-back" id="day-back">← 返回</button>
-        <div class="day-date">📅 ${m}月${d}日 · 周${weekday}</div>
-        <div class="day-streak">🔥 ${streakCurrent} 天</div>
+        <div class="day-date">${m}月${d}日 · 周${weekday}</div>
+        <div class="day-streak">${streakCurrent} 天</div>
       </div>
 
       <div class="day-checks">
@@ -215,11 +215,11 @@ const DayView = {
       <details class="day-rules" ${rulesSeen ? '' : 'open'}>
         <summary>规则</summary>
         <ul>
-          <li>🗂️ 今日滑卡 = 新词 + 到期复习混在一起滑，滑卡本身即判定</li>
+          <li>今日滑卡 = 新词 + 到期复习混在一起滑，滑卡本身即判定</li>
           <li>右滑 = 记得（新词进入间隔阶梯，到期词推进一档）；左滑 = 不熟（新词稍后重考，到期词打回第1天档）</li>
           <li>滑完这批即当天打卡，随时可以开始，没有固定时间窗</li>
           <li>新词按 动词→名词→复合动词→形容词→副词→拟声词 推荐顺序，可手动切换词性</li>
-          <li>🧠 回忆模式随时可用，纯巩固不影响进度</li>
+          <li>回忆模式随时可用，纯巩固不影响进度</li>
         </ul>
       </details>
 
@@ -255,13 +255,13 @@ const DayView = {
     const total = summary.newCount + summary.dueCount;
     const done = Streak.getCheckIn(dateStr).done;
     if (done) {
-      return `<div class="day-session-card"><div class="dsc-icon">✅</div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">已完成</div></div></div>`;
+      return `<div class="day-session-card"><div class="dsc-icon"></div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">已完成</div></div></div>`;
     }
     if (total === 0) {
-      return `<div class="day-session-card"><div class="dsc-icon">🎉</div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">暂无新词/到期词</div></div><button class="ds-btn" data-action="auto-today">标记完成</button></div>`;
+      return `<div class="day-session-card"><div class="dsc-icon"></div><div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">暂无新词/到期词</div></div><button class="ds-btn" data-action="auto-today">标记完成</button></div>`;
     }
     return `<div class="day-session-card">
-      <div class="dsc-icon">🗂️</div>
+      <div class="dsc-icon"></div>
       <div class="dsc-body"><div class="dsc-title">今日滑卡</div><div class="dsc-sub">新词 ${summary.newCount} · 到期复习 ${summary.dueCount}</div></div>
       <button class="ds-btn" data-action="today">开始</button>
     </div>`;
@@ -301,9 +301,9 @@ function renderHubBody() {
     const current = state.current || 0;
     const longest = state.longest || 0;
     const total = state.total || 0;
-    const todayFlag = state.lastDate === today ? '✅' : '';
+    const todayFlag = state.lastDate === today ? '✓' : '';
     box.innerHTML = `
-      <div class="item"><div class="num">🔥 ${current}</div><div class="lbl">连续 ${todayFlag}</div></div>
+      <div class="item"><div class="num">${current}</div><div class="lbl">连续 ${todayFlag}</div></div>
       <div class="item"><div class="num">${longest}</div><div class="lbl">最长</div></div>
       <div class="item"><div class="num">${total}</div><div class="lbl">累计天数</div></div>
     `;
@@ -365,8 +365,8 @@ const RetrospectView = {
     el.innerHTML = `
       <div class="day-head">
         <button class="day-back" id="retro-back">← 返回</button>
-        <div class="day-date">📅 ${m}月${d}日 · 周${weekday}</div>
-        <div class="day-streak">${done ? '✅' : '—'}</div>
+        <div class="day-date">${m}月${d}日 · 周${weekday}</div>
+        <div class="day-streak">${done ? '✓' : '—'}</div>
       </div>
       <div class="retro-empty">${done ? '这一天完成了今日滑卡' : '这一天没有打卡记录'}</div>
     `;

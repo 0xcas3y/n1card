@@ -81,23 +81,11 @@
       background: rgba(120,60,200,0.15);
       box-shadow: 0 0 10px rgba(140,70,240,0.3), 0 0 0 4px rgba(120,60,200,0.08);
     }
-    .badge-a::before {
-      content: '♛';
-      font-size: 10px;
-      color: rgba(200,160,255,0.7);
-      line-height: 1;
-    }
     .badge-a .num { font-size: 14px; font-weight: 800; color: #c8a0ff; line-height: 1; }
 
     .badge-l {
       border: 1.5px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.03);
-    }
-    .badge-l::before {
-      content: '♛';
-      font-size: 10px;
-      color: rgba(255,255,255,0.18);
-      line-height: 1;
     }
     .badge-l .num { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.22); line-height: 1; }
 
@@ -234,17 +222,17 @@ async function init() {
     if (needsRev) {
       active = true;
       href = 'quiz.html?day=' + (dp.day-1) + '&type=review';
-      sub  = '📝 复习第 ' + (dp.day-1) + ' 関后解锁';
+      sub  = '复习第 ' + (dp.day-1) + ' 関后解锁';
       arrow = '›';
     } else if (!unlocked) {
       active = false;
       href = null;
-      sub  = '🔒 第 ' + (dp.day-1) + ' 関をクリアで解放';
+      sub  = '第 ' + (dp.day-1) + ' 関をクリアで解放';
       arrow = '🔒';
     } else if (quizDone) {
       active = true;
       href = null;
-      sub  = dp.done ? '✅ 已通关 · 可重复学习/挑战' : dp.total + ' 词';
+      sub  = dp.done ? '已通关 · 可重复学习/挑战' : dp.total + ' 词';
       arrow = '✓';
       actions =
         '<div class="stage-actions">' +
@@ -254,7 +242,7 @@ async function init() {
     } else if (needsQuiz) {
       active = true;
       href = 'quiz.html?day=' + dp.day + '&type=complete';
-      sub  = '📝 学完！挑战通关测验';
+      sub  = '学完！挑战通关测验';
       arrow = '›';
     } else {
       active = true;
@@ -301,16 +289,16 @@ async function init() {
   });
 
   var label = open
-    ? '✨ 全 15 関制覇！宝箱里是一份你的学习总结'
+    ? '全 15 関制覇！宝箱里是一份你的学习总结'
     : '→ 全 15 関を制覇して宝箱を開けよう！ ←';
   var btn = '';
   var summary = open ? '<div class="chest-summary">你一路打到这里，留下的不是一个分数，而是一串真正被你啃下来的词。打开它，看看自己走了多远。</div>' : '';
   if (open)
     btn = '<button class="chest-btn" onclick="downloadSummary()">开启宝箱：领取学习总结</button>';
   else if (due > 0)
-    btn = '<a class="chest-btn" href="quiz.html?type=review&day=' + last.day + '">📅 今日复习 ' + due + ' 词</a>';
+    btn = '<a class="chest-btn" href="quiz.html?type=review&day=' + last.day + '">今日复习 ' + due + ' 词</a>';
   else if (!open)
-    btn = '<div class="chest-btn dim">🔒 宝箱未解锁</div>';
+    btn = '<div class="chest-btn dim">宝箱未解锁</div>';
 
   document.getElementById('chest-section').innerHTML =
     '<div class="chest-label">' + label + '</div>' +

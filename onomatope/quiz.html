@@ -1013,7 +1013,7 @@ function checkCompleteEnd(pct) {
   if (round === 1) {
     if (pct >= PASS.r1) {
       showRoundScreen(
-        '🎯', `第一轮通过！${pctDisp}%`,
+        '✓', `第一轮通过！${pctDisp}%`,
         '答对 ' + correct + ' / ' + initCount + '\n接下来撤掉提示，进入纯选择题决战！',
         '开始第二轮 →',
         () => startComplete(2)
@@ -1021,7 +1021,7 @@ function checkCompleteEnd(pct) {
     } else {
       showResult(false, pctDisp, correct, initCount,
         `未达到 80%，再来一次！`,
-        [{ label: '🔄 重试第一轮', action: () => startComplete(1) },
+        [{ label: '重试第一轮', action: () => startComplete(1) },
          { label: '← 返回', secondary: true, action: () => location.href = 'index.html' }]
       );
     }
@@ -1035,7 +1035,7 @@ function checkCompleteEnd(pct) {
     } else {
       showResult(false, pctDisp, correct, initCount,
         `未达到 90%，再来一次！`,
-        [{ label: '🔄 重试第二轮', action: () => startComplete(2) },
+        [{ label: '重试第二轮', action: () => startComplete(2) },
          { label: '重试第一轮', secondary: true, action: () => startComplete(1) }]
       );
     }
@@ -1054,7 +1054,7 @@ function checkReviewEnd(pct) {
   } else {
     showResult(false, pctDisp, correct, initCount,
       `未达到 70%，再来一次！`,
-      [{ label: '🔄 再试', action: () => startReview() },
+      [{ label: '再试', action: () => startReview() },
        { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
     );
   }
@@ -1071,7 +1071,7 @@ function checkFinalEnd(pct) {
   } else {
     showResult(false, pctDisp, correct, initCount,
       `未达到 80%，继续加油！`,
-      [{ label: '🔄 再战', action: () => startFinal() },
+      [{ label: '再战', action: () => startFinal() },
        { label: '返回主页', secondary: true, action: () => location.href = 'index.html' }]
     );
   }
@@ -1115,7 +1115,7 @@ function showResult(passed, pct, got, total, sub, actions) {
   const el = document.getElementById('result-screen');
   el.style.display = 'flex';
   el.className = actions.some(a => a.defeat) ? 'result-screen-defeat' : '';
-  const emoji = passed ? (pct === 100 ? '🎉' : '✅') : '💪';
+  const emoji = passed ? (pct === 100 ? '★' : '✓') : '✕';
   const actHTML = actions.map(a =>
     `<button class="result-btn ${a.secondary ? 'btn-secondary' : 'btn-primary'} ${a.className || ''}" data-action="${a.label}">${a.label}</button>`
   ).join('');

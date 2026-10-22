@@ -239,8 +239,10 @@ body.learnlist-on #cardstage { align-items: flex-start; padding: 8px; overflow: 
 }
 .qs-done:hover { background: rgba(0,0,0,0.4); }
 
-/* DayView + RetrospectView */
+/* DayView + RetrospectView（撑满视口高度+纵向居中的逻辑统一放在外层 .hub 上，
+   见 index.html；这里只负责内容本身的宽度和内边距） */
 #day-view, #retro-view {
+  width: 100%;
   max-width: 600px; margin: 0 auto; padding: 20px 16px;
 }
 .day-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }

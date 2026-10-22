@@ -393,7 +393,7 @@ const CardView = {
           漫画例句
           <a class="ik-inline-link"
              href="https://www.immersionkit.com/dictionary?keyword=${encodeURIComponent(card.word)}&exact=true"
-             target="_blank" rel="noopener">🔊 听更多例句</a>
+             target="_blank" rel="noopener">听更多例句</a>
         </div>
         <div class="section-body">${examplesHTML}</div>
       </div>
@@ -491,7 +491,6 @@ const Router = {
       const next = Progress.nextDueDate();
       stage.innerHTML = `
         <div style="text-align:center;padding:40px;max-width:300px;margin:0 auto;">
-          <div style="font-size:48px;margin-bottom:16px;">✨</div>
           <div style="font-size:20px;font-weight:600;margin-bottom:10px;">今日已完成</div>
           <div style="opacity:0.6;font-size:14px;line-height:1.7;">
             ${next ? `下次复习：${next}` : '全部词汇已掌握'}
@@ -578,10 +577,9 @@ const Router = {
     const quizDone = localStorage.getItem('onomatope:d' + DAY + ':quiz-complete') === '1';
     stage.innerHTML = `
       <div style="text-align:center;padding:40px;max-width:300px;margin:0 auto;">
-        <div style="font-size:48px;margin-bottom:16px;">${quizDone ? '✅' : '🎉'}</div>
         <div style="font-size:22px;font-weight:600;margin-bottom:10px;">第 ${DAY} 天刷完了！</div>
         <div style="opacity:0.65;font-size:14px;line-height:1.8;margin-bottom:24px;">
-          ${quizDone ? '选择题已通过，当天完成 🎊' : '做选择题才算完成这一天'}
+          ${quizDone ? '选择题已通过，当天完成' : '做选择题才算完成这一天'}
         </div>
         ${quizDone
           ? `<button onclick="location.href='index.html'"
@@ -623,7 +621,7 @@ const MiniNav = {
     Router.init(cards);
   } catch (err) {
     document.getElementById('cardstage').innerHTML =
-      `<div style="text-align:center;color:#ff6b6b;padding:40px;">❌ 加载失败：${err.message}</div>`;
+      `<div style="text-align:center;color:#ff6b6b;padding:40px;">加载失败：${err.message}</div>`;
   }
 })();
 

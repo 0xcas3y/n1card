@@ -364,7 +364,7 @@ class GrammarApp {
 </div>
 </div>
 <div class="fbar" id="fbar" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px)">
-  <button class="fbtn" data-f="fav">⭐ 收藏</button>
+  <button class="fbtn" data-f="fav">收藏</button>
   <button class="fbtn" data-f="★">★</button>
   <button class="fbtn" data-f="★★">★★</button>
   <button class="fbtn" data-f="★★★">★★★</button>
@@ -372,7 +372,7 @@ class GrammarApp {
 <div class="prog-wrap" id="progWrap">
   <div class="prog-info">
     <span class="prog-lbl" id="progLbl">1/${this.G.length}</span>
-    <div class="prog-stats"><span>⭐<span id="favCt">0</span></span><span>✅<span id="mstCt">0</span></span></div>
+    <div class="prog-stats"><span><span id="favCt">0</span></span><span><span id="mstCt">0</span></span></div>
   </div>
   <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
 </div>
@@ -393,7 +393,7 @@ class GrammarApp {
         <button class="cact" id="cCheck" title="已掌握 (M)">◯</button>
       </div>
     </div>
-    <div class="mst-rib" id="mstRib">✅ 已掌握</div>
+    <div class="mst-rib" id="mstRib">已掌握</div>
     <div class="cbody">
       <div>
         <div class="slbl">意思</div>
@@ -428,14 +428,14 @@ class GrammarApp {
   <div class="nctr"><span id="navIdx">1</span><sub> / <span id="navTot">${this.G.length}</span></sub></div>
   <button class="nbtn" id="nextBtn">→</button>
   <div class="nextra">
-    <button class="nxbtn" id="shuffleBtn">🔀 打乱顺序</button>
-    <button class="nxbtn" id="rndBtn">⚡ 随机</button>
+    <button class="nxbtn" id="shuffleBtn">打乱顺序</button>
+    <button class="nxbtn" id="rndBtn">随机</button>
   </div>
 </div>
 <!-- GRID STAGE -->
 <div class="gstage" id="gstage">
   <div class="srch-wrap"><input class="srch" type="search" placeholder="🔍 搜索语法..." id="srch"></div>
-  <div class="sbar"><span>📚 显示 <span id="visCt">0</span> 项</span></div>
+  <div class="sbar"><span>显示 <span id="visCt">0</span> 项</span></div>
   <div class="grid" id="grid"></div>
 </div>
 <div class="mov" id="mov">
@@ -450,7 +450,7 @@ class GrammarApp {
       <div style="font-size:12px;color:#aaa" id="mZh"></div>
       <div class="tts-row">
         <button class="tts-b" id="mSpk1">🔊 正常</button>
-        <button class="tts-b" id="mSpk2">🐢 慢速</button>
+        <button class="tts-b" id="mSpk2">慢速</button>
       </div>
       <div class="gmb"><span class="lb">意思</span><span id="mMean"></span></div>
       <div class="gpb"><span class="lb">接续</span><code id="mPat"></code></div>
@@ -658,7 +658,7 @@ class GrammarApp {
             furiDiv.appendChild(w);
             // tooltip
             const POS_LBL={noun:'名詞',verb:'動詞',adj:'形容詞',adv:'副詞',part:'助詞',conj:'接续詞',aux:'助動詞'};
-            const lbl = t.isGram ? '🔴 文法ポイント' : (POS_LBL[t.pos]||t.pos);
+            const lbl = t.isGram ? '文法ポイント' : (POS_LBL[t.pos]||t.pos);
             w.addEventListener('mouseenter', ev => {
               const tip=document.getElementById('posTip');
               tip.textContent=lbl+(t.reading?' · '+t.reading:'');
@@ -714,7 +714,7 @@ class GrammarApp {
     let n=0;
     const src=this.filter!=='all'?this.deck:this.G;
     src.filter(g=>this._matchS(g)).forEach(g=>{ n++; grid.appendChild(this._makeGC(g)); });
-    if(!n){const d=document.createElement('div');d.className='empty';d.textContent='🔍 没有找到相关语法';grid.appendChild(d);}
+    if(!n){const d=document.createElement('div');d.className='empty';d.textContent='没有找到相关语法';grid.appendChild(d);}
     (document.getElementById('visCt')||{textContent:''}).textContent=n;
     const _cb=document.getElementById('cntBadge'); if(_cb)_cb.textContent=`共 ${this.G.length} 项`;
   }
@@ -733,7 +733,7 @@ class GrammarApp {
     <div class="gea"><div class="gejp">${g.eh}</div><div class="gezh">${g.ez}</div>
       <div class="tts-row">
         <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',1.0)">🔊 朗读</button>
-        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',0.65)">🐢 慢速</button>
+        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',0.65)">慢速</button>
       </div></div>
     <div class="gi">
       <div class="gmb"><span class="lb">意思</span>${g.m}<br><span style="font-size:10.5px;color:#999">${g.mz}</span></div>
@@ -809,7 +809,7 @@ class GrammarApp {
         flipBtn.onclick = () => this._toggleFlip();
         cbody.appendChild(flipBtn);
       }
-      flipBtn.textContent = back ? '📖 查看解析 & 练习题' : '📖 解析暂未收录';
+      flipBtn.textContent = back ? '查看解析 & 练习题' : '解析暂未收录';
       flipBtn.disabled = !back;
     }
 
@@ -841,19 +841,19 @@ class GrammarApp {
       </div>
       <div class="back-body">
         <div class="back-section">
-          <div class="back-label">📌 深度解析</div>
+          <div class="back-label">深度解析</div>
           <div class="back-analysis">${back.analysis||''}</div>
         </div>
         <div class="back-section">
-          <div class="back-label">⚠️ 易错点</div>
+          <div class="back-label">易错点</div>
           <div class="back-mistakes">${mistakesHtml}</div>
         </div>
         ${similarHtml ? `<div class="back-section">
-          <div class="back-label">🔀 相似文法</div>
+          <div class="back-label">相似文法</div>
           <div class="back-similar">${similarHtml}</div>
         </div>` : ''}
         ${quizHtml ? `<div class="back-section">
-          <div class="back-label">✏️ 练习题</div>
+          <div class="back-label">练习题</div>
           ${quizHtml}
         </div>` : ''}
       </div>`;

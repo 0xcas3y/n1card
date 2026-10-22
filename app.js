@@ -239,9 +239,34 @@ const CardPool = {
       })
     );
     const merged = mergeLevelPool(level, entries);
+    this._applyOverrides(level, merged);
     this._cache[level] = merged;
     this._maybeMigrate(level, entries);
     return merged;
+  },
+  // 统一会话模式(today.html)下编辑卡片的持久化——跟DataStore.overrides是两套独立存储，
+  // 按compositeId存(天然跨词性不会撞id)，key单独叫overrides2，不跟老的numeric-id覆盖混在一起。
+  _overridesKey(level) { return `n1card:overrides2:${level}`; },
+  _applyOverrides(level, merged) {
+    let overrides = {};
+    try { overrides = JSON.parse(localStorage.getItem(this._overridesKey(level))) || {}; } catch {}
+    for (const compositeId in overrides) {
+      const i = merged.findIndex(c => c.compositeId === compositeId);
+      if (i >= 0) Object.assign(merged[i], overrides[compositeId]);
+    }
+  },
+  applyOverride(compositeId, patch) {
+    const level = compositeId.split(':')[0];
+    const key = this._overridesKey(level);
+    let overrides = {};
+    try { overrides = JSON.parse(localStorage.getItem(key)) || {}; } catch {}
+    overrides[compositeId] = { ...overrides[compositeId], ...patch };
+    try { localStorage.setItem(key, JSON.stringify(overrides)); } catch {}
+    const cached = this._cache[level];
+    if (cached) {
+      const i = cached.findIndex(c => c.compositeId === compositeId);
+      if (i >= 0) Object.assign(cached[i], patch);
+    }
   },
   _maybeMigrate(level, entries) {
     const flagKey = `n1card:migrated:${level}`;
@@ -563,7 +588,7 @@ const TopBar = {
     let leftHtml;
     const stats = Progress.stats();
     const streak = Streak.getCurrent();
-    const streakHtml = streak > 0 ? ` · 🔥${streak}` : '';
+    const streakHtml = streak > 0 ? ` · ${streak}` : '';
     const warn = this.warnings.length ? `<span class="topbar-warn">⚠ ${this.warnings.join(' · ')}</span>` : '';
 
     if (Router.learnMode) {
@@ -1199,7 +1224,16 @@ const EditPanel = {
           { jp: backdrop.querySelector('#edit-ex2-jp').value.trim(), cn: backdrop.querySelector('#edit-ex2-cn').value.trim() }
         ]
       };
-      DataStore.applyOverride(card.id, patch);
+      // card 是 Router.visibleCards[idx] 的同一个引用，先原地改掉能让当前这张卡立刻生效；
+      // 持久化这步才分两条路——统一会话模式(today.html)的卡片来自 CardPool，不是
+      // DataStore.cards(那边一直是空数组)，走 DataStore.applyOverride 写了也没人读，
+      // 保存了但刷新/下次进来就打回原样，所以要单独给 CardPool 一套覆盖存取。
+      Object.assign(card, patch);
+      if (window.UNIFIED_MODE) {
+        CardPool.applyOverride(card.compositeId, patch);
+      } else {
+        DataStore.applyOverride(card.id, patch);
+      }
       this.close();
       Router.showCurrent();
     });

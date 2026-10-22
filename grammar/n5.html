@@ -370,7 +370,7 @@ class GrammarApp {
   <div class="tb-sub" id="tbSub" style="display:none"></div>
 </div>
 <div class="fbar" id="fbar" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px)">
-  <button class="fbtn" data-f="fav">⭐ 收藏</button>
+  <button class="fbtn" data-f="fav">收藏</button>
   <button class="fbtn" data-f="★">★</button>
   <button class="fbtn" data-f="★★">★★</button>
   <button class="fbtn" data-f="★★★">★★★</button>
@@ -378,7 +378,7 @@ class GrammarApp {
 <div class="prog-wrap" id="progWrap">
   <div class="prog-info">
     <span class="prog-lbl" id="progLbl">1/${this.G.length}</span>
-    <div class="prog-stats"><span>⭐<span id="favCt">0</span></span><span>✅<span id="mstCt">0</span></span></div>
+    <div class="prog-stats"><span><span id="favCt">0</span></span><span><span id="mstCt">0</span></span></div>
   </div>
   <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
 </div>
@@ -399,7 +399,7 @@ class GrammarApp {
         <button class="cact" id="cCheck" title="已学 (M)">◯</button>
       </div>
     </div>
-    <div class="mst-rib" id="mstRib">✅ 已学</div>
+    <div class="mst-rib" id="mstRib">已学</div>
     <div class="cbody">
       <div>
         <div class="slbl">意思</div>
@@ -426,7 +426,7 @@ class GrammarApp {
         <div id="cExList"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="ana-btn" id="anaBtn">✨ 注音·词性分析</button>
+        <button class="ana-btn" id="anaBtn">注音·词性分析</button>
       </div>
     </div>
   </div>
@@ -436,14 +436,14 @@ class GrammarApp {
   <div class="nctr"><span id="navIdx">1</span><sub> / <span id="navTot">${this.G.length}</span></sub></div>
   <button class="nbtn" id="nextBtn">→</button>
   <div class="nextra">
-    <button class="nxbtn" id="shuffleBtn">🔀 打乱顺序</button>
+    <button class="nxbtn" id="shuffleBtn">打乱顺序</button>
   </div>
   <button class="nfav-btn" id="nFavBtn" title="收藏">☆</button>
 </div>
 <!-- GRID STAGE -->
 <div class="gstage" id="gstage">
   <div class="srch-wrap"><input class="srch" type="search" placeholder="🔍 搜索文法..." id="srch"></div>
-  <div class="sbar"><span>📚 显示 <span id="visCt">0</span> 项</span></div>
+  <div class="sbar"><span>显示 <span id="visCt">0</span> 项</span></div>
   <div class="grid" id="grid"></div>
 </div>
 <div class="mov" id="mov">
@@ -458,7 +458,7 @@ class GrammarApp {
       <div style="font-size:12px;color:#aaa" id="mZh"></div>
       <div class="tts-row">
         <button class="tts-b" id="mSpk1">🔊 正常</button>
-        <button class="tts-b" id="mSpk2">🐢 慢速</button>
+        <button class="tts-b" id="mSpk2">慢速</button>
       </div>
       <div class="gmb"><span class="lb">意味</span><span id="mMean"></span></div>
       <div class="gpb"><span class="lb">接続</span><code id="mPat"></code></div>
@@ -629,7 +629,7 @@ class GrammarApp {
   /* render plain (no furigana yet) */
   _renderPlain(g) {
     document.getElementById('posLegend').style.display='none';
-    document.getElementById('anaBtn').innerHTML='✨ 注音·词性分析';
+    document.getElementById('anaBtn').innerHTML='注音·词性分析';
     document.getElementById('anaBtn').disabled=false;
     const allEx = [{j:g.eh,z:g.ez,main:true},...g.ex.map(e=>({j:e.j,z:e.z}))];
     const lvl = this.level.toLowerCase();
@@ -646,7 +646,7 @@ class GrammarApp {
   /* render with furigana tokens */
   _renderFuri(g, tokenSets) {
     document.getElementById('posLegend').style.display='flex';
-    document.getElementById('anaBtn').innerHTML='✅ 已分析';
+    document.getElementById('anaBtn').innerHTML='已分析';
     document.getElementById('anaBtn').disabled=true;
 
     const allEx = [{j:g.eh,z:g.ez,main:true},...g.ex.map(e=>({j:e.j,z:e.z}))];
@@ -683,7 +683,7 @@ class GrammarApp {
             furiDiv.appendChild(w);
             // tooltip
             const POS_LBL={noun:'名詞',verb:'動詞',adj:'形容詞',adv:'副詞',part:'助詞',conj:'接続詞',aux:'助動詞'};
-            const lbl = t.isGram ? '🔴 文法ポイント' : (POS_LBL[t.pos]||t.pos);
+            const lbl = t.isGram ? '文法ポイント' : (POS_LBL[t.pos]||t.pos);
             w.addEventListener('mouseenter', ev => {
               const tip=document.getElementById('posTip');
               tip.textContent=lbl+(t.reading?' · '+t.reading:'');
@@ -752,7 +752,7 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
       try { localStorage.setItem(this._furiKey, JSON.stringify(this.furiCache)); } catch(e) {}
       this._renderFuri(g, sets);
     } catch(err) {
-      btn.innerHTML='⚠️ 重试';
+      btn.innerHTML='重试';
       btn.disabled=false;
       // show error briefly
       const errDiv=document.createElement('div');
@@ -805,7 +805,7 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
     let n=0;
     const src=this.filter!=='all'?this.deck:this.G;
     src.filter(g=>this._matchS(g)).forEach(g=>{ n++; grid.appendChild(this._makeGC(g)); });
-    if(!n){const d=document.createElement('div');d.className='empty';d.textContent='🔍 没有找到相关文法';grid.appendChild(d);}
+    if(!n){const d=document.createElement('div');d.className='empty';d.textContent='没有找到相关文法';grid.appendChild(d);}
     (document.getElementById('visCt')||{textContent:''}).textContent=n;
     (document.getElementById('cntBadge')||{textContent:''}).textContent=`共 ${this.G.length} 项`;
   }
@@ -825,7 +825,7 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
     <div class="gea"><div class="gejp">${g.eh}</div><div class="gezh">${g.ez}</div>
       <div class="tts-row">
         <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',1.0)">🔊 朗读</button>
-        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',0.65)">🐢 慢速</button>
+        <button class="tts-b" onclick="app.playOrSpeak('${mainAudio}','${et}',0.65)">慢速</button>
       </div></div>
     <div class="gi">
       <div class="gmb"><span class="lb">意思</span>${g.m}<br><span style="font-size:10.5px;color:#999">${g.mz}</span></div>
@@ -902,7 +902,7 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
         flipBtn.onclick = () => this._toggleFlip();
         cbody.appendChild(flipBtn);
       }
-      flipBtn.textContent = back ? '📖 查看解析 & 练习题' : '📖 解析暂未收录';
+      flipBtn.textContent = back ? '查看解析 & 练习题' : '解析暂未收录';
       flipBtn.disabled = !back;
     }
 
@@ -934,19 +934,19 @@ ${allEx.map((ex,i)=>`文${i}(idx:${i}): ${ex.j}`).join('\n')}`;
       </div>
       <div class="back-body">
         <div class="back-section">
-          <div class="back-label">📌 深度解析</div>
+          <div class="back-label">深度解析</div>
           <div class="back-analysis">${back.analysis||''}</div>
         </div>
         <div class="back-section">
-          <div class="back-label">⚠️ 易错点</div>
+          <div class="back-label">易错点</div>
           <div class="back-mistakes">${mistakesHtml}</div>
         </div>
         ${similarHtml ? `<div class="back-section">
-          <div class="back-label">🔀 相似文法</div>
+          <div class="back-label">相似文法</div>
           <div class="back-similar">${similarHtml}</div>
         </div>` : ''}
         ${quizHtml ? `<div class="back-section">
-          <div class="back-label">✏️ 练习题</div>
+          <div class="back-label">练习题</div>
           ${quizHtml}
         </div>` : ''}
       </div>`;
