@@ -517,10 +517,13 @@ const CardView = {
     const el = document.createElement('div');
     el.className = `flash-card color-${color}`;
     const isFav = Favorites.isFavorited(card.compositeId);
+    const heartHtml = card.compositeId
+      ? `<button class="fav-heart${isFav ? ' active' : ''}" aria-label="收藏">${isFav ? '♥' : '♡'}</button>`
+      : '';
     el.innerHTML = `
       <div class="card-id">${getSeenCount(card)}</div>
       <div class="front-center"><div class="front-word" data-len="${[...card.word].length}">${card.word}</div></div>
-      <button class="fav-heart${isFav ? ' active' : ''}" aria-label="收藏">${isFav ? '♥' : '♡'}</button>
+      ${heartHtml}
       <div class="hint-bottom">单击发音 · 双击翻面 · ←难 →易</div>
     `;
     return el;
@@ -1083,6 +1086,17 @@ const HardReviewMode = {
         this._render();
       }
     });
+    if (!this.flipped) {
+      const heart = el.querySelector('.fav-heart');
+      if (heart) {
+        heart.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nowFav = Favorites.toggle(card.compositeId);
+          heart.classList.toggle('active', nowFav);
+          heart.textContent = nowFav ? '♥' : '♡';
+        });
+      }
+    }
   }
 };
 

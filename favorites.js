@@ -37,6 +37,7 @@ export const Favorites = {
   },
   // 心形按钮点击用：切换收藏状态，返回切换后是不是已收藏
   toggle(compositeId) {
+    if (!compositeId) return false;
     this.load();
     this._map = toggleFavorite(this._map, compositeId, Date.now());
     this._save();
@@ -44,6 +45,7 @@ export const Favorites = {
   },
   // 单词本"移除"按钮用：明确删除，不是toggle(避免双击误操作又加回去)
   remove(compositeId) {
+    if (!compositeId) return;
     this.load();
     if (!this._map[compositeId]) return;
     const next = { ...this._map };
@@ -52,11 +54,12 @@ export const Favorites = {
     this._save();
   },
   isFavorited(compositeId) {
+    if (!compositeId) return false;
     this.load();
     return isFavorited(this._map, compositeId);
   },
   all() {
     this.load();
-    return this._map;
+    return { ...this._map };
   }
 };

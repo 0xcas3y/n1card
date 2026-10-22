@@ -21,7 +21,16 @@ async function render() {
     return;
   }
 
-  const index = await WordSearch.ensureIndex();
+  listEl.innerHTML = '<div class="nb-empty">加载中…</div>';
+
+  let index;
+  try {
+    index = await WordSearch.ensureIndex();
+  } catch {
+    listEl.innerHTML = '<div class="nb-empty">加载失败，请刷新重试</div>';
+    return;
+  }
+
   const byCompositeId = new Map(index.map(item => [item.compositeId, item]));
 
   const rows = compositeIds
