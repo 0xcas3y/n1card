@@ -3,6 +3,7 @@ import {
   LEVEL_CATEGORY_FILES, mergeLevelPool, applySwipeResult, migrateOldStatus,
   pickRecommendedCategory, computeNewWordQueue, computeDueIds
 } from './plan.js';
+import { Favorites } from './favorites.js';
 
 const COLORS = ['blue', 'green', 'purple', 'coral', 'teal', 'pink'];
 
@@ -468,12 +469,12 @@ const Gestures = {
     const clearTap = () => { if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; } };
 
     el.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.sentence-row')) { touchStart = null; return; }
+      if (e.target.closest('.sentence-row') || e.target.closest('.fav-heart')) { touchStart = null; return; }
       touchStart = { x: e.clientX, y: e.clientY, t: performance.now() };
     });
     el.addEventListener('pointercancel', () => { touchStart = null; clearTap(); });
     el.addEventListener('pointerup', (e) => {
-      if (e.target.closest('.sentence-row')) { touchStart = null; clearTap(); return; }
+      if (e.target.closest('.sentence-row') || e.target.closest('.fav-heart')) { touchStart = null; clearTap(); return; }
       if (!touchStart) return;
       const dx = e.clientX - touchStart.x;
       const dy = e.clientY - touchStart.y;
@@ -515,9 +516,11 @@ const CardView = {
   renderFront(card, color) {
     const el = document.createElement('div');
     el.className = `flash-card color-${color}`;
+    const isFav = Favorites.isFavorited(card.compositeId);
     el.innerHTML = `
       <div class="card-id">${getSeenCount(card)}</div>
       <div class="front-center"><div class="front-word" data-len="${[...card.word].length}">${card.word}</div></div>
+      <button class="fav-heart${isFav ? ' active' : ''}" aria-label="收藏">${isFav ? '♥' : '♡'}</button>
       <div class="hint-bottom">单击发音 · 双击翻面 · ←难 →易</div>
     `;
     return el;
@@ -1261,6 +1264,16 @@ const Router = {
           this.playExample(idx);
         });
       });
+    } else {
+      const heart = cardEl.querySelector('.fav-heart');
+      if (heart) {
+        heart.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nowFav = Favorites.toggle(card.compositeId);
+          heart.classList.toggle('active', nowFav);
+          heart.textContent = nowFav ? '♥' : '♡';
+        });
+      }
     }
     TopBar.render();
   },

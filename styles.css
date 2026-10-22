@@ -39,6 +39,15 @@ html, body { height: 100%; background: #111; color: #fff; font-family: "Hiragino
 .front-word[data-len="7"] { font-size: clamp(28px, 8vw, 48px); letter-spacing: 0; }
 .front-word[data-len="8"] { font-size: clamp(24px, 7vw, 42px); letter-spacing: 0; }
 .hint-bottom { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; opacity: 0.5; letter-spacing: 1px; }
+.fav-heart {
+  position: absolute; bottom: 40px; left: 0; right: 0; margin: 0 auto;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; cursor: pointer; padding: 0;
+  font-size: 22px; line-height: 1; color: rgba(255,255,255,0.5);
+}
+.fav-heart.active { color: #ff4d6d; }
+.fav-heart:active { transform: scale(0.9); }
 .back-head { font-size: 37px; font-weight: 600; margin-right: 50px; }
 .back-kana { font-size: 15px; opacity: 0.85; margin-bottom: 14px; }
 .section-title { font-size: 19px; font-weight: 500; margin: 12px 0 6px; opacity: 0.95; }
