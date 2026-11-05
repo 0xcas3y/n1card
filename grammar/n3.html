@@ -8,6 +8,7 @@ const N3_BACK = {"1": {"analysis": "「〜ため（に）」是N3重要语法，
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JLPT N3 文法カード</title>
+<script src="search.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════
    JLPT Grammar Card Engine v3
@@ -202,6 +203,13 @@ body{font-family:'M PLUS Rounded 1c','Noto Sans JP',sans-serif;min-height:100%;o
 .gei .gm{color:var(--red);font-weight:900}
 .gei .tr{font-size:10.5px;color:var(--gr);display:block;margin-top:1px}
 .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:rgba(255,255,255,.7);font-size:16px}
+.gs-other{padding:0 18px 40px;max-width:1400px;margin:0 auto}
+.gs-other-head{font-size:12px;color:rgba(255,255,255,.75);font-weight:700;margin:18px 0 10px;letter-spacing:.5px}
+.gs-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;text-decoration:none;color:#fff;margin-bottom:6px;transition:background .15s}
+.gs-row:hover{background:rgba(255,255,255,.18)}
+.gs-lv{flex-shrink:0;font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.22);letter-spacing:.5px}
+.gs-pattern{flex-shrink:0;font-size:14px;font-weight:700}
+.gs-meaning{flex:1;min-width:0;font-size:12px;color:rgba(255,255,255,.75);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 
 /* modal */
 .mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px}
@@ -339,6 +347,14 @@ class GrammarApp {
     this._bind();
     this._setView('card');
     this._initSwipe();
+    // 从文法首页的跨等级搜索跳转过来时，URL带?q=关键词——自动切到网格视图
+    // 并把搜索框填上，落地就是已经筛好的结果，不用再手动找一遍
+    const qp = new URLSearchParams(location.search).get('q');
+    if (qp) {
+      this.search = qp;
+      document.getElementById('srch').value = qp;
+      this._setView('grid');
+    }
     if (window.speechSynthesis)
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
   }
@@ -437,6 +453,7 @@ class GrammarApp {
   <div class="srch-wrap"><input class="srch" type="search" placeholder="🔍 搜索语法..." id="srch"></div>
   <div class="sbar"><span>显示 <span id="visCt">0</span> 项</span></div>
   <div class="grid" id="grid"></div>
+  <div class="gs-other" id="gsOther"></div>
 </div>
 <div class="mov" id="mov">
   <div class="mo">
@@ -717,6 +734,22 @@ class GrammarApp {
     if(!n){const d=document.createElement('div');d.className='empty';d.textContent='没有找到相关语法';grid.appendChild(d);}
     (document.getElementById('visCt')||{textContent:''}).textContent=n;
     const _cb=document.getElementById('cntBadge'); if(_cb)_cb.textContent=`共 ${this.G.length} 项`;
+    this._renderOtherLevels();
+  }
+  // 搜索框不只筛当前等级的网格，还会去问跨等级的共享索引(search.js)有没有
+  // 其他等级的相关结果——没有真正的锚点可以深链，所以不在当前网格里插进去，
+  // 单独放一个区块，点进去用?q=带上完整pattern跳到对应等级页(自动切到网格
+  // 视图+预填关键词，见construtor里读URL参数那段)
+  _renderOtherLevels() {
+    const el = document.getElementById('gsOther');
+    if (!el) return;
+    const q = this.search;
+    if (!q) { el.innerHTML = ''; return; }
+    GrammarSearch.search(q, { excludeLevel: this.level.toLowerCase(), limit: 20 }).then(hits => {
+      if (this.search !== q) return;
+      if (hits.length === 0) { el.innerHTML = ''; return; }
+      el.innerHTML = `<div class="gs-other-head">其他等级也有 ${hits.length} 条相关结果</div>` + hits.map(GrammarSearch.resultRowHTML).join('');
+    });
   }
   _makeGC(g) {
     const d=document.createElement('div'); d.className='gc';

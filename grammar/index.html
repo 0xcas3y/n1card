@@ -112,6 +112,42 @@
     -webkit-text-fill-color: transparent;
   }
 
+  /* ── SEARCH ── */
+  .gsearch-wrap { margin: 0 0 32px; }
+  .gsearch-input {
+    width: 100%;
+    background: var(--card); color: var(--tx);
+    border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 18px; font-size: 15px; font-family: inherit;
+    outline: none; transition: border-color 0.15s;
+  }
+  .gsearch-input:focus { border-color: #10ac84; }
+  .gsearch-input::placeholder { color: var(--muted); }
+  .gsearch-status { font-size: 12px; color: var(--muted); margin: 10px 2px 0; }
+  .gsearch-results { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .gs-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px;
+    text-decoration: none; color: var(--tx);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .gs-row:hover { border-color: rgba(255,255,255,0.2); background: #1c1c26; }
+  .gs-lv {
+    flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 6px; letter-spacing: 0.5px;
+  }
+  .gs-lv-n5 { background: color-mix(in srgb, var(--n5) 18%, transparent); color: var(--n5); }
+  .gs-lv-n4 { background: color-mix(in srgb, var(--n4) 18%, transparent); color: var(--n4); }
+  .gs-lv-n3 { background: color-mix(in srgb, var(--n3) 18%, transparent); color: var(--n3); }
+  .gs-lv-n2 { background: color-mix(in srgb, var(--n2) 18%, transparent); color: var(--n2); }
+  .gs-lv-n1 { background: color-mix(in srgb, var(--n1) 18%, transparent); color: var(--n1); }
+  .gs-pattern { flex-shrink: 0; font-size: 14px; font-weight: 600; }
+  .gs-meaning {
+    flex: 1; min-width: 0; font-size: 12px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right;
+  }
+
   /* ── LEVEL CARDS ── */
   .levels {
     display: grid;
@@ -375,6 +411,13 @@
     <div class="hero-eyebrow">Grammar Cards</div>
     <h1 class="hero-title">文法<em>卡片</em></h1>
   </section>
+
+  <!-- SEARCH -->
+  <div class="gsearch-wrap">
+    <input class="gsearch-input" type="search" id="gsearch" placeholder="搜索全部等级的语法点…" autocomplete="off">
+    <div class="gsearch-status" id="gsearchStatus"></div>
+    <div class="gsearch-results" id="gsearchResults"></div>
+  </div>
 
   <!-- LEVEL CARDS -->
   <div class="levels">
@@ -707,6 +750,35 @@
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && fsOverlay.classList.contains('active')) exitFullscreenMode();
+  });
+})();
+</script>
+
+<script src="search.js"></script>
+<script>
+(function () {
+  const input = document.getElementById('gsearch');
+  const status = document.getElementById('gsearchStatus');
+  const results = document.getElementById('gsearchResults');
+  let debounceTimer = null;
+
+  async function runSearch(q) {
+    if (!q) { status.textContent = ''; results.innerHTML = ''; return; }
+    status.textContent = '搜索中…';
+    const hits = await GrammarSearch.search(q, { limit: 50 });
+    if (hits.length === 0) {
+      status.textContent = '没有找到相关语法';
+      results.innerHTML = '';
+      return;
+    }
+    status.textContent = `共 ${hits.length}${hits.length >= 50 ? '+' : ''} 条结果${hits.length >= 50 ? '（仅显示前50条，试试更精确的关键词）' : ''}`;
+    results.innerHTML = hits.map(GrammarSearch.resultRowHTML).join('');
+  }
+
+  input.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const q = e.target.value;
+    debounceTimer = setTimeout(() => runSearch(q), 150);
   });
 })();
 </script>
